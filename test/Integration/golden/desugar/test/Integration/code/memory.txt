@@ -1,0 +1,244 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/main.$7d4411"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$7d4411
+                            ( Value $7d4411-arg= /Context( Value value )
+                                ( Value ctx@Value $7d4411-ctx )
+                            )
+                            ( Value $7d4411-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= /Data/Memory/var
+                                    ( Value type= /Catln/typeOf[ /T : /Data/Primitive/Integer ] )
+                                )
+                                ( Value ctx= /
+                                    ( ..Value $7d4411-states )
+                                    ( ..Value $7d4411-ctx )
+                                )
+                            )
+                            ( fn( Value v )= main.$7d4411.$6afdd8
+                                ( Value $6afdd8-arg= Value v )
+                                ( Value $6afdd8-states= /
+                                    ( ..Value $7d4411-states )
+                                    ( ..Value $7d4411-ctx )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/MemoryTest/failures"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /MemoryTest/failures
+                            ( Value taken= /Data/Result/Ok( Value value ) )
+                            ( Value refused= /Data/Result/Fail( Value err ) )= CInt
+                            { ciValue = 0 }
+                        , /MemoryTest/failures( Value taken )( Value refused )= CInt
+                            { ciValue = 1 }
+                        ]
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value main )
+                            ( Value /ctx= /( Value io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=()
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= /Context( Value /value= Value / )
+                                    ( Value /ctx= /
+                                        ( Value memorymap= /Data/Memory/MemoryMap( Value map= Value /Data/Map/Leaf )
+                                            ( Value next= CInt
+                                                { ciValue = 0 }
+                                            )
+                                        )
+                                    )
+                                )
+                                ( Value ctx= /( Value io= Value io ) )
+                            )
+                            ( fn( Value v )= main.$7d4411
+                                ( Value $7d4411-arg= Value v )
+                                ( Value $7d4411-states= /( Value io= Value io ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$7d4411.$6afdd8.$da8b79.$27b33a.$ee4c2c"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$7d4411.$6afdd8.$da8b79.$27b33a.$ee4c2c( Value /taken )( Value /refused )
+                            ( Value $ee4c2c-arg= /Context( Value value@Value got )( Value ctx@Value $ee4c2c-ctx ) )( Value $ee4c2c-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= exit
+                                    ( Value val= /operator+
+                                        ( Value /l= /MemoryTest/sevenRead( Value found= Value got ) )
+                                        ( Value /r= /MemoryTest/failures( Value taken= Value taken )( Value refused= Value refused ) )
+                                    )
+                                )
+                                ( Value ctx= /( ..Value $ee4c2c-states )( ..Value $ee4c2c-ctx ) )
+                            )
+                            ( fn( Value v )= main.$7d4411.$6afdd8.$da8b79.$27b33a.$ee4c2c.$e9edeb( Value $e9edeb-arg= Value v )
+                                ( Value $e9edeb-states= /( ..Value $ee4c2c-states )( ..Value $ee4c2c-ctx ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/MemoryTest/sevenRead"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /MemoryTest/sevenRead
+                            ( Value found= /Data/Maybe/Some( Value value -> /Data/Primitive/Integer ) )= /operator-( Value /l= Value value )
+                            ( Value /r= CInt
+                                { ciValue = 7 }
+                            )
+                        , /MemoryTest/sevenRead( Value found )= CInt
+                            { ciValue = 1 }
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$7d4411.$6afdd8"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$7d4411.$6afdd8
+                            ( Value $6afdd8-arg= /Context( Value value@Value x )
+                                ( Value ctx@Value $6afdd8-ctx )
+                            )
+                            ( Value $6afdd8-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= /operator:=( Value /l= Value x )
+                                    ( Value /r= CInt
+                                        { ciValue = 7 }
+                                    )
+                                )
+                                ( Value ctx= /
+                                    ( ..Value $6afdd8-states )
+                                    ( ..Value $6afdd8-ctx )
+                                )
+                            )
+                            ( fn( Value v )= main.$7d4411.$6afdd8.$da8b79( Value /x= Value /x )( Value $da8b79-arg= Value v )
+                                ( Value $da8b79-states= /
+                                    ( ..Value $6afdd8-states )
+                                    ( ..Value $6afdd8-ctx )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$7d4411.$6afdd8.$da8b79.$27b33a.$ee4c2c.$e9edeb"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$7d4411.$6afdd8.$da8b79.$27b33a.$ee4c2c.$e9edeb
+                            ( Value $e9edeb-arg= /Context( Value value )( Value ctx@Value $e9edeb-ctx ) )( Value $e9edeb-states )= /Context( Value value= Value / )
+                            ( Value ctx= /( ..Value $e9edeb-states )( ..Value $e9edeb-ctx ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$7d4411.$6afdd8.$da8b79.$27b33a"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$7d4411.$6afdd8.$da8b79.$27b33a( Value /x )( Value /taken )
+                            ( Value $27b33a-arg= /Context( Value value@Value refused )
+                                ( Value ctx@Value $27b33a-ctx )
+                            )
+                            ( Value $27b33a-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= /Data/Memory/read( Value target= Value x ) )
+                                ( Value ctx= /
+                                    ( ..Value $27b33a-states )
+                                    ( ..Value $27b33a-ctx )
+                                )
+                            )
+                            ( fn( Value v )= main.$7d4411.$6afdd8.$da8b79.$27b33a.$ee4c2c( Value /taken= Value /taken )( Value /refused= Value /refused )( Value $ee4c2c-arg= Value v )
+                                ( Value $ee4c2c-states= /
+                                    ( ..Value $27b33a-states )
+                                    ( ..Value $27b33a-ctx )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$7d4411.$6afdd8.$da8b79"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$7d4411.$6afdd8.$da8b79( Value /x )
+                            ( Value $da8b79-arg= /Context( Value value@Value taken )( Value ctx@Value $da8b79-ctx ) )( Value $da8b79-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= /operator:=( Value /l= Value x )
+                                    ( Value /r= CStr
+                                        { csValue = "seven" }
+                                    )
+                                )
+                                ( Value ctx= /( ..Value $da8b79-states )( ..Value $da8b79-ctx ) )
+                            )
+                            ( fn( Value v )= main.$7d4411.$6afdd8.$da8b79.$27b33a( Value /x= Value /x )( Value /taken= Value /taken )
+                                ( Value $27b33a-arg= Value v )
+                                ( Value $27b33a-states= /( ..Value $da8b79-states )( ..Value $da8b79-ctx ) )
+                            )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr
+                { csValue = "Tests [Memory] in a context: main adds an empty [MemoryMap] beside its [io], creates a [Var] of
+                [Integer], puts 7 in it, has a [String] refused by it, and reads it back. It exits with 0 only
+                where the 7 is read back, the [Integer] was taken and the [String] refused.
+                The bind chain is kept short: each bind over the memory's state costs minutes of type inference." }
+            )
+        ]
+    }

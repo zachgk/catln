@@ -1,0 +1,1578 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Data/Memory/varType"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Memory/varType
+                            ( EAppArg
+                                { eaaArg = Value /target -> /Data/Memory/Var
+                                    ( /type=∀/Catln/Type
+                                    , /id=/Data/Primitive/Integer
+                                    ) = /Data/Memory/Var
+                                    ( EAppArg { eaaArg = Value /id -> /Data/Primitive/Integer } )
+                                    ( EAppArg { eaaArg = Value /type -> ∀/Catln/Type } )
+                                }
+                            ) -> TVArg /type = ( Value /type ↦ TVArg /type )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Memory/storedValue"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Memory/storedValue
+                            ( EAppArg
+                                { eaaArg = Value /found -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some
+                                    ( EAppArg { eaaArg = Value /value@Value /stored } )
+                                }
+                            ) -> TVArg /stored = ( Value /stored ↦ TVArg /stored )
+                        , /Data/Memory/storedValue
+                            ( EAppArg { eaaArg = Value /found -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } ) -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing
+                        ]
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn
+                            ( EAppArg
+                                { eaaArg = Value /value -> /Data/Memory/var( /type=∀/Catln/Type ) = /Data/Memory/var
+                                    ( EAppArg { eaaArg = Value /type -> ∀/Catln/Type } )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /ctx ->
+                                    ( /memorymap=/Data/Memory/MemoryMap
+                                        ( /next=/Data/Primitive/Integer
+                                        , /map=∀/Data/Map
+                                            [ /K=/Data/Primitive/Integer
+                                            , /V=∀/Data/Maybe
+                                            ]
+                                        )
+                                    ).. = /
+                                    ( EAppArg
+                                        { eaaArg = Value /memorymap -> /Data/Memory/MemoryMap
+                                            ( /next=/Data/Primitive/Integer
+                                            , /map=∀/Data/Map
+                                                [ /K=/Data/Primitive/Integer
+                                                , /V=∀/Data/Maybe
+                                                ]
+                                            ) = /Data/Memory/MemoryMap
+                                            ( EAppArg
+                                                { eaaArg = Value /map -> ∀/Data/Map
+                                                    [ /K=/Data/Primitive/Integer
+                                                    , /V=∀/Data/Maybe
+                                                    ]
+                                                }
+                                            )
+                                            ( EAppArg { eaaArg = Value /next -> /Data/Primitive/Integer } )@Value /memorymap
+                                        }
+                                    )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )
+                                }
+                            ) -> /Context
+                            ( /value=/Data/Memory/Var
+                                ( /type=∀/Catln/Type
+                                , /id=/Data/Primitive/Integer
+                                )
+                            , /ctx=
+                                ( /memorymap=/Data/Memory/MemoryMap
+                                    ( /next=/Data/Primitive/Integer
+                                    , /map=UnionType
+                                        ( Just
+                                            ( PredClass /Data/Map
+                                                [ /K=/Data/Primitive/Integer
+                                                , /V=/Data/Maybe/Nothing
+                                                ]
+                                            , fromList []
+                                            , []
+                                            )
+                                        ,
+                                            ( /Data/Map/Node
+                                                [ /K=/Data/Primitive/Integer
+                                                , /V=∀/Data/Maybe
+                                                ]
+                                                ( /value=∀/Data/Maybe
+                                                , /key=/Data/Primitive/Integer
+                                                , /right=∀/Data/Map/BinTree
+                                                    [ /K=∀/Data/Algebra/Ord
+                                                    , /V=∀/Data/Maybe
+                                                    ]
+                                                , /left=/Data/Map/Node
+                                                    [ /K=∀/Data/Algebra/Ord
+                                                    , /V=∀/Data/Maybe
+                                                    ]
+                                                    ( /value=∀/Data/Maybe
+                                                    , /key=∀/Data/Algebra/Ord
+                                                    , /right=∀/Data/Map/BinTree
+                                                        [ /K=∀/Data/Algebra/Ord
+                                                        , /V=∀/Data/Maybe
+                                                        ]
+                                                    , /left=∀/Data/Map/BinTree
+                                                        [ /K=∀/Data/Algebra/Ord
+                                                        , /V=∀/Data/Maybe
+                                                        ]
+                                                    )
+                                                ) + /Data/Map/Node
+                                                [ /K=/Data/Primitive/Integer
+                                                , /V=∀/Data/Maybe
+                                                ]
+                                                ( /value=∀/Data/Maybe
+                                                , /key=/Data/Primitive/Integer
+                                                , /right=/Data/Map/Node
+                                                    [ /K=∀/Data/Algebra/Ord
+                                                    , /V=∀/Data/Maybe
+                                                    ]
+                                                    ( /value=∀/Data/Maybe
+                                                    , /key=∀/Data/Algebra/Ord
+                                                    , /right=∀/Data/Map/BinTree
+                                                        [ /K=∀/Data/Algebra/Ord
+                                                        , /V=∀/Data/Maybe
+                                                        ]
+                                                    , /left=∀/Data/Map/BinTree
+                                                        [ /K=∀/Data/Algebra/Ord
+                                                        , /V=∀/Data/Maybe
+                                                        ]
+                                                    )
+                                                , /left=∀/Data/Map/BinTree
+                                                    [ /K=∀/Data/Algebra/Ord
+                                                    , /V=∀/Data/Maybe
+                                                    ]
+                                                )
+                                            )
+                                        , []
+                                        )
+                                    )
+                                )
+                            ) = /Context
+                            ( EAppArg
+                                { eaaArg = Value /value -> /Data/Memory/Var
+                                    ( /type=∀/Catln/Type
+                                    , /id=/Data/Primitive/Integer
+                                    ) = /Data/Memory/Var
+                                    ( EAppArg
+                                        { eaaArg = Value /id -> TVArg /next = ( Value /next ↦ TVArg /next ) }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /type -> TVArg /type = ( Value /type ↦ TVArg /type ) }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /ctx ->
+                                    ( /memorymap=/Data/Memory/MemoryMap
+                                        ( /next=/Data/Primitive/Integer
+                                        , /map=UnionType
+                                            ( Just
+                                                ( PredClass /Data/Map
+                                                    [ /K=/Data/Primitive/Integer
+                                                    , /V=/Data/Maybe/Nothing
+                                                    ]
+                                                , fromList []
+                                                , []
+                                                )
+                                            ,
+                                                ( /Data/Map/Node
+                                                    [ /K=/Data/Primitive/Integer
+                                                    , /V=∀/Data/Maybe
+                                                    ]
+                                                    ( /value=∀/Data/Maybe
+                                                    , /key=/Data/Primitive/Integer
+                                                    , /right=∀/Data/Map/BinTree
+                                                        [ /K=∀/Data/Algebra/Ord
+                                                        , /V=∀/Data/Maybe
+                                                        ]
+                                                    , /left=/Data/Map/Node
+                                                        [ /K=∀/Data/Algebra/Ord
+                                                        , /V=∀/Data/Maybe
+                                                        ]
+                                                        ( /value=∀/Data/Maybe
+                                                        , /key=∀/Data/Algebra/Ord
+                                                        , /right=∀/Data/Map/BinTree
+                                                            [ /K=∀/Data/Algebra/Ord
+                                                            , /V=∀/Data/Maybe
+                                                            ]
+                                                        , /left=∀/Data/Map/BinTree
+                                                            [ /K=∀/Data/Algebra/Ord
+                                                            , /V=∀/Data/Maybe
+                                                            ]
+                                                        )
+                                                    ) + /Data/Map/Node
+                                                    [ /K=/Data/Primitive/Integer
+                                                    , /V=∀/Data/Maybe
+                                                    ]
+                                                    ( /value=∀/Data/Maybe
+                                                    , /key=/Data/Primitive/Integer
+                                                    , /right=/Data/Map/Node
+                                                        [ /K=∀/Data/Algebra/Ord
+                                                        , /V=∀/Data/Maybe
+                                                        ]
+                                                        ( /value=∀/Data/Maybe
+                                                        , /key=∀/Data/Algebra/Ord
+                                                        , /right=∀/Data/Map/BinTree
+                                                            [ /K=∀/Data/Algebra/Ord
+                                                            , /V=∀/Data/Maybe
+                                                            ]
+                                                        , /left=∀/Data/Map/BinTree
+                                                            [ /K=∀/Data/Algebra/Ord
+                                                            , /V=∀/Data/Maybe
+                                                            ]
+                                                        )
+                                                    , /left=∀/Data/Map/BinTree
+                                                        [ /K=∀/Data/Algebra/Ord
+                                                        , /V=∀/Data/Maybe
+                                                        ]
+                                                    )
+                                                )
+                                            , []
+                                            )
+                                        )
+                                    ) = /
+                                    ( EAppArg
+                                        { eaaArg = Value /memorymap -> /Data/Memory/MemoryMap
+                                            ( /next=/Data/Primitive/Integer
+                                            , /map=UnionType
+                                                ( Just
+                                                    ( PredClass /Data/Map
+                                                        [ /K=/Data/Primitive/Integer
+                                                        , /V=/Data/Maybe/Nothing
+                                                        ]
+                                                    , fromList []
+                                                    , []
+                                                    )
+                                                ,
+                                                    ( /Data/Map/Node
+                                                        [ /K=/Data/Primitive/Integer
+                                                        , /V=∀/Data/Maybe
+                                                        ]
+                                                        ( /value=∀/Data/Maybe
+                                                        , /key=/Data/Primitive/Integer
+                                                        , /right=∀/Data/Map/BinTree
+                                                            [ /K=∀/Data/Algebra/Ord
+                                                            , /V=∀/Data/Maybe
+                                                            ]
+                                                        , /left=/Data/Map/Node
+                                                            [ /K=∀/Data/Algebra/Ord
+                                                            , /V=∀/Data/Maybe
+                                                            ]
+                                                            ( /value=∀/Data/Maybe
+                                                            , /key=∀/Data/Algebra/Ord
+                                                            , /right=∀/Data/Map/BinTree
+                                                                [ /K=∀/Data/Algebra/Ord
+                                                                , /V=∀/Data/Maybe
+                                                                ]
+                                                            , /left=∀/Data/Map/BinTree
+                                                                [ /K=∀/Data/Algebra/Ord
+                                                                , /V=∀/Data/Maybe
+                                                                ]
+                                                            )
+                                                        ) + /Data/Map/Node
+                                                        [ /K=/Data/Primitive/Integer
+                                                        , /V=∀/Data/Maybe
+                                                        ]
+                                                        ( /value=∀/Data/Maybe
+                                                        , /key=/Data/Primitive/Integer
+                                                        , /right=/Data/Map/Node
+                                                            [ /K=∀/Data/Algebra/Ord
+                                                            , /V=∀/Data/Maybe
+                                                            ]
+                                                            ( /value=∀/Data/Maybe
+                                                            , /key=∀/Data/Algebra/Ord
+                                                            , /right=∀/Data/Map/BinTree
+                                                                [ /K=∀/Data/Algebra/Ord
+                                                                , /V=∀/Data/Maybe
+                                                                ]
+                                                            , /left=∀/Data/Map/BinTree
+                                                                [ /K=∀/Data/Algebra/Ord
+                                                                , /V=∀/Data/Maybe
+                                                                ]
+                                                            )
+                                                        , /left=∀/Data/Map/BinTree
+                                                            [ /K=∀/Data/Algebra/Ord
+                                                            , /V=∀/Data/Maybe
+                                                            ]
+                                                        )
+                                                    )
+                                                , []
+                                                )
+                                            ) = /Data/Memory/MemoryMap
+                                            ( EAppArg
+                                                { eaaArg = Value /map -> UnionType
+                                                    ( Just
+                                                        ( PredClass /Data/Map
+                                                            [ /K=/Data/Primitive/Integer
+                                                            , /V=/Data/Maybe/Nothing
+                                                            ]
+                                                        , fromList []
+                                                        , []
+                                                        )
+                                                    ,
+                                                        ( /Data/Map/Node
+                                                            [ /K=/Data/Primitive/Integer
+                                                            , /V=∀/Data/Maybe
+                                                            ]
+                                                            ( /value=∀/Data/Maybe
+                                                            , /key=/Data/Primitive/Integer
+                                                            , /right=/Data/Map/Node
+                                                                [ /K=∀/Data/Algebra/Ord
+                                                                , /V=$_/V
+                                                                ]
+                                                                ( /value=$/V
+                                                                , /key=∀/Data/Algebra/Ord
+                                                                , /right=∀/Data/Map/BinTree
+                                                                    [ /K=∀/Data/Algebra/Ord
+                                                                    , /V=$_/V
+                                                                    ]
+                                                                , /left=∀/Data/Map/BinTree
+                                                                    [ /K=∀/Data/Algebra/Ord
+                                                                    , /V=$_/V
+                                                                    ]
+                                                                )
+                                                            , /left=∀/Data/Map/BinTree
+                                                                [ /K=∀/Data/Algebra/Ord
+                                                                , /V=∀/Data/Maybe
+                                                                ]
+                                                            ) + /Data/Map/Node
+                                                            [ /K=/Data/Primitive/Integer
+                                                            , /V=∀/Data/Maybe
+                                                            ]
+                                                            ( /value=∀/Data/Maybe
+                                                            , /key=/Data/Primitive/Integer
+                                                            , /right=∀/Data/Map/BinTree
+                                                                [ /K=∀/Data/Algebra/Ord
+                                                                , /V=∀/Data/Maybe
+                                                                ]
+                                                            , /left=/Data/Map/Node
+                                                                [ /K=∀/Data/Algebra/Ord
+                                                                , /V=$_/V
+                                                                ]
+                                                                ( /value=$/V
+                                                                , /key=∀/Data/Algebra/Ord
+                                                                , /right=∀/Data/Map/BinTree
+                                                                    [ /K=∀/Data/Algebra/Ord
+                                                                    , /V=$_/V
+                                                                    ]
+                                                                , /left=∀/Data/Map/BinTree
+                                                                    [ /K=∀/Data/Algebra/Ord
+                                                                    , /V=$_/V
+                                                                    ]
+                                                                )
+                                                            )
+                                                        )
+                                                    , []
+                                                    ) =
+                                                    ( /Data/Map/insert
+                                                        ( EAppArg
+                                                            { eaaArg = Value /m -> TVArg /map = ( Value /map ↦ TVArg /map ) }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /key -> TVArg /next = ( Value /next ↦ TVArg /next ) }
+                                                        )
+                                                        ( EAppArg { eaaArg = Value /value -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing } ) ↦ UnionType
+                                                        ( Just
+                                                            ( PredClass /Data/Map
+                                                                [ /K=/Data/Primitive/Integer
+                                                                , /V=/Data/Maybe/Nothing
+                                                                ]
+                                                            , fromList []
+                                                            , []
+                                                            )
+                                                        ,
+                                                            ( /Data/Map/Node
+                                                                [ /K=/Data/Primitive/Integer
+                                                                , /V=∀/Data/Maybe
+                                                                ]
+                                                                ( /value=∀/Data/Maybe
+                                                                , /key=/Data/Primitive/Integer
+                                                                , /right=/Data/Map/Node
+                                                                    [ /K=∀/Data/Algebra/Ord
+                                                                    , /V=$_/V
+                                                                    ]
+                                                                    ( /value=$/V
+                                                                    , /key=∀/Data/Algebra/Ord
+                                                                    , /right=∀/Data/Map/BinTree
+                                                                        [ /K=∀/Data/Algebra/Ord
+                                                                        , /V=$_/V
+                                                                        ]
+                                                                    , /left=∀/Data/Map/BinTree
+                                                                        [ /K=∀/Data/Algebra/Ord
+                                                                        , /V=$_/V
+                                                                        ]
+                                                                    )
+                                                                , /left=∀/Data/Map/BinTree
+                                                                    [ /K=∀/Data/Algebra/Ord
+                                                                    , /V=∀/Data/Maybe
+                                                                    ]
+                                                                ) + /Data/Map/Node
+                                                                [ /K=/Data/Primitive/Integer
+                                                                , /V=∀/Data/Maybe
+                                                                ]
+                                                                ( /value=∀/Data/Maybe
+                                                                , /key=/Data/Primitive/Integer
+                                                                , /right=∀/Data/Map/BinTree
+                                                                    [ /K=∀/Data/Algebra/Ord
+                                                                    , /V=∀/Data/Maybe
+                                                                    ]
+                                                                , /left=/Data/Map/Node
+                                                                    [ /K=∀/Data/Algebra/Ord
+                                                                    , /V=$_/V
+                                                                    ]
+                                                                    ( /value=$/V
+                                                                    , /key=∀/Data/Algebra/Ord
+                                                                    , /right=∀/Data/Map/BinTree
+                                                                        [ /K=∀/Data/Algebra/Ord
+                                                                        , /V=$_/V
+                                                                        ]
+                                                                    , /left=∀/Data/Map/BinTree
+                                                                        [ /K=∀/Data/Algebra/Ord
+                                                                        , /V=$_/V
+                                                                        ]
+                                                                    )
+                                                                )
+                                                            )
+                                                        , []
+                                                        )
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /next -> /Data/Primitive/Integer =
+                                                    ( /operator+
+                                                        ( EAppArg
+                                                            { eaaArg = Value /l -> TVArg /next = ( Value /next ↦ TVArg /next ) }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                                        ) ↦ /Data/Primitive/Integer
+                                                    )
+                                                }
+                                            )
+                                        }
+                                    )
+                                }
+                            )
+                        , /ContextIn
+                            ( EAppArg
+                                { eaaArg = Value /value -> /Data/Memory/read
+                                    ( /target=/Data/Memory/Var
+                                        ( /type=∀/Catln/Type
+                                        , /id=/Data/Primitive/Integer
+                                        )
+                                    ) = /Data/Memory/read
+                                    ( EAppArg
+                                        { eaaArg = Value /target -> /Data/Memory/Var
+                                            ( /type=∀/Catln/Type
+                                            , /id=/Data/Primitive/Integer
+                                            ) = /Data/Memory/Var
+                                            ( EAppArg { eaaArg = Value /id -> /Data/Primitive/Integer } )
+                                            ( EAppArg { eaaArg = Value /type -> ∀/Catln/Type } )
+                                        }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /ctx ->
+                                    ( /memorymap=/Data/Memory/MemoryMap
+                                        ( /next=/Data/Primitive/Integer
+                                        , /map=∀/Data/Map
+                                            [ /K=/Data/Primitive/Integer
+                                            , /V=∀/Data/Maybe
+                                            ]
+                                        )
+                                    ).. = /
+                                    ( EAppArg
+                                        { eaaArg = Value /memorymap -> /Data/Memory/MemoryMap
+                                            ( /next=/Data/Primitive/Integer
+                                            , /map=∀/Data/Map
+                                                [ /K=/Data/Primitive/Integer
+                                                , /V=∀/Data/Maybe
+                                                ]
+                                            ) = /Data/Memory/MemoryMap
+                                            ( EAppArg
+                                                { eaaArg = Value /map -> ∀/Data/Map
+                                                    [ /K=/Data/Primitive/Integer
+                                                    , /V=∀/Data/Maybe
+                                                    ]
+                                                }
+                                            )
+                                            ( EAppArg { eaaArg = Value /next -> /Data/Primitive/Integer } )@Value /memorymap
+                                        }
+                                    )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )
+                                }
+                            ) -> /Context
+                            ( /value=∀/Data/Maybe
+                            , /ctx=
+                                ( /memorymap=/Data/Memory/MemoryMap
+                                    ( /next=/Data/Primitive/Integer
+                                    , /map=∀/Data/Map
+                                        [ /K=/Data/Primitive/Integer
+                                        , /V=∀/Data/Maybe
+                                        ]
+                                    )
+                                )
+                            ) = /Context
+                            ( EAppArg
+                                { eaaArg = Value /value -> ∀/Data/Maybe =
+                                    ( /Data/Memory/storedValue
+                                        ( EAppArg
+                                            { eaaArg = Value /found -> UnionType
+                                                ( Just
+                                                    ( PredClass /Data/Maybe[ /T=∀/Data/Maybe ]
+                                                    , fromList []
+                                                    , []
+                                                    )
+                                                , /Data/Maybe/Some[ /T=∀/Data/Maybe ]( /value=∀/Data/Maybe )
+                                                , []
+                                                ) =
+                                                ( /Data/Map/get
+                                                    ( EAppArg
+                                                        { eaaArg = Value /m -> TVArg /map = ( Value /map ↦ TVArg /map ) }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /key -> TVArg /id = ( Value /id ↦ TVArg /id ) }
+                                                    ) ↦ UnionType
+                                                    ( Just
+                                                        ( PredClass /Data/Maybe[ /T=∀/Data/Maybe ]
+                                                        , fromList []
+                                                        , []
+                                                        )
+                                                    , /Data/Maybe/Some[ /T=∀/Data/Maybe ]( /value=∀/Data/Maybe )
+                                                    , []
+                                                    )
+                                                )
+                                            }
+                                        ) ↦ ∀/Data/Maybe
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /ctx ->
+                                    ( /memorymap=/Data/Memory/MemoryMap
+                                        ( /next=/Data/Primitive/Integer
+                                        , /map=∀/Data/Map
+                                            [ /K=/Data/Primitive/Integer
+                                            , /V=∀/Data/Maybe
+                                            ]
+                                        )
+                                    ) = /
+                                    ( EAppArg
+                                        { eaaArg = Value /memorymap -> /Data/Memory/MemoryMap
+                                            ( /next=/Data/Primitive/Integer
+                                            , /map=∀/Data/Map
+                                                [ /K=/Data/Primitive/Integer
+                                                , /V=∀/Data/Maybe
+                                                ]
+                                            ) = /Data/Memory/MemoryMap
+                                            ( EAppArg
+                                                { eaaArg = Value /map -> TVArg /map = ( Value /map ↦ TVArg /map ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /next -> TVArg /next = ( Value /next ↦ TVArg /next ) }
+                                            )
+                                        }
+                                    )
+                                }
+                            )
+                        , /ContextIn
+                            ( EAppArg
+                                { eaaArg = Value /value -> /operator:=
+                                    ( /r=TopType
+                                    , /l=/Data/Memory/Var..
+                                    ) = /operator:=
+                                    ( EAppArg { eaaArg = Value /l -> /Data/Memory/Var.. } )
+                                    ( EAppArg { eaaArg = Value /r -> $/V } )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /ctx ->
+                                    ( /memorymap=/Data/Memory/MemoryMap
+                                        ( /next=/Data/Primitive/Integer
+                                        , /map=∀/Data/Map
+                                            [ /K=/Data/Primitive/Integer
+                                            , /V=∀/Data/Maybe
+                                            ]
+                                        )
+                                    ).. = /
+                                    ( EAppArg
+                                        { eaaArg = Value /memorymap -> /Data/Memory/MemoryMap
+                                            ( /next=/Data/Primitive/Integer
+                                            , /map=∀/Data/Map
+                                                [ /K=/Data/Primitive/Integer
+                                                , /V=∀/Data/Maybe
+                                                ]
+                                            ) = /Data/Memory/MemoryMap
+                                            ( EAppArg
+                                                { eaaArg = Value /map -> ∀/Data/Map
+                                                    [ /K=/Data/Primitive/Integer
+                                                    , /V=∀/Data/Maybe
+                                                    ]
+                                                }
+                                            )
+                                            ( EAppArg { eaaArg = Value /next -> /Data/Primitive/Integer } )@Value /memorymap
+                                        }
+                                    )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )
+                                }
+                            ) -> /Context
+                            ( /value=
+                                ( /Data/Result/Fail
+                                    ( /err=/Data/Memory/MemoryErr/NotOf
+                                        ( /found=TopType
+                                        , /target=/Data/Memory/Var..
+                                        )
+                                    ) + /Data/Result/Ok
+                                    ( /value=() )
+                                )
+                            , /ctx=
+                                ( /memorymap=/Data/Memory/MemoryMap
+                                    ( /next=/Data/Primitive/Integer
+                                    , /map=∀/Data/Map
+                                        [ /K=/Data/Primitive/Integer
+                                        , /V=∀/Data/Maybe
+                                        ]
+                                    )
+                                )
+                            ) = /Context
+                            ( EAppArg
+                                { eaaArg = Value /value ->
+                                    ( /Data/Result/Fail
+                                        ( /err=/Data/Memory/MemoryErr/NotOf
+                                            ( /found=TopType
+                                            , /target=/Data/Memory/Var..
+                                            )
+                                        ) + /Data/Result/Ok
+                                        ( /value=() )
+                                    ) =
+                                    ( /Data/Memory/assigned
+                                        ( EAppArg
+                                            { eaaArg = Value /target -> TVArg /l = ( Value /l ↦ TVArg /l ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /found -> TVArg /r = ( Value /r ↦ TVArg /r ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /ok -> ∀/Data/Primitive/Boolean =
+                                                ( /Catln/isOf
+                                                    ( EAppArg
+                                                        { eaaArg = Value /value -> TVArg /r = ( Value /r ↦ TVArg /r ) }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /type -> ∀/Catln/Type =
+                                                            ( /Data/Memory/varType
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /target -> TVArg /l = ( Value /l ↦ TVArg /l ) }
+                                                                ) ↦ ∀/Catln/Type
+                                                            )
+                                                        }
+                                                    ) ↦ ∀/Data/Primitive/Boolean
+                                                )
+                                            }
+                                        ) ↦
+                                        ( /Data/Result/Fail
+                                            ( /err=/Data/Memory/MemoryErr/NotOf
+                                                ( /found=TopType
+                                                , /target=/Data/Memory/Var..
+                                                )
+                                            ) + /Data/Result/Ok
+                                            ( /value=() )
+                                        )
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /ctx ->
+                                    ( /memorymap=/Data/Memory/MemoryMap
+                                        ( /next=/Data/Primitive/Integer
+                                        , /map=∀/Data/Map
+                                            [ /K=/Data/Primitive/Integer
+                                            , /V=∀/Data/Maybe
+                                            ]
+                                        )
+                                    ) = /
+                                    ( EAppArg
+                                        { eaaArg = Value /memorymap -> /Data/Memory/MemoryMap
+                                            ( /next=/Data/Primitive/Integer
+                                            , /map=∀/Data/Map
+                                                [ /K=/Data/Primitive/Integer
+                                                , /V=∀/Data/Maybe
+                                                ]
+                                            ) = /Data/Memory/MemoryMap
+                                            ( EAppArg
+                                                { eaaArg = Value /map -> ∀/Data/Map
+                                                    [ /K=/Data/Primitive/Integer
+                                                    , /V=∀/Data/Maybe
+                                                    ] =
+                                                    ( /Data/Memory/assignedMap
+                                                        ( EAppArg
+                                                            { eaaArg = Value /map -> TVArg /map = ( Value /map ↦ TVArg /map ) }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /target -> TVArg /l = ( Value /l ↦ TVArg /l ) }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /found -> TVArg /r = ( Value /r ↦ TVArg /r ) }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /ok -> ∀/Data/Primitive/Boolean =
+                                                                ( /Catln/isOf
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /value -> TVArg /r = ( Value /r ↦ TVArg /r ) }
+                                                                    )
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /type -> ∀/Catln/Type =
+                                                                            ( /Data/Memory/varType
+                                                                                ( EAppArg
+                                                                                    { eaaArg = Value /target -> TVArg /l = ( Value /l ↦ TVArg /l ) }
+                                                                                ) ↦ ∀/Catln/Type
+                                                                            )
+                                                                        }
+                                                                    ) ↦ ∀/Data/Primitive/Boolean
+                                                                )
+                                                            }
+                                                        ) ↦ ∀/Data/Map
+                                                        [ /K=/Data/Primitive/Integer
+                                                        , /V=∀/Data/Maybe
+                                                        ]
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /next -> TVArg /next = ( Value /next ↦ TVArg /next ) }
+                                            )
+                                        }
+                                    )
+                                }
+                            )
+                        , /ContextIn
+                            ( EAppArg
+                                { eaaArg = Value /value -> /Data/Memory/free( /target=/Data/Memory/Var.. ) = /Data/Memory/free
+                                    ( EAppArg { eaaArg = Value /target -> /Data/Memory/Var.. } )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /ctx ->
+                                    ( /memorymap=/Data/Memory/MemoryMap
+                                        ( /next=/Data/Primitive/Integer
+                                        , /map=∀/Data/Map
+                                            [ /K=/Data/Primitive/Integer
+                                            , /V=∀/Data/Maybe
+                                            ]
+                                        )
+                                    ).. = /
+                                    ( EAppArg
+                                        { eaaArg = Value /memorymap -> /Data/Memory/MemoryMap
+                                            ( /next=/Data/Primitive/Integer
+                                            , /map=∀/Data/Map
+                                                [ /K=/Data/Primitive/Integer
+                                                , /V=∀/Data/Maybe
+                                                ]
+                                            ) = /Data/Memory/MemoryMap
+                                            ( EAppArg
+                                                { eaaArg = Value /map -> ∀/Data/Map
+                                                    [ /K=/Data/Primitive/Integer
+                                                    , /V=∀/Data/Maybe
+                                                    ]
+                                                }
+                                            )
+                                            ( EAppArg { eaaArg = Value /next -> /Data/Primitive/Integer } )@Value /memorymap
+                                        }
+                                    )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )
+                                }
+                            ) -> /Context
+                            ( /value=()
+                            , /ctx=
+                                ( /memorymap=/Data/Memory/MemoryMap
+                                    ( /next=/Data/Primitive/Integer
+                                    , /map=∀/Data/Map
+                                        [ /K=/Data/Primitive/Integer
+                                        , /V=∀/Data/Maybe
+                                        ]
+                                    )
+                                )
+                            ) = /Context
+                            ( EAppArg
+                                { eaaArg = Value /value -> () = Value / }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /ctx ->
+                                    ( /memorymap=/Data/Memory/MemoryMap
+                                        ( /next=/Data/Primitive/Integer
+                                        , /map=∀/Data/Map
+                                            [ /K=/Data/Primitive/Integer
+                                            , /V=∀/Data/Maybe
+                                            ]
+                                        )
+                                    ) = /
+                                    ( EAppArg
+                                        { eaaArg = Value /memorymap -> /Data/Memory/MemoryMap
+                                            ( /next=/Data/Primitive/Integer
+                                            , /map=∀/Data/Map
+                                                [ /K=/Data/Primitive/Integer
+                                                , /V=∀/Data/Maybe
+                                                ]
+                                            ) = /Data/Memory/MemoryMap
+                                            ( EAppArg
+                                                { eaaArg = Value /map -> ∀/Data/Map
+                                                    [ /K=/Data/Primitive/Integer
+                                                    , /V=∀/Data/Maybe
+                                                    ] =
+                                                    ( /Data/Map/remove
+                                                        ( EAppArg
+                                                            { eaaArg = Value /m -> TVArg /map = ( Value /map ↦ TVArg /map ) }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /key -> /Data/Primitive/Integer =
+                                                                ( /Data/Memory/varId
+                                                                    ( EAppArg
+                                                                        { eaaArg = Value /target -> TVArg /target = ( Value /target ↦ TVArg /target ) }
+                                                                    ) ↦ /Data/Primitive/Integer
+                                                                )
+                                                            }
+                                                        ) ↦ ∀/Data/Map
+                                                        [ /K=/Data/Primitive/Integer
+                                                        , /V=∀/Data/Maybe
+                                                        ]
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /next -> TVArg /next = ( Value /next ↦ TVArg /next ) }
+                                            )
+                                        }
+                                    )
+                                }
+                            )
+                        , /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /Data/Memory/varCount = Value /Data/Memory/varCount } )
+                            ( EAppArg
+                                { eaaArg = Value /ctx ->
+                                    ( /memorymap=/Data/Memory/MemoryMap
+                                        ( /next=/Data/Primitive/Integer
+                                        , /map=∀/Data/Map
+                                            [ /K=/Data/Primitive/Integer
+                                            , /V=∀/Data/Maybe
+                                            ]
+                                        )
+                                    ).. = /
+                                    ( EAppArg
+                                        { eaaArg = Value /memorymap -> /Data/Memory/MemoryMap
+                                            ( /next=/Data/Primitive/Integer
+                                            , /map=∀/Data/Map
+                                                [ /K=/Data/Primitive/Integer
+                                                , /V=∀/Data/Maybe
+                                                ]
+                                            ) = /Data/Memory/MemoryMap
+                                            ( EAppArg
+                                                { eaaArg = Value /map -> ∀/Data/Map
+                                                    [ /K=/Data/Primitive/Integer
+                                                    , /V=∀/Data/Maybe
+                                                    ]
+                                                }
+                                            )
+                                            ( EAppArg { eaaArg = Value /next -> /Data/Primitive/Integer } )@Value /memorymap
+                                        }
+                                    )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )
+                                }
+                            ) -> /Context
+                            ( /value=/Data/Primitive/Integer
+                            , /ctx=
+                                ( /memorymap=/Data/Memory/MemoryMap
+                                    ( /next=/Data/Primitive/Integer
+                                    , /map=∀/Data/Map
+                                        [ /K=/Data/Primitive/Integer
+                                        , /V=∀/Data/Maybe
+                                        ]
+                                    )
+                                )
+                            ) = /Context
+                            ( EAppArg
+                                { eaaArg = Value /value -> /Data/Primitive/Integer =
+                                    ( /Data/Map/size
+                                        ( EAppArg
+                                            { eaaArg = Value /m -> TVArg /map = ( Value /map ↦ TVArg /map ) }
+                                        ) ↦ /Data/Primitive/Integer
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /ctx ->
+                                    ( /memorymap=/Data/Memory/MemoryMap
+                                        ( /next=/Data/Primitive/Integer
+                                        , /map=∀/Data/Map
+                                            [ /K=/Data/Primitive/Integer
+                                            , /V=∀/Data/Maybe
+                                            ]
+                                        )
+                                    ) = /
+                                    ( EAppArg
+                                        { eaaArg = Value /memorymap -> /Data/Memory/MemoryMap
+                                            ( /next=/Data/Primitive/Integer
+                                            , /map=∀/Data/Map
+                                                [ /K=/Data/Primitive/Integer
+                                                , /V=∀/Data/Maybe
+                                                ]
+                                            ) = /Data/Memory/MemoryMap
+                                            ( EAppArg
+                                                { eaaArg = Value /map -> TVArg /map = ( Value /map ↦ TVArg /map ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /next -> TVArg /next = ( Value /next ↦ TVArg /next ) }
+                                            )
+                                        }
+                                    )
+                                }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Memory/assigned"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Memory/assigned
+                            ( EAppArg { eaaArg = Value /target } )
+                            ( EAppArg { eaaArg = Value /found } )
+                            ( EAppArg { eaaArg = Value /ok -> /Data/Primitive/True = Value /Data/Primitive/True } ) -> /Data/Result/Ok
+                            ( /value=() ) = /Data/Result/Ok
+                            ( EAppArg
+                                { eaaArg = Value /value -> () = Value / }
+                            )
+                        , /Data/Memory/assigned
+                            ( EAppArg { eaaArg = Value /target -> /Data/Memory/Var.. } )
+                            ( EAppArg { eaaArg = Value /found } )
+                            ( EAppArg { eaaArg = Value /ok -> /Data/Primitive/False = Value /Data/Primitive/False } ) -> /Data/Result/Fail
+                            ( /err=/Data/Memory/MemoryErr/NotOf
+                                ( /found=TopType
+                                , /target=/Data/Memory/Var..
+                                )
+                            ) = /Data/Result/Fail
+                            ( EAppArg
+                                { eaaArg = Value /err -> /Data/Memory/MemoryErr/NotOf
+                                    ( /found=TopType
+                                    , /target=/Data/Memory/Var..
+                                    ) = /Data/Memory/MemoryErr/NotOf
+                                    ( EAppArg
+                                        { eaaArg = Value /target -> TVArg /target = ( Value /target ↦ TVArg /target ) }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /found -> TVArg /found = ( Value /found ↦ TVArg /found ) }
+                                    )
+                                }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Memory/MemoryErr/NotOf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Memory/MemoryErr/NotOf
+                            ( EAppArg { eaaArg = Value /target -> /Data/Memory/Var.. } )
+                            ( EAppArg { eaaArg = Value /found } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Memory/MemoryMap"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Memory/MemoryMap
+                            ( EAppArg
+                                { eaaArg = Value /map -> ∀/Data/Map
+                                    [ /K=/Data/Primitive/Integer
+                                    , /V=∀/Data/Maybe
+                                    ]
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /next -> /Data/Primitive/Integer } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Memory/varId"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Memory/varId
+                            ( EAppArg
+                                { eaaArg = Value /target -> /Data/Memory/Var
+                                    ( /type=∀/Catln/Type
+                                    , /id=/Data/Primitive/Integer
+                                    ) = /Data/Memory/Var
+                                    ( EAppArg { eaaArg = Value /id -> /Data/Primitive/Integer } )
+                                    ( EAppArg { eaaArg = Value /type -> ∀/Catln/Type } )
+                                }
+                            ) -> TVArg /id = ( Value /id ↦ TVArg /id )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/msg"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/msg
+                            ( EAppArg
+                                { eaaArg = Value /this -> /Data/Memory/MemoryErr/NotOf
+                                    ( /found=TopType
+                                    , /target=/Data/Memory/Var..
+                                    ) = /Data/Memory/MemoryErr/NotOf
+                                    ( EAppArg { eaaArg = Value /target -> /Data/Memory/Var.. } )
+                                    ( EAppArg { eaaArg = Value /found } )
+                                }
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "the value is not of the type the variable holds"
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Memory/Var"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Memory/Var
+                            ( EAppArg { eaaArg = Value /id -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /type -> ∀/Catln/Type } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Memory/assignedMap"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Memory/assignedMap
+                            ( EAppArg
+                                { eaaArg = Value /map -> ∀/Data/Map
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=TopType
+                                    ]
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /target -> /Data/Memory/Var
+                                    ( /type=∀/Catln/Type
+                                    , /id=/Data/Primitive/Integer
+                                    )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /found } )
+                            ( EAppArg { eaaArg = Value /ok -> /Data/Primitive/True = Value /Data/Primitive/True } ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Map
+                                    [ /K=/Data/Primitive/Integer
+                                    , /V=/Data/Maybe/Some( /value=TopType )
+                                    ]
+                                , fromList []
+                                , []
+                                )
+                            ,
+                                ( /Data/Map/insert.$5a3188
+                                    ( /nk=∀/Data/Algebra/Ord
+                                    , /value=/Data/Maybe/Some( /value=TopType )
+                                    , /key=/Data/Primitive/Integer
+                                    , /$5a3188-arg=( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                                    , /nv=TopType
+                                    , /right=∀/Data/Map/BinTree
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=$_/V
+                                        ]
+                                    , /left=∀/Data/Map/BinTree
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=$_/V
+                                        ]
+                                    ) + /Data/Map/Node
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=/Data/Maybe/Some( /value=TopType )
+                                    ]
+                                    ( /value=/Data/Maybe/Some( /value=TopType )
+                                    , /key=∀/Data/Algebra/Ord
+                                    , /right=∀/Data/Map/BinTree
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=/Data/Maybe/Some( /value=TopType )
+                                        ]
+                                    , /left=∀/Data/Map/BinTree
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=/Data/Maybe/Some( /value=TopType )
+                                        ]
+                                    ) + /Data/Map/Node
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=TopType
+                                    ]
+                                    ( /value=TopType
+                                    , /key=∀/Data/Algebra/Ord
+                                    , /right=∀/Data/Map/BinTree
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=$_/V
+                                        ]
+                                    , /left=/Data/Map/Node
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=TopType
+                                        ]
+                                        ( /value=TopType
+                                        , /key=∀/Data/Algebra/Ord
+                                        , /right=∀/Data/Map/BinTree
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=$_/V
+                                            ]
+                                        , /left=∀/Data/Map/BinTree
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=$_/V
+                                            ]
+                                        )
+                                    ) + /Data/Map/Node
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=TopType
+                                    ]
+                                    ( /value=TopType
+                                    , /key=∀/Data/Algebra/Ord
+                                    , /right=/Data/Map/Node
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=TopType
+                                        ]
+                                        ( /value=TopType
+                                        , /key=∀/Data/Algebra/Ord
+                                        , /right=∀/Data/Map/BinTree
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=$_/V
+                                            ]
+                                        , /left=∀/Data/Map/BinTree
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=$_/V
+                                            ]
+                                        )
+                                    , /left=∀/Data/Map/BinTree
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=$_/V
+                                        ]
+                                    ) + /Data/Map/insert
+                                    ( /value=/Data/Maybe/Some( /value=TopType )
+                                    , /m=∀/Data/Map
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=TopType
+                                        ]
+                                    , /key=/Data/Primitive/Integer
+                                    )
+                                )
+                            , []
+                            ) =
+                            ( /Data/Map/insert
+                                ( EAppArg
+                                    { eaaArg = Value /m -> TVArg /map = ( Value /map ↦ TVArg /map ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /key -> /Data/Primitive/Integer =
+                                        ( /Data/Memory/varId
+                                            ( EAppArg
+                                                { eaaArg = Value /target -> TVArg /target = ( Value /target ↦ TVArg /target ) }
+                                            ) ↦ /Data/Primitive/Integer
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /value -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some
+                                        ( EAppArg
+                                            { eaaArg = Value /value -> TVArg /found = ( Value /found ↦ TVArg /found ) }
+                                        )
+                                    }
+                                ) ↦ UnionType
+                                ( Just
+                                    ( PredClass /Data/Map
+                                        [ /K=/Data/Primitive/Integer
+                                        , /V=/Data/Maybe/Some( /value=TopType )
+                                        ]
+                                    , fromList []
+                                    , []
+                                    )
+                                ,
+                                    ( /Data/Map/insert.$5a3188
+                                        ( /nk=∀/Data/Algebra/Ord
+                                        , /value=/Data/Maybe/Some( /value=TopType )
+                                        , /key=/Data/Primitive/Integer
+                                        , /$5a3188-arg=( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                                        , /nv=TopType
+                                        , /right=∀/Data/Map/BinTree
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=$_/V
+                                            ]
+                                        , /left=∀/Data/Map/BinTree
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=$_/V
+                                            ]
+                                        ) + /Data/Map/Node
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=/Data/Maybe/Some( /value=TopType )
+                                        ]
+                                        ( /value=/Data/Maybe/Some( /value=TopType )
+                                        , /key=∀/Data/Algebra/Ord
+                                        , /right=∀/Data/Map/BinTree
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=$_/V
+                                            ]
+                                        , /left=∀/Data/Map/BinTree
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=$_/V
+                                            ]
+                                        ) + /Data/Map/Node
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=TopType
+                                        ]
+                                        ( /value=TopType
+                                        , /key=∀/Data/Algebra/Ord
+                                        , /right=∀/Data/Map/BinTree
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=$_/V
+                                            ]
+                                        , /left=/Data/Map/Node
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=TopType
+                                            ]
+                                            ( /value=TopType
+                                            , /key=∀/Data/Algebra/Ord
+                                            , /right=∀/Data/Map/BinTree
+                                                [ /K=∀/Data/Algebra/Ord
+                                                , /V=$_/V
+                                                ]
+                                            , /left=∀/Data/Map/BinTree
+                                                [ /K=∀/Data/Algebra/Ord
+                                                , /V=$_/V
+                                                ]
+                                            )
+                                        ) + /Data/Map/Node
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=TopType
+                                        ]
+                                        ( /value=TopType
+                                        , /key=∀/Data/Algebra/Ord
+                                        , /right=/Data/Map/Node
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=TopType
+                                            ]
+                                            ( /value=TopType
+                                            , /key=∀/Data/Algebra/Ord
+                                            , /right=∀/Data/Map/BinTree
+                                                [ /K=∀/Data/Algebra/Ord
+                                                , /V=$_/V
+                                                ]
+                                            , /left=∀/Data/Map/BinTree
+                                                [ /K=∀/Data/Algebra/Ord
+                                                , /V=$_/V
+                                                ]
+                                            )
+                                        , /left=∀/Data/Map/BinTree
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=$_/V
+                                            ]
+                                        )
+                                    )
+                                , []
+                                )
+                            )
+                        , /Data/Memory/assignedMap
+                            ( EAppArg { eaaArg = Value /map } )
+                            ( EAppArg { eaaArg = Value /target } )
+                            ( EAppArg { eaaArg = Value /found } )
+                            ( EAppArg { eaaArg = Value /ok -> /Data/Primitive/False = Value /Data/Primitive/False } ) -> TVArg /map = ( Value /map ↦ TVArg /map )
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Err
+            , cgcExtends = [ ∀/Data/Memory/MemoryErr ]
+            , cgcDoc = Nothing
+            }
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Memory
+            , cgcExtends =
+                [ /Data/Memory/MemoryMap
+                    ( /next=/Data/Primitive/Integer
+                    , /map=∀/Data/Map
+                        [ /K=/Data/Primitive/Integer
+                        , /V=∀/Data/Maybe
+                        ]
+                    )
+                ]
+            , cgcDoc = Just "[Memory] is a state put in a [Context] to enable memory-based programming. A function using
+              it names the state in its braces and answers with the state it leaves behind, so each
+              change is a new value of the state, and the binds of a body thread it from one statement to
+              the next."
+            }
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /Data/Memory/MemoryErr
+            , cgcExtends =
+                [ /Data/Memory/MemoryErr/NotOf
+                    ( /found=TopType
+                    , /target=/Data/Memory/Var..
+                    )
+                ]
+            , cgcDoc = Just "[MemoryErr] is why a value was not put in a [Var]: it is not of the [Var]'s type ([NotOf]),
+              and [found] is the value refused."
+            }
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "# Memory
+                  The [Memory] is designed to work as part of [Context].
+                  The fundamental idea of [Memory] is change.
+                  It can best be pictured by a visualization where you see the program state with a slider on the bottom.
+                  Moving the slider forwards moves time forwards and shows later values of the memory.
+                  Moving it backwards will show earlier values of the memory.
+                  If this isn't the way you would picture and understand the application, it is probably not a good fit for the task.
+                  It also enables imperative code.
+                  Imperative code is defined by the usage of [Memory].
+                  However, [Memory] is not a fundamental aspect and shouldn't be built-in.
+                  Instead, using it as a library helps to bridge it with other concepts, but still enables the same programming strategies as imperative languages."
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[Memory] is a state put in a [Context] to enable memory-based programming. A function using
+                  it names the state in its braces and answers with the state it leaves behind, so each
+                  change is a new value of the state, and the binds of a body thread it from one statement to
+                  the next."
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "TODO A function should name the [Memory] class in its braces (@{m -> Memory}@) and be given"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  whichever memory the context holds. A state is found by the name of the type it is written"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  with, so @{Memory}@ never finds a [MemoryMap]. Until a state can be found by its class, the"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  functions below name the [MemoryMap] they work on."
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "TODO [imperative] (@imperative{}(f{Memory} -> $R) -> $R@) adds a [MemoryMap] for the length of a"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  block when none is in the context and removes it afterwards. It needs a state added within a"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  scope and removed when it ends, and a function taking a context function as an argument, and"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  neither is supported yet."
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[MemoryErr] is why a value was not put in a [Var]: it is not of the [Var]'s type ([NotOf]),
+                  and [found] is the value refused."
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "## [MemoryMap]"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "[var] creates a new [Var] of a type, with no value yet. [read] is the value of a [Var]: [Some]"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  of what it holds, or [Nothing] when it holds nothing or has been freed. [:=] puts a value in"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  a [Var], replacing the one before, and answers [Ok], or fails with [NotOf] and leaves the"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  [Var] as it was when the value is not of its type. [free] removes a [Var], reclaiming its"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  place, and [varCount] is how many [Var]s the memory holds."
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "A body using memory binds each of these in turn (test/Integration/code/memory.ct). Binding a"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  result under the name [v] is to be avoided for now: a bind's continuation is called through a"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  lambda whose parameter is named [v], and the type checker reads that parameter as the [v] the"
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "  body bound."
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) =
+                    ( /msg
+                        ( EAppArg
+                            { eaaArg = Value /this -> /Data/Memory/MemoryErr/NotOf
+                                ( /found=/Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                , /target=/Data/Memory/Var
+                                    ( /type=∀/Catln/Type
+                                    , /id=/Data/Primitive/Integer
+                                    )
+                                ) = /Data/Memory/MemoryErr/NotOf
+                                ( EAppArg
+                                    { eaaArg = Value /target -> /Data/Memory/Var
+                                        ( /type=∀/Catln/Type
+                                        , /id=/Data/Primitive/Integer
+                                        ) = /Data/Memory/Var
+                                        ( EAppArg
+                                            { eaaArg = Value /id -> /Data/Primitive/Integer = 0 }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /type -> ∀/Catln/Type = TupleVal /Catln/Type/UnionType
+                                                ( /leafs = TupleVal /Data/List/Cons
+                                                    ( /head = TupleVal /Catln/Pair
+                                                        ( /first = "/Data/Primitive/Integer"
+                                                        , /second = TupleVal /Data/List/Cons
+                                                            ( /head = TupleVal /Catln/PartialArgsOption
+                                                                ( /argMode = TupleVal /Catln/PtArgMode
+                                                                    ( /argLb = TupleVal /Data/Primitive/True
+                                                                    , /argOpt = TupleVal /Data/List/Nil
+                                                                    , /argUb = TupleVal /Data/Primitive/True
+                                                                    )
+                                                                , /args = TupleVal /Data/List/Nil
+                                                                , /vars = TupleVal /Data/List/Nil
+                                                                , /preds = TupleVal /Catln/TypePredicates/PredsAnd( /preds = TupleVal /Data/List/Nil )
+                                                                )
+                                                            , /tail = TupleVal /Data/List/Nil
+                                                            )
+                                                        )
+                                                    , /tail = TupleVal /Data/List/Nil
+                                                    )
+                                                , /top = TupleVal /Data/Maybe/Nothing
+                                                , /consts = TupleVal /Data/List/Nil
+                                                )
+                                            }
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /found -> /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "a"
+                                    }
+                                )
+                            }
+                        ) ↦ /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result -> /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "the value is not of the type the variable holds"
+                }
+            )
+        ]
+    }

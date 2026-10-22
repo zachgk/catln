@@ -1,0 +1,1055 @@
+Prgm
+    { prgmObjMap = ObjectMap
+        { omItems = fromList
+            [
+                ( "/Data/Memory/varType"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Memory/varType
+                            ( Value /target -> /Data/Memory/Var
+                                ( /type=∀/Catln/Type
+                                , /id=/Data/Primitive/Integer
+                                ) = /Data/Memory/Var( Value /id -> /Data/Primitive/Integer )( Value /type -> ∀/Catln/Type )
+                            ) -> TVArg /type = Value /type
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Memory/storedValue"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Memory/storedValue
+                            ( Value /found -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some( Value /value@Value /stored ) ) -> TVArg /stored = Value /stored
+                        , /Data/Memory/storedValue( Value /found -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing ) -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing
+                        ]
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn
+                            ( Value /value -> /Data/Memory/var( /type=∀/Catln/Type ) = /Data/Memory/var( Value /type -> ∀/Catln/Type ) )
+                            ( Value /ctx ->
+                                ( /memorymap=/Data/Memory/MemoryMap
+                                    ( /next=/Data/Primitive/Integer
+                                    , /map=∀/Data/Map
+                                        [ /K=/Data/Primitive/Integer
+                                        , /V=∀/Data/Maybe
+                                        ]
+                                    )
+                                ).. = /
+                                ( Value /memorymap -> /Data/Memory/MemoryMap
+                                    ( /next=/Data/Primitive/Integer
+                                    , /map=∀/Data/Map
+                                        [ /K=/Data/Primitive/Integer
+                                        , /V=∀/Data/Maybe
+                                        ]
+                                    ) = /Data/Memory/MemoryMap
+                                    ( Value /map -> ∀/Data/Map
+                                        [ /K=/Data/Primitive/Integer
+                                        , /V=∀/Data/Maybe
+                                        ]
+                                    )( Value /next -> /Data/Primitive/Integer )@Value /memorymap
+                                )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=/Data/Memory/Var
+                                ( /type=∀/Catln/Type
+                                , /id=/Data/Primitive/Integer
+                                )
+                            , /ctx=
+                                ( /memorymap=/Data/Memory/MemoryMap
+                                    ( /next=/Data/Primitive/Integer
+                                    , /map=UnionType
+                                        ( Just
+                                            ( PredClass /Data/Map
+                                                [ /K=/Data/Primitive/Integer
+                                                , /V=/Data/Maybe/Nothing
+                                                ]
+                                            , fromList []
+                                            , []
+                                            )
+                                        ,
+                                            ( /Data/Map/Node
+                                                [ /K=/Data/Primitive/Integer
+                                                , /V=∀/Data/Maybe
+                                                ]
+                                                ( /value=∀/Data/Maybe
+                                                , /key=/Data/Primitive/Integer
+                                                , /right=∀/Data/Map/BinTree
+                                                    [ /K=∀/Data/Algebra/Ord
+                                                    , /V=∀/Data/Maybe
+                                                    ]
+                                                , /left=/Data/Map/Node
+                                                    [ /K=∀/Data/Algebra/Ord
+                                                    , /V=∀/Data/Maybe
+                                                    ]
+                                                    ( /value=∀/Data/Maybe
+                                                    , /key=∀/Data/Algebra/Ord
+                                                    , /right=∀/Data/Map/BinTree
+                                                        [ /K=∀/Data/Algebra/Ord
+                                                        , /V=∀/Data/Maybe
+                                                        ]
+                                                    , /left=∀/Data/Map/BinTree
+                                                        [ /K=∀/Data/Algebra/Ord
+                                                        , /V=∀/Data/Maybe
+                                                        ]
+                                                    )
+                                                ) + /Data/Map/Node
+                                                [ /K=/Data/Primitive/Integer
+                                                , /V=∀/Data/Maybe
+                                                ]
+                                                ( /value=∀/Data/Maybe
+                                                , /key=/Data/Primitive/Integer
+                                                , /right=/Data/Map/Node
+                                                    [ /K=∀/Data/Algebra/Ord
+                                                    , /V=∀/Data/Maybe
+                                                    ]
+                                                    ( /value=∀/Data/Maybe
+                                                    , /key=∀/Data/Algebra/Ord
+                                                    , /right=∀/Data/Map/BinTree
+                                                        [ /K=∀/Data/Algebra/Ord
+                                                        , /V=∀/Data/Maybe
+                                                        ]
+                                                    , /left=∀/Data/Map/BinTree
+                                                        [ /K=∀/Data/Algebra/Ord
+                                                        , /V=∀/Data/Maybe
+                                                        ]
+                                                    )
+                                                , /left=∀/Data/Map/BinTree
+                                                    [ /K=∀/Data/Algebra/Ord
+                                                    , /V=∀/Data/Maybe
+                                                    ]
+                                                )
+                                            )
+                                        , []
+                                        )
+                                    )
+                                )
+                            ) = /Context
+                            ( Value /value -> /Data/Memory/Var
+                                ( /type=∀/Catln/Type
+                                , /id=/Data/Primitive/Integer
+                                ) = /Data/Memory/Var( Value /id -> TVArg /next = Value /next )( Value /type -> TVArg /type = Value /type )
+                            )
+                            ( Value /ctx ->
+                                ( /memorymap=/Data/Memory/MemoryMap
+                                    ( /next=/Data/Primitive/Integer
+                                    , /map=UnionType
+                                        ( Just
+                                            ( PredClass /Data/Map
+                                                [ /K=/Data/Primitive/Integer
+                                                , /V=/Data/Maybe/Nothing
+                                                ]
+                                            , fromList []
+                                            , []
+                                            )
+                                        ,
+                                            ( /Data/Map/Node
+                                                [ /K=/Data/Primitive/Integer
+                                                , /V=∀/Data/Maybe
+                                                ]
+                                                ( /value=∀/Data/Maybe
+                                                , /key=/Data/Primitive/Integer
+                                                , /right=∀/Data/Map/BinTree
+                                                    [ /K=∀/Data/Algebra/Ord
+                                                    , /V=∀/Data/Maybe
+                                                    ]
+                                                , /left=/Data/Map/Node
+                                                    [ /K=∀/Data/Algebra/Ord
+                                                    , /V=∀/Data/Maybe
+                                                    ]
+                                                    ( /value=∀/Data/Maybe
+                                                    , /key=∀/Data/Algebra/Ord
+                                                    , /right=∀/Data/Map/BinTree
+                                                        [ /K=∀/Data/Algebra/Ord
+                                                        , /V=∀/Data/Maybe
+                                                        ]
+                                                    , /left=∀/Data/Map/BinTree
+                                                        [ /K=∀/Data/Algebra/Ord
+                                                        , /V=∀/Data/Maybe
+                                                        ]
+                                                    )
+                                                ) + /Data/Map/Node
+                                                [ /K=/Data/Primitive/Integer
+                                                , /V=∀/Data/Maybe
+                                                ]
+                                                ( /value=∀/Data/Maybe
+                                                , /key=/Data/Primitive/Integer
+                                                , /right=/Data/Map/Node
+                                                    [ /K=∀/Data/Algebra/Ord
+                                                    , /V=∀/Data/Maybe
+                                                    ]
+                                                    ( /value=∀/Data/Maybe
+                                                    , /key=∀/Data/Algebra/Ord
+                                                    , /right=∀/Data/Map/BinTree
+                                                        [ /K=∀/Data/Algebra/Ord
+                                                        , /V=∀/Data/Maybe
+                                                        ]
+                                                    , /left=∀/Data/Map/BinTree
+                                                        [ /K=∀/Data/Algebra/Ord
+                                                        , /V=∀/Data/Maybe
+                                                        ]
+                                                    )
+                                                , /left=∀/Data/Map/BinTree
+                                                    [ /K=∀/Data/Algebra/Ord
+                                                    , /V=∀/Data/Maybe
+                                                    ]
+                                                )
+                                            )
+                                        , []
+                                        )
+                                    )
+                                ) = /
+                                ( Value /memorymap -> /Data/Memory/MemoryMap
+                                    ( /next=/Data/Primitive/Integer
+                                    , /map=UnionType
+                                        ( Just
+                                            ( PredClass /Data/Map
+                                                [ /K=/Data/Primitive/Integer
+                                                , /V=/Data/Maybe/Nothing
+                                                ]
+                                            , fromList []
+                                            , []
+                                            )
+                                        ,
+                                            ( /Data/Map/Node
+                                                [ /K=/Data/Primitive/Integer
+                                                , /V=∀/Data/Maybe
+                                                ]
+                                                ( /value=∀/Data/Maybe
+                                                , /key=/Data/Primitive/Integer
+                                                , /right=∀/Data/Map/BinTree
+                                                    [ /K=∀/Data/Algebra/Ord
+                                                    , /V=∀/Data/Maybe
+                                                    ]
+                                                , /left=/Data/Map/Node
+                                                    [ /K=∀/Data/Algebra/Ord
+                                                    , /V=∀/Data/Maybe
+                                                    ]
+                                                    ( /value=∀/Data/Maybe
+                                                    , /key=∀/Data/Algebra/Ord
+                                                    , /right=∀/Data/Map/BinTree
+                                                        [ /K=∀/Data/Algebra/Ord
+                                                        , /V=∀/Data/Maybe
+                                                        ]
+                                                    , /left=∀/Data/Map/BinTree
+                                                        [ /K=∀/Data/Algebra/Ord
+                                                        , /V=∀/Data/Maybe
+                                                        ]
+                                                    )
+                                                ) + /Data/Map/Node
+                                                [ /K=/Data/Primitive/Integer
+                                                , /V=∀/Data/Maybe
+                                                ]
+                                                ( /value=∀/Data/Maybe
+                                                , /key=/Data/Primitive/Integer
+                                                , /right=/Data/Map/Node
+                                                    [ /K=∀/Data/Algebra/Ord
+                                                    , /V=∀/Data/Maybe
+                                                    ]
+                                                    ( /value=∀/Data/Maybe
+                                                    , /key=∀/Data/Algebra/Ord
+                                                    , /right=∀/Data/Map/BinTree
+                                                        [ /K=∀/Data/Algebra/Ord
+                                                        , /V=∀/Data/Maybe
+                                                        ]
+                                                    , /left=∀/Data/Map/BinTree
+                                                        [ /K=∀/Data/Algebra/Ord
+                                                        , /V=∀/Data/Maybe
+                                                        ]
+                                                    )
+                                                , /left=∀/Data/Map/BinTree
+                                                    [ /K=∀/Data/Algebra/Ord
+                                                    , /V=∀/Data/Maybe
+                                                    ]
+                                                )
+                                            )
+                                        , []
+                                        )
+                                    ) = /Data/Memory/MemoryMap
+                                    ( Value /map -> UnionType
+                                        ( Just
+                                            ( PredClass /Data/Map
+                                                [ /K=/Data/Primitive/Integer
+                                                , /V=/Data/Maybe/Nothing
+                                                ]
+                                            , fromList []
+                                            , []
+                                            )
+                                        ,
+                                            ( /Data/Map/Node
+                                                [ /K=/Data/Primitive/Integer
+                                                , /V=∀/Data/Maybe
+                                                ]
+                                                ( /value=∀/Data/Maybe
+                                                , /key=/Data/Primitive/Integer
+                                                , /right=/Data/Map/Node
+                                                    [ /K=∀/Data/Algebra/Ord
+                                                    , /V=$_/V
+                                                    ]
+                                                    ( /value=$/V
+                                                    , /key=∀/Data/Algebra/Ord
+                                                    , /right=∀/Data/Map/BinTree
+                                                        [ /K=∀/Data/Algebra/Ord
+                                                        , /V=$_/V
+                                                        ]
+                                                    , /left=∀/Data/Map/BinTree
+                                                        [ /K=∀/Data/Algebra/Ord
+                                                        , /V=$_/V
+                                                        ]
+                                                    )
+                                                , /left=∀/Data/Map/BinTree
+                                                    [ /K=∀/Data/Algebra/Ord
+                                                    , /V=∀/Data/Maybe
+                                                    ]
+                                                ) + /Data/Map/Node
+                                                [ /K=/Data/Primitive/Integer
+                                                , /V=∀/Data/Maybe
+                                                ]
+                                                ( /value=∀/Data/Maybe
+                                                , /key=/Data/Primitive/Integer
+                                                , /right=∀/Data/Map/BinTree
+                                                    [ /K=∀/Data/Algebra/Ord
+                                                    , /V=∀/Data/Maybe
+                                                    ]
+                                                , /left=/Data/Map/Node
+                                                    [ /K=∀/Data/Algebra/Ord
+                                                    , /V=$_/V
+                                                    ]
+                                                    ( /value=$/V
+                                                    , /key=∀/Data/Algebra/Ord
+                                                    , /right=∀/Data/Map/BinTree
+                                                        [ /K=∀/Data/Algebra/Ord
+                                                        , /V=$_/V
+                                                        ]
+                                                    , /left=∀/Data/Map/BinTree
+                                                        [ /K=∀/Data/Algebra/Ord
+                                                        , /V=$_/V
+                                                        ]
+                                                    )
+                                                )
+                                            )
+                                        , []
+                                        ) = /Data/Map/insert( Value /m -> TVArg /map = Value /map )( Value /key -> TVArg /next = Value /next )( Value /value -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing )
+                                    )
+                                    ( Value /next -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /next = Value /next )
+                                        ( Value /r -> /Data/Primitive/Integer = CInt
+                                            { ciValue = 1 }
+                                        )
+                                    )
+                                )
+                            )
+                        , /ContextIn
+                            ( Value /value -> /Data/Memory/read
+                                ( /target=/Data/Memory/Var
+                                    ( /type=∀/Catln/Type
+                                    , /id=/Data/Primitive/Integer
+                                    )
+                                ) = /Data/Memory/read
+                                ( Value /target -> /Data/Memory/Var
+                                    ( /type=∀/Catln/Type
+                                    , /id=/Data/Primitive/Integer
+                                    ) = /Data/Memory/Var( Value /id -> /Data/Primitive/Integer )( Value /type -> ∀/Catln/Type )
+                                )
+                            )
+                            ( Value /ctx ->
+                                ( /memorymap=/Data/Memory/MemoryMap
+                                    ( /next=/Data/Primitive/Integer
+                                    , /map=∀/Data/Map
+                                        [ /K=/Data/Primitive/Integer
+                                        , /V=∀/Data/Maybe
+                                        ]
+                                    )
+                                ).. = /
+                                ( Value /memorymap -> /Data/Memory/MemoryMap
+                                    ( /next=/Data/Primitive/Integer
+                                    , /map=∀/Data/Map
+                                        [ /K=/Data/Primitive/Integer
+                                        , /V=∀/Data/Maybe
+                                        ]
+                                    ) = /Data/Memory/MemoryMap
+                                    ( Value /map -> ∀/Data/Map
+                                        [ /K=/Data/Primitive/Integer
+                                        , /V=∀/Data/Maybe
+                                        ]
+                                    )( Value /next -> /Data/Primitive/Integer )@Value /memorymap
+                                )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=∀/Data/Maybe
+                            , /ctx=
+                                ( /memorymap=/Data/Memory/MemoryMap
+                                    ( /next=/Data/Primitive/Integer
+                                    , /map=∀/Data/Map
+                                        [ /K=/Data/Primitive/Integer
+                                        , /V=∀/Data/Maybe
+                                        ]
+                                    )
+                                )
+                            ) = /Context
+                            ( Value /value -> ∀/Data/Maybe = /Data/Memory/storedValue
+                                ( Value /found -> UnionType
+                                    ( Just
+                                        ( PredClass /Data/Maybe[ /T=∀/Data/Maybe ]
+                                        , fromList []
+                                        , []
+                                        )
+                                    , /Data/Maybe/Some[ /T=∀/Data/Maybe ]( /value=∀/Data/Maybe )
+                                    , []
+                                    ) = /Data/Map/get( Value /m -> TVArg /map = Value /map )( Value /key -> TVArg /id = Value /id )
+                                )
+                            )
+                            ( Value /ctx ->
+                                ( /memorymap=/Data/Memory/MemoryMap
+                                    ( /next=/Data/Primitive/Integer
+                                    , /map=∀/Data/Map
+                                        [ /K=/Data/Primitive/Integer
+                                        , /V=∀/Data/Maybe
+                                        ]
+                                    )
+                                ) = /
+                                ( Value /memorymap -> /Data/Memory/MemoryMap
+                                    ( /next=/Data/Primitive/Integer
+                                    , /map=∀/Data/Map
+                                        [ /K=/Data/Primitive/Integer
+                                        , /V=∀/Data/Maybe
+                                        ]
+                                    ) = /Data/Memory/MemoryMap( Value /map -> TVArg /map = Value /map )( Value /next -> TVArg /next = Value /next )
+                                )
+                            )
+                        , /ContextIn
+                            ( Value /value -> /operator:=
+                                ( /r=TopType
+                                , /l=/Data/Memory/Var..
+                                ) = /operator:=( Value /l -> /Data/Memory/Var.. )( Value /r -> $/V )
+                            )
+                            ( Value /ctx ->
+                                ( /memorymap=/Data/Memory/MemoryMap
+                                    ( /next=/Data/Primitive/Integer
+                                    , /map=∀/Data/Map
+                                        [ /K=/Data/Primitive/Integer
+                                        , /V=∀/Data/Maybe
+                                        ]
+                                    )
+                                ).. = /
+                                ( Value /memorymap -> /Data/Memory/MemoryMap
+                                    ( /next=/Data/Primitive/Integer
+                                    , /map=∀/Data/Map
+                                        [ /K=/Data/Primitive/Integer
+                                        , /V=∀/Data/Maybe
+                                        ]
+                                    ) = /Data/Memory/MemoryMap
+                                    ( Value /map -> ∀/Data/Map
+                                        [ /K=/Data/Primitive/Integer
+                                        , /V=∀/Data/Maybe
+                                        ]
+                                    )( Value /next -> /Data/Primitive/Integer )@Value /memorymap
+                                )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=
+                                ( /Data/Result/Fail
+                                    ( /err=/Data/Memory/MemoryErr/NotOf
+                                        ( /found=TopType
+                                        , /target=/Data/Memory/Var..
+                                        )
+                                    ) + /Data/Result/Ok
+                                    ( /value=() )
+                                )
+                            , /ctx=
+                                ( /memorymap=/Data/Memory/MemoryMap
+                                    ( /next=/Data/Primitive/Integer
+                                    , /map=∀/Data/Map
+                                        [ /K=/Data/Primitive/Integer
+                                        , /V=∀/Data/Maybe
+                                        ]
+                                    )
+                                )
+                            ) = /Context
+                            ( Value /value ->
+                                ( /Data/Result/Fail
+                                    ( /err=/Data/Memory/MemoryErr/NotOf
+                                        ( /found=TopType
+                                        , /target=/Data/Memory/Var..
+                                        )
+                                    ) + /Data/Result/Ok
+                                    ( /value=() )
+                                ) = /Data/Memory/assigned( Value /target -> TVArg /l = Value /l )( Value /found -> TVArg /r = Value /r )
+                                ( Value /ok -> ∀/Data/Primitive/Boolean = /Catln/isOf( Value /value -> TVArg /r = Value /r )
+                                    ( Value /type -> ∀/Catln/Type = /Data/Memory/varType( Value /target -> TVArg /l = Value /l ) )
+                                )
+                            )
+                            ( Value /ctx ->
+                                ( /memorymap=/Data/Memory/MemoryMap
+                                    ( /next=/Data/Primitive/Integer
+                                    , /map=∀/Data/Map
+                                        [ /K=/Data/Primitive/Integer
+                                        , /V=∀/Data/Maybe
+                                        ]
+                                    )
+                                ) = /
+                                ( Value /memorymap -> /Data/Memory/MemoryMap
+                                    ( /next=/Data/Primitive/Integer
+                                    , /map=∀/Data/Map
+                                        [ /K=/Data/Primitive/Integer
+                                        , /V=∀/Data/Maybe
+                                        ]
+                                    ) = /Data/Memory/MemoryMap
+                                    ( Value /map -> ∀/Data/Map
+                                        [ /K=/Data/Primitive/Integer
+                                        , /V=∀/Data/Maybe
+                                        ] = /Data/Memory/assignedMap( Value /map -> TVArg /map = Value /map )( Value /target -> TVArg /l = Value /l )( Value /found -> TVArg /r = Value /r )
+                                        ( Value /ok -> ∀/Data/Primitive/Boolean = /Catln/isOf( Value /value -> TVArg /r = Value /r )
+                                            ( Value /type -> ∀/Catln/Type = /Data/Memory/varType( Value /target -> TVArg /l = Value /l ) )
+                                        )
+                                    )( Value /next -> TVArg /next = Value /next )
+                                )
+                            )
+                        , /ContextIn
+                            ( Value /value -> /Data/Memory/free( /target=/Data/Memory/Var.. ) = /Data/Memory/free( Value /target -> /Data/Memory/Var.. ) )
+                            ( Value /ctx ->
+                                ( /memorymap=/Data/Memory/MemoryMap
+                                    ( /next=/Data/Primitive/Integer
+                                    , /map=∀/Data/Map
+                                        [ /K=/Data/Primitive/Integer
+                                        , /V=∀/Data/Maybe
+                                        ]
+                                    )
+                                ).. = /
+                                ( Value /memorymap -> /Data/Memory/MemoryMap
+                                    ( /next=/Data/Primitive/Integer
+                                    , /map=∀/Data/Map
+                                        [ /K=/Data/Primitive/Integer
+                                        , /V=∀/Data/Maybe
+                                        ]
+                                    ) = /Data/Memory/MemoryMap
+                                    ( Value /map -> ∀/Data/Map
+                                        [ /K=/Data/Primitive/Integer
+                                        , /V=∀/Data/Maybe
+                                        ]
+                                    )( Value /next -> /Data/Primitive/Integer )@Value /memorymap
+                                )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=()
+                            , /ctx=
+                                ( /memorymap=/Data/Memory/MemoryMap
+                                    ( /next=/Data/Primitive/Integer
+                                    , /map=∀/Data/Map
+                                        [ /K=/Data/Primitive/Integer
+                                        , /V=∀/Data/Maybe
+                                        ]
+                                    )
+                                )
+                            ) = /Context
+                            ( Value /value -> () = Value / )
+                            ( Value /ctx ->
+                                ( /memorymap=/Data/Memory/MemoryMap
+                                    ( /next=/Data/Primitive/Integer
+                                    , /map=∀/Data/Map
+                                        [ /K=/Data/Primitive/Integer
+                                        , /V=∀/Data/Maybe
+                                        ]
+                                    )
+                                ) = /
+                                ( Value /memorymap -> /Data/Memory/MemoryMap
+                                    ( /next=/Data/Primitive/Integer
+                                    , /map=∀/Data/Map
+                                        [ /K=/Data/Primitive/Integer
+                                        , /V=∀/Data/Maybe
+                                        ]
+                                    ) = /Data/Memory/MemoryMap
+                                    ( Value /map -> ∀/Data/Map
+                                        [ /K=/Data/Primitive/Integer
+                                        , /V=∀/Data/Maybe
+                                        ] = /Data/Map/remove( Value /m -> TVArg /map = Value /map )
+                                        ( Value /key -> /Data/Primitive/Integer = /Data/Memory/varId( Value /target -> TVArg /target = Value /target ) )
+                                    )( Value /next -> TVArg /next = Value /next )
+                                )
+                            )
+                        , /ContextIn( Value /value -> /Data/Memory/varCount = Value /Data/Memory/varCount )
+                            ( Value /ctx ->
+                                ( /memorymap=/Data/Memory/MemoryMap
+                                    ( /next=/Data/Primitive/Integer
+                                    , /map=∀/Data/Map
+                                        [ /K=/Data/Primitive/Integer
+                                        , /V=∀/Data/Maybe
+                                        ]
+                                    )
+                                ).. = /
+                                ( Value /memorymap -> /Data/Memory/MemoryMap
+                                    ( /next=/Data/Primitive/Integer
+                                    , /map=∀/Data/Map
+                                        [ /K=/Data/Primitive/Integer
+                                        , /V=∀/Data/Maybe
+                                        ]
+                                    ) = /Data/Memory/MemoryMap
+                                    ( Value /map -> ∀/Data/Map
+                                        [ /K=/Data/Primitive/Integer
+                                        , /V=∀/Data/Maybe
+                                        ]
+                                    )( Value /next -> /Data/Primitive/Integer )@Value /memorymap
+                                )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=/Data/Primitive/Integer
+                            , /ctx=
+                                ( /memorymap=/Data/Memory/MemoryMap
+                                    ( /next=/Data/Primitive/Integer
+                                    , /map=∀/Data/Map
+                                        [ /K=/Data/Primitive/Integer
+                                        , /V=∀/Data/Maybe
+                                        ]
+                                    )
+                                )
+                            ) = /Context
+                            ( Value /value -> /Data/Primitive/Integer = /Data/Map/size( Value /m -> TVArg /map = Value /map ) )
+                            ( Value /ctx ->
+                                ( /memorymap=/Data/Memory/MemoryMap
+                                    ( /next=/Data/Primitive/Integer
+                                    , /map=∀/Data/Map
+                                        [ /K=/Data/Primitive/Integer
+                                        , /V=∀/Data/Maybe
+                                        ]
+                                    )
+                                ) = /
+                                ( Value /memorymap -> /Data/Memory/MemoryMap
+                                    ( /next=/Data/Primitive/Integer
+                                    , /map=∀/Data/Map
+                                        [ /K=/Data/Primitive/Integer
+                                        , /V=∀/Data/Maybe
+                                        ]
+                                    ) = /Data/Memory/MemoryMap( Value /map -> TVArg /map = Value /map )( Value /next -> TVArg /next = Value /next )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Memory/assigned"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Memory/assigned( Value /target )( Value /found )( Value /ok -> /Data/Primitive/True = Value /Data/Primitive/True ) -> /Data/Result/Ok
+                            ( /value=() ) = /Data/Result/Ok
+                            ( Value /value -> () = Value / )
+                        , /Data/Memory/assigned( Value /target -> /Data/Memory/Var.. )( Value /found )( Value /ok -> /Data/Primitive/False = Value /Data/Primitive/False ) -> /Data/Result/Fail
+                            ( /err=/Data/Memory/MemoryErr/NotOf
+                                ( /found=TopType
+                                , /target=/Data/Memory/Var..
+                                )
+                            ) = /Data/Result/Fail
+                            ( Value /err -> /Data/Memory/MemoryErr/NotOf
+                                ( /found=TopType
+                                , /target=/Data/Memory/Var..
+                                ) = /Data/Memory/MemoryErr/NotOf( Value /target -> TVArg /target = Value /target )( Value /found -> TVArg /found = Value /found )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Memory/MemoryErr/NotOf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Memory/MemoryErr/NotOf( Value /target -> /Data/Memory/Var.. )( Value /found ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Memory/MemoryMap"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Memory/MemoryMap
+                            ( Value /map -> ∀/Data/Map
+                                [ /K=/Data/Primitive/Integer
+                                , /V=∀/Data/Maybe
+                                ]
+                            )( Value /next -> /Data/Primitive/Integer )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Memory/varId"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Memory/varId
+                            ( Value /target -> /Data/Memory/Var
+                                ( /type=∀/Catln/Type
+                                , /id=/Data/Primitive/Integer
+                                ) = /Data/Memory/Var( Value /id -> /Data/Primitive/Integer )( Value /type -> ∀/Catln/Type )
+                            ) -> TVArg /id = Value /id
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/msg"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/msg
+                            ( Value /this -> /Data/Memory/MemoryErr/NotOf
+                                ( /found=TopType
+                                , /target=/Data/Memory/Var..
+                                ) = /Data/Memory/MemoryErr/NotOf( Value /target -> /Data/Memory/Var.. )( Value /found )
+                            ) -> /Data/String/Text
+                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                            { csValue = "the value is not of the type the variable holds" }
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Memory/Var"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Memory/Var( Value /id -> /Data/Primitive/Integer )( Value /type -> ∀/Catln/Type ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Memory/assignedMap"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Memory/assignedMap
+                            ( Value /map -> ∀/Data/Map
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=TopType
+                                ]
+                            )
+                            ( Value /target -> /Data/Memory/Var
+                                ( /type=∀/Catln/Type
+                                , /id=/Data/Primitive/Integer
+                                )
+                            )( Value /found )( Value /ok -> /Data/Primitive/True = Value /Data/Primitive/True ) -> UnionType
+                            ( Just
+                                ( PredClass /Data/Map
+                                    [ /K=/Data/Primitive/Integer
+                                    , /V=/Data/Maybe/Some( /value=TopType )
+                                    ]
+                                , fromList []
+                                , []
+                                )
+                            ,
+                                ( /Data/Map/insert.$5a3188
+                                    ( /nk=∀/Data/Algebra/Ord
+                                    , /value=/Data/Maybe/Some( /value=TopType )
+                                    , /key=/Data/Primitive/Integer
+                                    , /$5a3188-arg=( /Data/Algebra/LessThan + /Data/Algebra/Equal + /Data/Algebra/GreaterThan )
+                                    , /nv=TopType
+                                    , /right=∀/Data/Map/BinTree
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=$_/V
+                                        ]
+                                    , /left=∀/Data/Map/BinTree
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=$_/V
+                                        ]
+                                    ) + /Data/Map/Node
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=/Data/Maybe/Some( /value=TopType )
+                                    ]
+                                    ( /value=/Data/Maybe/Some( /value=TopType )
+                                    , /key=∀/Data/Algebra/Ord
+                                    , /right=∀/Data/Map/BinTree
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=/Data/Maybe/Some( /value=TopType )
+                                        ]
+                                    , /left=∀/Data/Map/BinTree
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=/Data/Maybe/Some( /value=TopType )
+                                        ]
+                                    ) + /Data/Map/Node
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=TopType
+                                    ]
+                                    ( /value=TopType
+                                    , /key=∀/Data/Algebra/Ord
+                                    , /right=∀/Data/Map/BinTree
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=$_/V
+                                        ]
+                                    , /left=/Data/Map/Node
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=TopType
+                                        ]
+                                        ( /value=TopType
+                                        , /key=∀/Data/Algebra/Ord
+                                        , /right=∀/Data/Map/BinTree
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=$_/V
+                                            ]
+                                        , /left=∀/Data/Map/BinTree
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=$_/V
+                                            ]
+                                        )
+                                    ) + /Data/Map/Node
+                                    [ /K=∀/Data/Algebra/Ord
+                                    , /V=TopType
+                                    ]
+                                    ( /value=TopType
+                                    , /key=∀/Data/Algebra/Ord
+                                    , /right=/Data/Map/Node
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=TopType
+                                        ]
+                                        ( /value=TopType
+                                        , /key=∀/Data/Algebra/Ord
+                                        , /right=∀/Data/Map/BinTree
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=$_/V
+                                            ]
+                                        , /left=∀/Data/Map/BinTree
+                                            [ /K=∀/Data/Algebra/Ord
+                                            , /V=$_/V
+                                            ]
+                                        )
+                                    , /left=∀/Data/Map/BinTree
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=$_/V
+                                        ]
+                                    ) + /Data/Map/insert
+                                    ( /value=/Data/Maybe/Some( /value=TopType )
+                                    , /m=∀/Data/Map
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=TopType
+                                        ]
+                                    , /key=/Data/Primitive/Integer
+                                    )
+                                )
+                            , []
+                            ) = /Data/Map/insert( Value /m -> TVArg /map = Value /map )
+                            ( Value /key -> /Data/Primitive/Integer = /Data/Memory/varId( Value /target -> TVArg /target = Value /target ) )
+                            ( Value /value -> /Data/Maybe/Some( /value=TopType ) = /Data/Maybe/Some( Value /value -> TVArg /found = Value /found ) )
+                        , /Data/Memory/assignedMap( Value /map )( Value /target )( Value /found )( Value /ok -> /Data/Primitive/False = Value /Data/Primitive/False ) -> TVArg /map = Value /map
+                        ]
+                    }
+                )
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Err
+            , cgcExtends = [ ∀/Data/Memory/MemoryErr ]
+            , cgcDoc = Nothing
+            }
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Data/Memory
+            , cgcExtends =
+                [ /Data/Memory/MemoryMap
+                    ( /next=/Data/Primitive/Integer
+                    , /map=∀/Data/Map
+                        [ /K=/Data/Primitive/Integer
+                        , /V=∀/Data/Maybe
+                        ]
+                    )
+                ]
+            , cgcDoc = Just "[Memory] is a state put in a [Context] to enable memory-based programming. A function using
+              it names the state in its braces and answers with the state it leaves behind, so each
+              change is a new value of the state, and the binds of a body thread it from one statement to
+              the next."
+            }
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /Data/Memory/MemoryErr
+            , cgcExtends =
+                [ /Data/Memory/MemoryErr/NotOf
+                    ( /found=TopType
+                    , /target=/Data/Memory/Var..
+                    )
+                ]
+            , cgcDoc = Just "[MemoryErr] is why a value was not put in a [Var]: it is not of the [Var]'s type ([NotOf]),
+              and [found] is the value refused."
+            }
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "# Memory
+                The [Memory] is designed to work as part of [Context].
+                The fundamental idea of [Memory] is change.
+                It can best be pictured by a visualization where you see the program state with a slider on the bottom.
+                Moving the slider forwards moves time forwards and shows later values of the memory.
+                Moving it backwards will show earlier values of the memory.
+                If this isn't the way you would picture and understand the application, it is probably not a good fit for the task.
+                It also enables imperative code.
+                Imperative code is defined by the usage of [Memory].
+                However, [Memory] is not a fundamental aspect and shouldn't be built-in.
+                Instead, using it as a library helps to bridge it with other concepts, but still enables the same programming strategies as imperative languages." }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "[Memory] is a state put in a [Context] to enable memory-based programming. A function using
+                it names the state in its braces and answers with the state it leaves behind, so each
+                change is a new value of the state, and the binds of a body thread it from one statement to
+                the next." }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "TODO A function should name the [Memory] class in its braces (@{m -> Memory}@) and be given" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "  whichever memory the context holds. A state is found by the name of the type it is written" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "  with, so @{Memory}@ never finds a [MemoryMap]. Until a state can be found by its class, the" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "  functions below name the [MemoryMap] they work on." }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "TODO [imperative] (@imperative{}(f{Memory} -> $R) -> $R@) adds a [MemoryMap] for the length of a" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "  block when none is in the context and removes it afterwards. It needs a state added within a" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "  scope and removed when it ends, and a function taking a context function as an argument, and" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "  neither is supported yet." }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "[MemoryErr] is why a value was not put in a [Var]: it is not of the [Var]'s type ([NotOf]),
+                and [found] is the value refused." }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "## [MemoryMap]" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "[var] creates a new [Var] of a type, with no value yet. [read] is the value of a [Var]: [Some]" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "  of what it holds, or [Nothing] when it holds nothing or has been freed. [:=] puts a value in" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "  a [Var], replacing the one before, and answers [Ok], or fails with [NotOf] and leaves the" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "  [Var] as it was when the value is not of its type. [free] removes a [Var], reclaiming its" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "  place, and [varCount] is how many [Var]s the memory holds." }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "A body using memory binds each of these in turn (test/Integration/code/memory.ct). Binding a" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "  result under the name [v] is to be avoided for now: a bind's continuation is called through a" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "  lambda whose parameter is named [v], and the type checker reads that parameter as the [v] the" }
+            )
+        , /Catln/#md
+            ( Value /text -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "  body bound." }
+            )
+        , /Catln/#print
+            ( Value /p -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /msg
+                ( Value /this -> /Data/Memory/MemoryErr/NotOf
+                    ( /found=/Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                    , /target=/Data/Memory/Var
+                        ( /type=∀/Catln/Type
+                        , /id=/Data/Primitive/Integer
+                        )
+                    ) = /Data/Memory/MemoryErr/NotOf
+                    ( Value /target -> /Data/Memory/Var
+                        ( /type=∀/Catln/Type
+                        , /id=/Data/Primitive/Integer
+                        ) = /Data/Memory/Var
+                        ( Value /id -> /Data/Primitive/Integer = CInt
+                            { ciValue = 0 }
+                        )
+                        ( Value /type -> ∀/Catln/Type = /Catln/typeOf[ /T : /Data/Primitive/Integer ] )
+                    )
+                    ( Value /found -> /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                        { csValue = "a" }
+                    )
+                )
+            )
+            ( Value /result -> /Data/String/Text
+                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                { csValue = "the value is not of the type the variable holds" }
+            )
+        ]
+    }

@@ -1,0 +1,87 @@
+import "core"
+import "reflect"
+
+
+# # Memory
+  The [Memory] is designed to work as part of [Context].
+  The fundamental idea of [Memory] is change.
+  It can best be pictured by a visualization where you see the program state with a slider on the bottom.
+  Moving the slider forwards moves time forwards and shows later values of the memory.
+  Moving it backwards will show earlier values of the memory.
+  If this isn't the way you would picture and understand the application, it is probably not a good fit for the task.
+  It also enables imperative code.
+  Imperative code is defined by the usage of [Memory].
+  However, [Memory] is not a fundamental aspect and shouldn't be built-in.
+  Instead, using it as a library helps to bridge it with other concepts, but still enables the same programming strategies as imperative languages.
+module(Data)
+  class(Memory)
+    # [Memory] is a state put in a [Context] to enable memory-based programming. A function using
+      it names the state in its braces and answers with the state it leaves behind, so each
+      change is a new value of the state, and the binds of a body thread it from one statement to
+      the next.
+
+# TODO A function should name the [Memory] class in its braces (@{m -> Memory}@) and be given
+#   whichever memory the context holds. A state is found by the name of the type it is written
+#   with, so @{Memory}@ never finds a [MemoryMap]. Until a state can be found by its class, the
+#   functions below name the [MemoryMap] they work on.
+# TODO [imperative] (@imperative{}(f{Memory} -> $R) -> $R@) adds a [MemoryMap] for the length of a
+#   block when none is in the context and removes it afterwards. It needs a state added within a
+#   scope and removed when it ends, and a function taking a context function as an argument, and
+#   neither is supported yet.
+module(Data/Memory)
+  data(Var(id -> Integer, type -> /Catln/Type))
+    # A [Var] is a variable within a [Memory]. If you think of the [Memory] as a map, then the
+      [Var] is a key. It carries the [type] its values must be of, a [/Catln/Type] written as
+      [/Catln/typeOf] of the type, which is checked whenever a value is put in it. The type is a
+      value rather than a parameter of [Var], so what [read] gives back is of no one type the
+      program can see, and it is read by arms for each shape it may be.
+
+  class(MemoryErr, [MemoryErr/NotOf(target -> Var.., found)], isa= [/Data/Err])
+    # [MemoryErr] is why a value was not put in a [Var]: it is not of the [Var]'s type ([NotOf]),
+      and [found] is the value refused.
+
+  # ## [MemoryMap]
+  data(MemoryMap(map -> /Data/Map[$K -> Integer, $V -> /Data/Maybe], next -> Integer), isa= [/Data/Memory])
+    # The [MemoryMap] is one of the simplest [Memory]s, one that keeps each [Var]'s value in a
+      [Map] from its [id]: [Nothing] while the [Var] has no value, and [Some] of the value once
+      it has one. [next] is the [id] the next [Var] is given. While most [Memory] are built using
+      things like hardware or external services, this helps make sure that [Memory] can be used
+      wherever. An empty one is [MemoryMap(map= /Data/Map/Leaf, next= 0)], the state a body adds to
+      its context to start using memory.
+
+  # [var] creates a new [Var] of a type, with no value yet. [read] is the value of a [Var]: [Some]
+  #   of what it holds, or [Nothing] when it holds nothing or has been freed. [:=] puts a value in
+  #   a [Var], replacing the one before, and answers [Ok], or fails with [NotOf] and leaves the
+  #   [Var] as it was when the value is not of its type. [free] removes a [Var], reclaiming its
+  #   place, and [varCount] is how many [Var]s the memory holds.
+  # A body using memory binds each of these in turn (test/Integration/code/memory.ct). Binding a
+  #   result under the name [v] is to be avoided for now: a bind's continuation is called through a
+  #   lambda whose parameter is named [v], and the type checker reads that parameter as the [v] the
+  #   body bound.
+  var{MemoryMap(map, next)}(type -> /Catln/Type)= (Var(id= next, type= type)){MemoryMap(map= /Data/Map/insert(m= map, key= next, value= /Data/Maybe/Nothing), next= next + 1)}
+
+  read{MemoryMap(map, next)}(target= Var(id, type))= (storedValue(found= /Data/Map/get(m= map, key= id))){MemoryMap(map= map, next= next)}
+
+  storedValue(found= /Data/Maybe/Some(value@stored))= stored
+  storedValue(found= /Data/Maybe/Nothing)= /Data/Maybe/Nothing
+
+  (l :: Var.. := r :: $V){MemoryMap(map, next)}= (assigned(target= l, found= r, ok= /Catln/isOf(value= r, type= varType(target= l)))){MemoryMap(map= assignedMap(map= map, target= l, found= r, ok= /Catln/isOf(value= r, type= varType(target= l))), next= next)}
+
+  varType(target= Var(id, type))= type
+
+  varId(target= Var(id, type))= id
+
+  assigned(target, found, ok= True)= /Data/Result/Ok(value= ())
+  assigned(target, found, ok= False)= /Data/Result/Fail(err= MemoryErr/NotOf(target= target, found= found))
+
+  assignedMap(map, target, found, ok= True)= /Data/Map/insert(m= map, key= varId(target= target), value= /Data/Maybe/Some(value= found))
+  assignedMap(map, target, found, ok= False)= map
+
+  free{MemoryMap(map, next)}(target -> Var..)= (){MemoryMap(map= /Data/Map/remove(m= map, key= varId(target= target)), next= next)}
+
+  varCount{MemoryMap(map, next)}= (/Data/Map/size(m= map)){MemoryMap(map= map, next= next)}
+module(Data)
+  :/Data/Memory/MemoryErr/NotOf(target, found).msg= "the value is not of the type the variable holds"
+
+  > /Data/Memory/MemoryErr/NotOf(target= /Data/Memory/Var(id= 0, type= /Catln/typeOf[$T -> Integer]), found= "a").msg
+    >>> the value is not of the type the variable holds
