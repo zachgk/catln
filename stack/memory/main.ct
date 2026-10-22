@@ -54,10 +54,10 @@ module(Data/Memory)
   #   a [Var], replacing the one before, and answers [Ok], or fails with [NotOf] and leaves the
   #   [Var] as it was when the value is not of its type. [free] removes a [Var], reclaiming its
   #   place, and [varCount] is how many [Var]s the memory holds.
-  # A body using memory binds each of these in turn (test/Integration/code/memory.ct). Binding a
-  #   result under the name [v] is to be avoided for now: a bind's continuation is called through a
-  #   lambda whose parameter is named [v], and the type checker reads that parameter as the [v] the
-  #   body bound.
+  # A body using memory binds each of these in turn, as [Example/steps] does. Binding a result
+  #   under the name [v] is to be avoided for now: a bind's continuation is called through a lambda
+  #   whose parameter is named [v], and the type checker reads that parameter as the [v] the body
+  #   bound.
   var{MemoryMap(map, next)}(type -> /Catln/Type)= (Var(id= next, type= type)){MemoryMap(map= /Data/Map/insert(m= map, key= next, value= /Data/Maybe/Nothing), next= next + 1)}
 
   read{MemoryMap(map, next)}(target= Var(id, type))= (storedValue(found= /Data/Map/get(m= map, key= id))){MemoryMap(map= map, next= next)}
@@ -80,6 +80,44 @@ module(Data/Memory)
   free{MemoryMap(map, next)}(target -> Var..)= (){MemoryMap(map= /Data/Map/remove(m= map, key= varId(target= target)), next= next)}
 
   varCount{MemoryMap(map, next)}= (/Data/Map/size(m= map)){MemoryMap(map= map, next= next)}
+module(Data/Memory/Example)
+  # ## Using memory
+    [steps] creates a [Var] of [Integer], puts 7 in it, has a [String] refused by it, and reads it
+    back. It runs in a [MemoryMap] that starts empty, from code using no memory, the way a bind runs
+    what it binds in the body's states.
+    The chain is kept short: each bind over the memory's state costs minutes of type inference.
+  data(Run(got -> /Data/Maybe, taken -> /Data/Result, refused -> /Data/Result))
+    # A [Run] is what [steps] found: the value read back ([got]), and what [:=] answered for the
+      [Integer] ([taken]) and the [String] ([refused]).
+
+  steps{/Data/Memory/MemoryMap(map, next)} =
+    x<- /Data/Memory/var(type= /Catln/typeOf[$T -> Integer])
+
+    taken<- x := 7
+
+    refused<- x := "seven"
+
+    got<- /Data/Memory/read(target= x)
+
+    Run(got= got, taken= taken, refused= refused)
+
+  ran= /Data/Context/unwrap(this= /ContextIn(value= steps, ctx= (memorymap= /Data/Memory/MemoryMap(map= /Data/Map/Leaf, next= 0))))
+
+  readSeven(run= Run(got= /Data/Maybe/Some(value -> Integer), taken, refused))= value == 7
+  readSeven(run) else = False
+
+  tookInteger(run= Run(got, taken= /Data/Result/Ok(value), refused))= True
+  tookInteger(run) else = False
+
+  refusedString(run= Run(got, taken, refused= /Data/Result/Fail(err= /Data/Memory/MemoryErr/NotOf(target, found= "seven"))))= True
+  refusedString(run) else = False
+
+  exampleMemory =
+    #example
+    #assert(test= readSeven(run= ran))
+    #assert(test= tookInteger(run= ran))
+    #assert(test= refusedString(run= ran))
+    0
 module(Data)
   :/Data/Memory/MemoryErr/NotOf(target, found).msg= "the value is not of the type the variable holds"
 
