@@ -14,21 +14,22 @@ import "reflect"
   However, [Memory] is not a fundamental aspect and shouldn't be built-in.
   Instead, using it as a library helps to bridge it with other concepts, but still enables the same programming strategies as imperative languages.
 module(Data)
-  class(Memory)
-    # [Memory] is a state put in a [Context] to enable memory-based programming. A function using
-      it names the state in its braces and answers with the state it leaves behind, so each
-      change is a new value of the state, and the binds of a body thread it from one statement to
-      the next.
+  data(Memory(storage -> /Data/Memory/Storage))
+    # [Memory] is the state put in a [Context] to enable memory-based programming. It holds a
+      [/Data/Memory/Storage], which is what keeps the values, so a context holds its memory as
+      [Memory] whichever [Storage] that is. A function using it names the state in its braces and
+      answers with the state it leaves behind, so each change is a new value of the state, and the
+      binds of a body thread it from one statement to the next.
 
-# TODO A function should name the [Memory] class in its braces (@{m -> Memory}@) and be given
-#   whichever memory the context holds. A state is found by the name of the type it is written
-#   with, so @{Memory}@ never finds a [MemoryMap]. Until a state can be found by its class, the
-#   functions below name the [MemoryMap] they work on.
 # TODO [imperative] (@imperative{}(f{Memory} -> $R) -> $R@) adds a [MemoryMap] for the length of a
 #   block when none is in the context and removes it afterwards. It needs a state added within a
 #   scope and removed when it ends, and a function taking a context function as an argument, and
 #   neither is supported yet.
 module(Data/Memory)
+  class(Storage)
+    # A [Storage] is what a [Memory] keeps its values in. Each operation on a [Memory] has an arm
+      for each [Storage], written with the [Storage]'s pattern inside the [Memory] in its braces.
+
   data(Var(id -> Integer, type -> /Catln/Type))
     # A [Var] is a variable within a [Memory]. If you think of the [Memory] as a map, then the
       [Var] is a key. It carries the [type] its values must be of, a [/Catln/Type] written as
@@ -41,13 +42,14 @@ module(Data/Memory)
       and [found] is the value refused.
 
   # ## [MemoryMap]
-  data(MemoryMap(map -> /Data/Map[$K -> Integer, $V -> /Data/Maybe], next -> Integer), isa= [/Data/Memory])
-    # The [MemoryMap] is one of the simplest [Memory]s, one that keeps each [Var]'s value in a
+  data(MemoryMap(map -> /Data/Map[$K -> Integer, $V -> /Data/Maybe], next -> Integer), isa= [/Data/Memory/Storage])
+    # The [MemoryMap] is one of the simplest [Storage]s, one that keeps each [Var]'s value in a
       [Map] from its [id]: [Nothing] while the [Var] has no value, and [Some] of the value once
-      it has one. [next] is the [id] the next [Var] is given. While most [Memory] are built using
+      it has one. [next] is the [id] the next [Var] is given. While most [Storage]s are built using
       things like hardware or external services, this helps make sure that [Memory] can be used
-      wherever. An empty one is [MemoryMap(map= /Data/Map/Leaf, next= 0)], the state a body adds to
-      its context to start using memory.
+      wherever. An empty one is [MemoryMap(map= /Data/Map/Leaf, next= 0)], and a body adds
+      [/Data/Memory(storage= MemoryMap(map= /Data/Map/Leaf, next= 0))] to its context to start
+      using memory.
 
   # [var] creates a new [Var] of a type, with no value yet. [read] is the value of a [Var]: [Some]
   #   of what it holds, or [Nothing] when it holds nothing or has been freed. [:=] puts a value in
@@ -58,14 +60,14 @@ module(Data/Memory)
   #   under the name [v] is to be avoided for now: a bind's continuation is called through a lambda
   #   whose parameter is named [v], and the type checker reads that parameter as the [v] the body
   #   bound.
-  var{MemoryMap(map, next)}(type -> /Catln/Type)= (Var(id= next, type= type)){MemoryMap(map= /Data/Map/insert(m= map, key= next, value= /Data/Maybe/Nothing), next= next + 1)}
+  var{/Data/Memory(storage= MemoryMap(map, next))}(type -> /Catln/Type)= (Var(id= next, type= type)){/Data/Memory(storage= MemoryMap(map= /Data/Map/insert(m= map, key= next, value= /Data/Maybe/Nothing), next= next + 1))}
 
-  read{MemoryMap(map, next)}(target= Var(id, type))= (storedValue(found= /Data/Map/get(m= map, key= id))){MemoryMap(map= map, next= next)}
+  read{/Data/Memory(storage= MemoryMap(map, next))}(target= Var(id, type))= (storedValue(found= /Data/Map/get(m= map, key= id))){/Data/Memory(storage= MemoryMap(map= map, next= next))}
 
   storedValue(found= /Data/Maybe/Some(value@stored))= stored
   storedValue(found= /Data/Maybe/Nothing)= /Data/Maybe/Nothing
 
-  (l :: Var.. := r :: $V){MemoryMap(map, next)}= (assigned(target= l, found= r, ok= /Catln/isOf(value= r, type= varType(target= l)))){MemoryMap(map= assignedMap(map= map, target= l, found= r, ok= /Catln/isOf(value= r, type= varType(target= l))), next= next)}
+  (l :: Var.. := r :: $V){/Data/Memory(storage= MemoryMap(map, next))}= (assigned(target= l, found= r, ok= /Catln/isOf(value= r, type= varType(target= l)))){/Data/Memory(storage= MemoryMap(map= assignedMap(map= map, target= l, found= r, ok= /Catln/isOf(value= r, type= varType(target= l))), next= next))}
 
   varType(target= Var(id, type))= type
 
@@ -77,20 +79,22 @@ module(Data/Memory)
   assignedMap(map, target, found, ok= True)= /Data/Map/insert(m= map, key= varId(target= target), value= /Data/Maybe/Some(value= found))
   assignedMap(map, target, found, ok= False)= map
 
-  free{MemoryMap(map, next)}(target -> Var..)= (){MemoryMap(map= /Data/Map/remove(m= map, key= varId(target= target)), next= next)}
+  free{/Data/Memory(storage= MemoryMap(map, next))}(target -> Var..)= (){/Data/Memory(storage= MemoryMap(map= /Data/Map/remove(m= map, key= varId(target= target)), next= next))}
 
-  varCount{MemoryMap(map, next)}= (/Data/Map/size(m= map)){MemoryMap(map= map, next= next)}
+  varCount{/Data/Memory(storage= MemoryMap(map, next))}= (/Data/Map/size(m= map)){/Data/Memory(storage= MemoryMap(map= map, next= next))}
 module(Data/Memory/Example)
   # ## Using memory
     [steps] creates a [Var] of [Integer], puts 7 in it, has a [String] refused by it, and reads it
-    back. It runs in a [MemoryMap] that starts empty, from code using no memory, the way a bind runs
-    what it binds in the body's states.
+    back. It runs in a [Memory] whose [MemoryMap] starts empty, from code using no memory, the way
+    a bind runs what it binds in the body's states. [steps] names the [Memory] without saying which
+    [Storage] it holds (@{/Data/Memory(storage)}@), so it runs in whichever one it is given; a bare
+    @{/Data/Memory}@ would be the [Memory] with no [storage] at all, which is never made.
     The chain is kept short: each bind over the memory's state costs minutes of type inference.
   data(Run(got -> /Data/Maybe, taken -> /Data/Result, refused -> /Data/Result))
     # A [Run] is what [steps] found: the value read back ([got]), and what [:=] answered for the
       [Integer] ([taken]) and the [String] ([refused]).
 
-  steps{/Data/Memory/MemoryMap(map, next)} =
+  steps{/Data/Memory(storage)} =
     x<- /Data/Memory/var(type= /Catln/typeOf[$T -> Integer])
 
     taken<- x := 7
@@ -101,7 +105,7 @@ module(Data/Memory/Example)
 
     Run(got= got, taken= taken, refused= refused)
 
-  ran= /Data/Context/unwrap(this= /ContextIn(value= steps, ctx= (memorymap= /Data/Memory/MemoryMap(map= /Data/Map/Leaf, next= 0))))
+  ran= /Data/Context/unwrap(this= /ContextIn(value= steps, ctx= (memory= /Data/Memory(storage= /Data/Memory/MemoryMap(map= /Data/Map/Leaf, next= 0)))))
 
   readSeven(run= Run(got= /Data/Maybe/Some(value -> Integer), taken, refused))= value == 7
   readSeven(run) else = False
