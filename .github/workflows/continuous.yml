@@ -36,9 +36,11 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
           cache-dependency-path: webdocs/package-lock.json
+      # The lockfile is written by npm 12, which records it in a form older npm rejects in npm ci.
+      - run: npm install -g npm@12
       - run: cd webdocs && npm ci
       - run: cd webdocs && npm run test:run
       - run: cd webdocs && npm run test:integration:full
