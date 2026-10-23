@@ -752,31 +752,66 @@ boundedByObjs feTypeEnv con@(Constraint _ _ vaenv (BoundedByObjs i p@SType{stype
     -- decl-origin 'stypeReqDecl' — each against its own var-env and its own open-class
     -- components ('openClassPart'). Narrowing spelled requirement content against declared
     -- objects preserves the decl channel's origin purity: no actual-derived input enters.
+    --
+    -- The bound is the universe, the requirement's open-class part and the arguments together, and
+    -- for a union requirement it is not built as one type: a meet distributes over a union, so the
+    -- requirement is met with each part separately and the pieces joined. Built, the union re-canonicalized the whole
+    -- universe — every object, its fields compacted again, its same-named leafs compared pairwise —
+    -- once per execution of every such constraint, to be met with a requirement that reads only the
+    -- objects of its own names. A requirement leaf is met with the SLICE of each part holding its
+    -- name ('boundSliceFor'), as a value has one name and leafs of other names meet it in nothing;
+    -- the relaxation of recursive fields is per leaf, so relaxing a slice is relaxing its leafs.
     narrowChannel chanVaenv chanReq = chanReq'
       where
-        boundUbReq = relaxRecursiveSelfArgs feTypeEnv $ unionTypes feTypeEnv (unionTypes feTypeEnv objMapBoundUb (openClassPart feTypeEnv chanReq)) argsBoundUb
-        boundNames = case boundUbReq of
-          UnionType _ bLeafs _ -> map ptName $ splitUnionType bLeafs
-          _                    -> []
+        openPart = openClassPart feTypeEnv chanReq
+        boundParts = [objMapBoundUb, openPart, argsBoundUb]
+        -- The names the bound holds positive leafs under. Open-class parts are predicate tops and
+        -- hold none.
+        boundNames = S.fromList [ n | UnionType _ bLeafs _ <- boundParts, n <- H.keys bLeafs ]
         -- The universe bound is open-world on NAMES: a requirement leaf whose name matches no
         -- object in the universe (a compiler annotation whose compile.ct declaration is not in
         -- this import closure, or any name declared outside the current program) offers nothing
         -- to tighten against, so it passes through unchanged rather than emptying the requirement.
         -- A name the universe DOES know meets its name-matching objects as before.
-        nameKnown l = any (relativeNameMatches (ptName l)) boundNames
+        -- An absolute name is matched by no other name, so only a relative one is looked for by
+        -- its suffix.
+        nameKnown l
+          | S.member (ptName l) boundNames = True
+          | take 1 (nameStr (ptName l)) == "/" = False
+          | otherwise = any (relativeNameMatches (ptName l)) (S.toList boundNames)
+        meetParts t parts = unionAllTypesWithEnv feTypeEnv chanVaenv
+          [ snd $ intersectTypesWithVarEnv feTypeEnv chanVaenv t (relaxRecursiveSelfArgs feTypeEnv part) | part <- parts ]
         chanReq' | chanReq == PTopType = chanReq
                  | otherwise           = case chanReq of
                      UnionType mTop leafs consts ->
                        let (knownLeafs, unknownLeafs) = partition nameKnown (splitUnionType leafs)
-                           metKnown = [ snd $ intersectTypesWithVarEnv feTypeEnv chanVaenv (singletonType l) boundUbReq
+                           metKnown = [ meetParts (singletonType l) (map (boundSliceFor (ptName l)) boundParts)
                                       | l <- knownLeafs ]
-                           metTopConsts = snd $ intersectTypesWithVarEnv feTypeEnv chanVaenv (UnionType mTop H.empty consts) boundUbReq
+                           -- A top or a constant can hold a value of any name, so it meets the
+                           -- parts whole.
+                           metTopConsts = unionTypesWithEnv feTypeEnv chanVaenv metTop metConsts
+                           -- An open class's region is a part of the bound itself ('openClassPart'),
+                           -- so the requirement's top lies within the bound and meets it in all of
+                           -- itself — each member of the universe it holds is already inside it.
+                           metTop = case mTop of
+                             Nothing -> BottomType
+                             Just _
+                               | openPart /= BottomType && relaxRecursiveSelfArgs feTypeEnv openPart == openPart -> topPart
+                               | otherwise -> meetParts topPart boundParts
+                             where topPart = UnionType mTop H.empty []
+                           metConsts
+                             | null consts = BottomType
+                             | otherwise = meetParts (UnionType Nothing H.empty consts) boundParts
                        -- Recombined under the channel's environment, the one each piece was met
                        -- under: a piece can keep an in-scope link (@inverse(/t=$_T)@ with
                        -- @T ↦ ∀Group@), which read in an empty environment denotes ⊤ and would
                        -- widen the requirement.
                        in unionAllTypesWithEnv feTypeEnv chanVaenv (UnionType Nothing (joinUnionType unknownLeafs) [] : metTopConsts : metKnown)
-                     _ -> snd $ intersectTypesWithVarEnv feTypeEnv chanVaenv chanReq boundUbReq
+                     -- A requirement that is not a union (a variable occurrence) is met with
+                     -- the bound whole, as joining its meets with the parts would read the
+                     -- variable through its binding.
+                     _ -> snd $ intersectTypesWithVarEnv feTypeEnv chanVaenv chanReq $ relaxRecursiveSelfArgs feTypeEnv $
+                            unionTypes feTypeEnv (unionTypes feTypeEnv objMapBoundUb openPart) argsBoundUb
     reqChanVaenv = ambientEnv (fmap (stypeReq . snd) vaenv)
     declChanVaenv = ambientEnv (fmap (stypeReqDecl . snd) vaenv)
     pReq' = narrowChannel reqChanVaenv pReq
@@ -786,6 +821,20 @@ boundedByObjs feTypeEnv con@(Constraint _ _ vaenv (BoundedByObjs i p@SType{stype
     pReqDecl' | pReqDecl == pReq && declChanVaenv == reqChanVaenv = pReq'
               | otherwise = narrowChannel declChanVaenv pReqDecl
 boundedByObjs _ con = (False, con)
+
+-- | The part of a bound a value named @name@ can be within: its predicate top and constants whole,
+-- as they can hold a value of any name, and of its positive leafs only those named @name@ — exactly,
+-- or by a relative spelling of either name. A leaf of any other name meets such a value in nothing.
+boundSliceFor :: TypeName -> Type -> Type
+boundSliceFor name (UnionType mTop leafs consts) = UnionType mTop slice consts
+  where
+    -- An absolute name is matched by no other absolute name, so only the leafs kept under it and
+    -- under relative names are candidates, and the absolute ones are not scanned.
+    slice
+      | isAbs name = maybe id (H.insert name) (H.lookup name leafs) $ H.filterWithKey (\k _ -> not (isAbs k) && relativeNameMatches k name) leafs
+      | otherwise  = H.filterWithKey (\k _ -> k == name || relativeNameMatches name k || relativeNameMatches k name) leafs
+    isAbs n = take 1 (nameStr n) == "/"
+boundSliceFor _ t = t
 
 executeConstraint :: Int -> VConstraint -> StateT FEnv TypeCheckResult Bool
 executeConstraint cid con = do
@@ -808,7 +857,6 @@ executeConstraint cid con = do
             ArrowTo{}        -> feEnvStamp
             PropEq{}         -> feEnvStamp
             PropEqInferred{} -> feEnvStamp
-            BoundedByObjs{}  -> feEnvStamp
             _                -> 0
       let oaKey = case conDat con of
             ArrowTo{}       -> conOaResolveKey env con
@@ -820,13 +868,20 @@ executeConstraint cid con = do
       -- position, and comparing them was a third of a fragmented solve. The parts of the
       -- objects a compute actually reads are covered separately ('conOaResolveKey').
       let conMemoKey = con'{conOs=[], conCallArrs=[]}
+      -- A 'BoundedByObjs' reads no more of the reaches graph than the declarations under its own
+      -- objects' names, so it is keyed by those rather than by the env stamp: the bound of a
+      -- point whose objects, universe and arguments are as they were is as it was, whatever
+      -- arrows elsewhere in the fragment changed.
+      let declsKey = case conDat con of
+            BoundedByObjs{} -> conObjDeclsKey env con
+            _               -> []
       case IM.lookup cid conMemo of
-        Just (ConMemo memoStamp memoCon memoOa memoPrune)
-          | memoStamp == stampKey && memoCon == conMemoKey && memoOa == oaKey -> return memoPrune
+        Just (ConMemo memoStamp memoCon memoOa memoDecls memoPrune)
+          | memoStamp == stampKey && memoCon == conMemoKey && memoOa == oaKey && memoDecls == declsKey -> return memoPrune
         _ -> do
           let (prune, con'') = computeConstraint env con'
           modify $ saveConstraint con con' con''
-          modify $ \e -> e{feConMemo = IM.insert cid (ConMemo stampKey conMemoKey oaKey prune) (feConMemo e)}
+          modify $ \e -> e{feConMemo = IM.insert cid (ConMemo stampKey conMemoKey oaKey declsKey prune) (feConMemo e)}
           return prune
 
 -- |

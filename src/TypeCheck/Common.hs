@@ -128,8 +128,9 @@ data FEnv = FEnv { fePnts               :: IM.IntMap Scheme
 
 -- | A constraint's last-execution inputs and result: env stamp ('feEnvStamp'), the resolved
 -- constraint view ('showCon'+'stypeConstraint'), the resolved object-side arg entries an
--- 'ArrowTo' additionally reads ('mkReachesEnv'), and the returned prune decision.
-data ConMemo = ConMemo Int RConstraint [(Maybe SExpr, Maybe ShowMeta)] Bool
+-- 'ArrowTo' additionally reads ('mkReachesEnv'), the declarations a 'BoundedByObjs' reads of the
+-- reaches graph ('TypeCheck.TypeUtils.conObjDeclsKey'), and the returned prune decision.
+data ConMemo = ConMemo Int RConstraint [(Maybe SExpr, Maybe ShowMeta)] [(PartialKey, Type)] Bool
   deriving (Show)
 
 type UnionObj = (Pnt, Pnt) -- a union of all TypeObj for argument inference, union of all Object types for function limiting

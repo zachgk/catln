@@ -528,6 +528,19 @@ localArrowTypeEnv env (Constraint callArrs maybeConOa stypeVaenv _) = do
     then Nothing
     else Just (mkTypeEnv $ Prgm argObjMap (classGraphFromObjs argObjMap) [])
 
+-- | The part of the reaches graph 'localArrowTypeEnv' reads for a constraint: what the declarations
+-- kept under the name of each of its objects say their higher-order arguments return. This is all
+-- of the graph that a 'BoundedByObjs' sees, so with its resolved view and 'conOaResolveKey' it
+-- completes that constraint's skip-memo key ('feConMemo') — in place of the env stamp, which
+-- changes whenever ANY arrow of the fragment does. Read the same way 'localArrowTypeEnv' reads it.
+conObjDeclsKey :: FEnv -> VConstraint -> [(PartialKey, Type)]
+conObjDeclsKey FEnv{feReachesTypeEnv=TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap reachesTg)}} con =
+  [ (inExprSingleton aObj, getMetaType aM)
+  | oa <- conOs con
+  , decl <- maybe [] omiDecls (H.lookup (makeAbsoluteName (exprPath (oaObjExpr oa))) reachesTg)
+  , ObjArr{oaObj=Just aObj, oaArr=Just (_, aM)} <- exprAppliedArgs (oaObjExpr decl)
+  , not (null (exprAppliedArgs aObj)) ]
+
 -- | The resolved view of exactly the object-side arg entries 'mkReachesEnv' reads from a
 -- constraint's 'conOs' (each arg's in-expression and out meta, resolved through the current
 -- point schemes). These are the only per-execution inputs of an 'ArrowTo' beyond its own
