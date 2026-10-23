@@ -1,0 +1,51 @@
+import "core"
+
+
+# # Deep learning
+  The start of differentiable programming: functions of one input whose behaviour is set by named
+  parameters, written as members of one class so that code over every such function (evaluating
+  it, and later taking its gradient for backpropagation) is written once.
+module(Data/DL)
+  # ## Univariate functions
+  class(Univariate)
+    # A [Univariate] is a function of one [Float] input [x], shaped by [params]: a map from each
+      parameter's name to its [Float] value. Its members are functions, named alone: `constOne` is
+      the function before it is given anything. A model is one of them, and training one is a
+      search for the [params] that make it fit.
+
+  (_ -> Univariate)(x -> Float, params -> /Data/Map[$K -> String, $V -> Float]) -> Float
+    # Every [Univariate], given an [x] and its [params], gives a [Float]. Each member is held to
+      this, so a value known only as a [Univariate] can be applied as [evalAt] applies it.
+
+  every(constOne, isa= [/Data/DL/Univariate])
+
+  constOne(x -> Float, params -> /Data/Map[$K -> String, $V -> Float]) -> Float
+    # [constOne] is 1 wherever it is evaluated, whatever its [params]. It is the simplest member:
+      it reads neither its input nor a parameter.
+  constOne(x, params)= 1.0
+
+  > constOne(x= 3.0, params= /Data/Map/Leaf)
+    >>> 1.0
+  every(linear, isa= [/Data/DL/Univariate])
+
+  linear(x -> Float, params -> /Data/Map[$K -> String, $V -> Float]) -> Float
+    # [linear] is the line `m * x + b`, its slope [m] and offset [b] read from [params]. A parameter
+      that is not given reads as 0, so a line with no offset needs only an [m].
+  linear(x, params)= /Data/Map/getOr(m= params, key= "m", def= 0.0) * x + /Data/Map/getOr(m= params, key= "b", def= 0.0)
+
+  > linear(x= 3.0, params= /Data/Map/insert(m= /Data/Map/insert(m= /Data/Map/Leaf, key= "m", value= 2.0), key= "b", value= 1.0))
+    >>> 7.0
+  > linear(x= 3.0, params= /Data/Map/insert(m= /Data/Map/Leaf, key= "m", value= 2.0))
+    >>> 6.0
+  > linear(x= 3.0, params= /Data/Map/Leaf)
+    >>> 0.0
+  # ## Evaluating
+  evalAt(f -> Univariate, x -> Float, params -> /Data/Map[$K -> String, $V -> Float]) -> Float
+    # [evalAt] is [f] at [x] under [params], whichever [Univariate] [f] is: it gives [f] the two
+      arguments every member takes, and the member's own definition answers.
+  evalAt(f, x, params)= f(x= x, params= params)
+
+  > evalAt(f= linear, x= 3.0, params= /Data/Map/insert(m= /Data/Map/insert(m= /Data/Map/Leaf, key= "m", value= 2.0), key= "b", value= 1.0))
+    >>> 7.0
+  > evalAt(f= constOne, x= 3.0, params= /Data/Map/insert(m= /Data/Map/insert(m= /Data/Map/Leaf, key= "m", value= 2.0), key= "b", value= 1.0))
+    >>> 1.0
