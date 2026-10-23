@@ -26,36 +26,39 @@
 
 module Semantics.Types where
 
-import           Control.Applicative ((<|>))
-import           Control.Concurrent  (ThreadId, myThreadId)
-import           Control.Exception   (bracket_, evaluate)
-import           Control.Monad       (foldM, guard, when)
+import           Control.Applicative   ((<|>))
+import           Control.Concurrent    (ThreadId, myThreadId)
+import           Control.Exception     (bracket_, evaluate)
+import           Control.Monad         (foldM, guard, when)
 import           CtConstants
 import           Data.Aeson
-import           Data.Aeson.Types    (contramapToJSONKeyFunction)
-import           Data.Bifunctor      (Bifunctor (bimap, first))
+import           Data.Aeson.Types      (contramapToJSONKeyFunction)
+import           Data.Bifunctor        (Bifunctor (bimap, first))
+import qualified Data.ByteString.Short as SBS
+import qualified Data.ByteString.UTF8  as UTF8
 import           Data.Either
-import           Data.Graph          (graphFromEdges, vertices)
+import           Data.Graph            (graphFromEdges, vertices)
 import           Data.Hashable
-import qualified Data.HashMap.Strict as H
-import qualified Data.HashSet        as S
-import           Data.IORef          (IORef, atomicModifyIORef', newIORef,
-                                      readIORef)
-import           Data.List           (foldl', intercalate, isPrefixOf,
-                                      partition)
-import qualified Data.List           as L
-import           Data.List.Split     (splitOn)
-import qualified Data.Map.Strict     as M
+import qualified Data.HashMap.Strict   as H
+import qualified Data.HashSet          as S
+import           Data.IORef            (IORef, atomicModifyIORef', newIORef,
+                                        readIORef)
+import           Data.List             (foldl', intercalate, isPrefixOf,
+                                        partition)
+import qualified Data.List             as L
+import           Data.List.Split       (splitOn)
+import qualified Data.Map.Strict       as M
 import           Data.Maybe
-import           Data.Proxy          (Proxy (..))
-import           Data.String         (IsString (..))
+import           Data.Proxy            (Proxy (..))
+import           Data.String           (IsString (..))
+import           Data.Word             (Word8)
 import           Data.Zip
-import           Debug.Trace         (trace)
+import           Debug.Trace           (trace)
 import           GHC.Generics
-import           Prelude             hiding (unzip)
+import           Prelude               hiding (unzip)
 import           Semantics.CtType
-import           Semantics.Val       (pattern AnyStrVal, pattern StrVal)
-import           System.IO.Unsafe    (unsafePerformIO)
+import           Semantics.Val         (pattern AnyStrVal, pattern StrVal)
+import           System.IO.Unsafe      (unsafePerformIO)
 import           Text.Printf
 import           Utils
 
@@ -66,11 +69,16 @@ import           Utils
 -- compile time. 'nameHash' is exactly @hash nameStr@, so a name is placed in a 'Data.HashMap'
 -- exactly where its string would be, and iteration order (hence printed output) is determined
 -- by the string alone.
-data Name = Name { nameHash :: !Int, nameStr :: String }
+--
+-- It also carries its UTF-8 bytes packed ('nameBytes'), which is what names are compared by. Names
+-- key every map the type algebra reads and are compared on every lookup that finds its key — an
+-- equal pair agrees on its hash, so comparing the 'String's walked both cons lists to the end. The
+-- packed bytes compare in one memcmp, and order the same way, as UTF-8 preserves code point order.
+data Name = Name { nameHash :: !Int, nameBytes :: !SBS.ShortByteString, nameStr :: String }
 
--- | The canonical way to build a 'Name': computes and caches the hash once.
+-- | The canonical way to build a 'Name': computes and caches the hash and the packed bytes once.
 mkName :: String -> Name
-mkName s = Name (hash s) s
+mkName s = Name (hash s) (SBS.toShort (UTF8.fromString s)) s
 
 -- | A name is its string, read as a Catln one.
 --
@@ -97,10 +105,10 @@ instance Hashable Name where
   hashWithSalt s n = hashWithSalt s (nameHash n)
 
 instance Eq Name where
-  a == b = nameHash a == nameHash b && nameStr a == nameStr b
+  a == b = nameHash a == nameHash b && nameBytes a == nameBytes b
 
 instance Ord Name where
-  compare a b = compare (nameStr a) (nameStr b)
+  compare a b = compare (nameBytes a) (nameBytes b)
 
 instance Show Name where
   show = show . nameStr
@@ -1755,10 +1763,17 @@ splitVarArgEnv vaenv = bimap H.fromList H.fromList $ partitionEithers $ map eith
     eitherVarArg (TVApplied v _, _) = error $ printf "Unexpected TVApplied %s used as an env key in splitVarArgEnv" (show v)
 
 makeAbsoluteName :: Name -> Name
-makeAbsoluteName n = case nameStr n of
-  ""      -> n
-  ('/':_) -> n
-  s       -> mkName ('/' : s)
+makeAbsoluteName n
+  | SBS.null (nameBytes n) || nameIsAbsolute n = n
+  | otherwise = mkName ('/' : nameStr n)
+
+-- | Whether a name is spelled from the root: it begins with the separator.
+nameIsAbsolute :: Name -> Bool
+nameIsAbsolute n = not (SBS.null b) && SBS.index b 0 == slashByte
+  where b = nameBytes n
+
+slashByte :: Word8
+slashByte = 47
 
 makeAbsolutePk :: PartialKey -> PartialKey
 makeAbsolutePk (PartialKey name vars args)= PartialKey (makeAbsoluteName name) (S.map makeAbsolutePk vars) (S.map makeAbsolutePk args)
@@ -1789,7 +1804,17 @@ matchesNPath (NPath True _) (NPath False _) = False
 -- component is empty — integer division is written @//@, so 'CtConstants.operatorName' makes it
 -- @/operator//@ — and the unit type would name both itself and integer division.
 relativeNameMatches :: RelativeName -> Name -> Bool
-relativeNameMatches rn n = rn == n || (nameStr rn `notElem` ["", "/"] && ('/' : nameStr rn) `L.isSuffixOf` ('/' : nameStr n))
+relativeNameMatches rn n = rn == n || (not (SBS.null r) && r /= SBS.singleton slashByte && suffixAtSeparator)
+  where
+    r = nameBytes rn
+    b = nameBytes n
+    lr = SBS.length r
+    lb = SBS.length b
+    -- @'/' : rn@ is a suffix of @'/' : n@: @rn@ is @n@ itself, or a suffix of it preceded by a '/'.
+    suffixAtSeparator
+      | lr == lb  = r == b
+      | lr < lb   = SBS.index b (lb - lr - 1) == slashByte && SBS.drop (lb - lr) b == r
+      | otherwise = False
 
 relativeNameFilter :: RelativeName -> [Name] -> [Name]
 relativeNameFilter rn = filter (relativeNameMatches rn)
