@@ -1,0 +1,43 @@
+annot(#noCore)
+
+# A call whose declared result is one of its parameters, passed to a slot of a generic operator.
+  [pull] is declared to give a [$MV], the set its [m]'s values are, so given a [Bag] of [Fl] it gives
+  an [Fl], and [scaled] multiplies two [Fl]s. Its definition reads the value out of [look]'s [Opt],
+  which inference does not follow back to [m], so the call is read by its declaration. As the left
+  operand of [*], whose [$T] nothing else has fixed yet, it was read as the [Ring] [*] is declared
+  over instead. [def] is a member of the set and not the set, so it is not what the result is read
+  from: [scaledByDefault]'s [Bag] is only known as [Bag], and its [pull] stays unread.
+#noCore
+module(Rx)
+  class(Ring)
+
+  data(Fl)
+
+  every(Fl, isa= [/Rx/Ring])
+
+  class(Opt[$T], [Has[$T -> $_T](value -> $T), Nope])
+
+  class(Bag[$V])
+
+  class(Tree[$V], [Full[$V -> $_V](v -> $V), Empty])
+
+  every(Tree[$V -> $_V], isa= [/Rx/Bag[$V -> $_V]])
+
+  look[$MV](m -> /Rx/Bag[$V -> $_MV]) -> /Rx/Opt[$T -> $_MV]
+  look(m= Full(v))= Has(value= v)
+  look(m= Empty)= Nope
+
+  pull[$MV](m -> /Rx/Bag[$V -> $_MV], def -> $_MV) -> $_MV
+  pull(m, def)= match(look(m= m))
+    Has(value)= value
+
+    e -> Nope= def
+
+  (_ :: $T * _ :: $T)[$T -> /Rx/Ring] -> $T
+  (l :: Fl * r :: Fl)= Fl
+
+  scaled(x -> Fl, b -> /Rx/Bag[$V -> /Rx/Fl]) -> Fl
+  scaled(x, b)= pull(m= b, def= Fl) * x
+
+  scaledByDefault(x -> Fl, b -> /Rx/Bag) -> /Rx/Ring
+  scaledByDefault(x, b)= pull(m= b, def= Fl) * x

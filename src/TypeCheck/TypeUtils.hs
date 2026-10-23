@@ -23,6 +23,7 @@ import           CtConstants
 import qualified Data.HashMap.Strict        as H
 import qualified Data.HashSet               as S
 
+import           Control.Applicative        ((<|>))
 import           Control.Monad
 import           Control.Monad.State.Strict
 import           Data.Bifunctor             (Bifunctor (bimap))
@@ -225,8 +226,15 @@ buildTypeEnv env@FEnv{feTypeEnv, feVTypeGraph, feTTypeGraphCleared} = do
 -- declaration's parameter (@mmap(m -> $M, ..) -> $M@) promises a value within the set @$M@ is
 -- given or inferred as, and @$M@ is not the type of the argument it also contains: @m=Some(5)@
 -- does not make @Nothing@ outside it.
+--
+-- A result that is a declaration's parameter is read where the call's arguments fix the set the
+-- parameter is, as only a parameter of an argument's type can: @getOr(m -> Map[$V -> $_MV], key,
+-- def -> $_MV) -> $_MV@ given an @m@ of @Map[/V=Float]@ gives a @Float@, whatever @def@ is, as the
+-- map's values are the set @$MV@ is. An argument declared as the parameter itself (@def@, the @m@ of
+-- @mmap@) is only a member of the set, and says nothing of it, so it is left out of the reading
+-- ('parameterResult').
 declaredCallResult :: FEnvTypeEnv -> TypeVarArgEnv -> PartialType -> Type
-declaredCallResult typeEnv vaenv p@PartialType{ptName, ptArgs=callArgs} = case mapM fixedResult applying of
+declaredCallResult typeEnv vaenv p@PartialType{ptName, ptArgs=callArgs} = case mapM (\oa -> fixedResult oa <|> parameterResult oa) applying of
   Just results@(_:_) -> foldl' (intersectTypesEnv typeEnv vaenv) (unionAllTypes typeEnv results) refinedResults
   _                  -> PTopType
   where
@@ -253,6 +261,21 @@ declaredCallResult typeEnv vaenv p@PartialType{ptName, ptArgs=callArgs} = case m
       | outT /= PTopType, not (typeContainsTypeVar outT), arrowDestType typeEnv vaenv p oa == [outT] = Just outT
       where outT = getMetaType outM
     fixedResult _ = Nothing
+    -- A result that is one of the declaration's parameters (@-> $_MV@), read from the call with
+    -- every argument the declaration types as a bare parameter left unread, and every higher-order
+    -- argument (@mmap@'s @fn(v) -> $M@, whose result is the lambda's, a member of the set like any
+    -- value): what is left to bind the parameter is the parameters of the other arguments' types. Only a single value with no
+    -- variable left in it, and one a value can be shown to lie within ('closedType'), is a reading.
+    parameterResult oa@ObjArr{oaArr=Just (_, outM)}
+      | TypeVar{} <- getMetaType outM
+      , Just declObj <- maybeGetSingleton (getMetaType (getExprMeta (oaObjExpr oa)))
+      , let memberArg k _ = not (S.null (pkArgs k)) || case H.lookup k (ptArgs declObj) of
+              Just TypeVar{} -> True
+              _              -> False
+      , let fromParams = p{ptArgs = H.mapWithKey (\k v -> if memberArg k v then PTopType else v) callArgs}
+      , [t] <- arrowDestType typeEnv vaenv fromParams oa
+      , t /= PTopType, not (isBottomType t), not (typeContainsTypeVar t), closedType typeEnv t = Just t
+    parameterResult _ = Nothing
 
 -- | What the declarations of a complete call form promise it evaluates to, when that promise is
 -- spelled in the calling scope's own variables: a call passing them as links (@idf(/x=$_/Q)@,

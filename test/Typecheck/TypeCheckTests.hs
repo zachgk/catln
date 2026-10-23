@@ -436,6 +436,14 @@ testClassSignature mk = testCase "a member of a class of functions gives what th
   assertPageErrorSays mk page "Member that does not: /bad(/a=/In)"
   assertPageErrorLacks mk page "/good"
 
+-- | A call whose declared result is one of its parameters (@pull(m -> Bag[$V -> $_MV], def -> $_MV)
+-- -> $_MV@) gives what an argument's type fixes the parameter as, wherever it is passed: as the left
+-- operand of a generic @*@ it is an @Fl@, not the @Ring@ @*@ is declared over. Fixture:
+-- unit/paramBoundResult.ct.
+testParamBoundResult :: MkService -> TestTree
+testParamBoundResult mk = testCase "a call's parameter result is read from its arguments' types" $
+  assertResultGuaranteed mk "test/Typecheck/unit/paramBoundResult.ct" "/Rx/scaled"
+
 -- | The page fails, and its errors do not mention @needle@.
 assertPageErrorLacks :: MkService -> String -> String -> Assertion
 assertPageErrorLacks mk page needle = do
@@ -516,6 +524,7 @@ typecheckTests mk = do
     , testPassedOnLink mk
     , testLongerShapeCall mk
     , testClassSignature mk
+    , testParamBoundResult mk
     , testImportAfterAnnot mk
     , testCapturedField mk
     , testAmbiguousMember mk
