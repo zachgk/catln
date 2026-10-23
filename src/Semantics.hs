@@ -57,6 +57,12 @@ graphItemOrEmpty typeEnv name = fromMaybe mempty (graphItemOf typeEnv name)
 setDeclsVersionName :: TypeName
 setDeclsVersionName = mkName "\0omDecls"
 
+-- | The name the input-embedded names of a reaches graph ('typeGraphInputEmbeddedNames') are
+-- versioned under in a 'ReuseScope': a fact about every item at once, read through the solve's
+-- per-epoch copy of it ('TypeCheck.Common.feInputArrowNames').
+inputArrowNamesVersionName :: TypeName
+inputArrowNamesVersionName = mkName "\0inputArrowNames"
+
 instance Semigroup (ObjArrTypeGraph e m) where
   (ObjArrTypeGraph a) <> (ObjArrTypeGraph b) = ObjArrTypeGraph (a <> b)
 

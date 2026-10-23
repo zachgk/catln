@@ -132,8 +132,9 @@ data FEnv = FEnv { fePnts               :: IM.IntMap Scheme
 -- | A constraint's last-execution inputs and result: env stamp ('feEnvStamp'), the resolved
 -- constraint view ('showCon'+'stypeConstraint'), the resolved object-side arg entries an
 -- 'ArrowTo' additionally reads ('mkReachesEnv'), what a 'BoundedByObjs' reads of the reaches graph
--- and the object universe ('BoundedReads'), and the returned prune decision.
-data ConMemo = ConMemo Int RConstraint [(Maybe SExpr, Maybe ShowMeta)] BoundedReads Bool
+-- and the object universe ('BoundedReads'), what its compute read of the reaches graph's versioned items
+-- ('ReadDeps'), and the returned prune decision.
+data ConMemo = ConMemo Int RConstraint [(Maybe SExpr, Maybe ShowMeta)] BoundedReads ReadDeps Bool
   deriving (Show)
 
 -- | What a 'BoundedByObjs' reads beyond its resolved view: what its objects' declarations say their

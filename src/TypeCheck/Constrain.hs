@@ -17,6 +17,8 @@
 
 module TypeCheck.Constrain where
 
+import           Control.Exception          (evaluate)
+import           Data.Hashable              (hash)
 import qualified Data.HashMap.Strict        as H
 import qualified Data.HashSet               as S
 import qualified Data.IntMap.Strict         as IM
@@ -28,7 +30,8 @@ import           Control.Monad.State.Strict
 import           CtConstants                (macroThisKey)
 import           Semantics                  (ObjArrTypeGraph (..),
                                              classMemberLeaves,
-                                             convertingMembers,
+                                             convertingMembers, graphItemOf,
+                                             inputArrowNamesVersionName,
                                              memberAsDeclared,
                                              setDeclsVersionName,
                                              stampQueryToken)
@@ -41,6 +44,7 @@ import           Semantics.Prgm             (Expr, Meta (..), ObjArr (..),
 import           Semantics.TypeGraph        (ReachesEnv (..),
                                              typeGuaranteedWithin)
 import           Semantics.Types
+import           System.IO.Unsafe           (unsafePerformIO)
 import           Text.Printf
 import           TypeCheck.Common
 import           TypeCheck.Show
@@ -615,8 +619,8 @@ computeConstraint FEnv{feTypeEnv, feReachesTypeEnv} con@(Constraint _ _ _ (HoRes
         [] -> Nothing
         vs -> Just (unionAllTypes feTypeEnv vs)
     paramOf _ _ = Nothing
-    TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap reachesTg)} = feReachesTypeEnv
-    applyingDecls leaf = [ decl | decl@ObjArr{oaArr=Just{}} <- maybe [] omiDecls (H.lookup (makeAbsoluteName (ptName leaf)) reachesTg)
+
+    applyingDecls leaf = [ decl | decl@ObjArr{oaArr=Just{}} <- maybe [] omiDecls (graphItemOf feReachesTypeEnv (makeAbsoluteName (ptName leaf)))
                                 , not (isBottomType (intersectTypes feReachesTypeEnv (singletonType leaf) (getMetaType (getExprMeta (oaObjExpr decl))))) ]
     declResult decl = maybe PTopType (getMetaType . snd) (oaArr decl)
     declArgResults decl = [ (inExprSingleton aObj, getMetaType aM) | ObjArr{oaObj=Just aObj, oaArr=Just (_, aM)} <- exprAppliedArgs (oaObjExpr decl), not (null (exprAppliedArgs aObj)) ]
@@ -880,11 +884,21 @@ executeConstraint cid con = do
       -- entries and call arrows ('conOaResolveKey'). When every component of that key equals the last execution's,
       -- the recomputed stores would all be refused as unchanged by 'setScheme' — a provable
       -- no-op, so skip the compute and save entirely and repeat the prune decision.
+      --
+      -- What a compute reads of the reaches graph is noted as it is read ('withReadFrame'), so
+      -- where the graph's live items are versioned ('ReuseScope') the memo is valid while each
+      -- item the compute read is still at the version it read ('depsCurrent'), whatever other
+      -- items changed. Only an env whose items are not versioned falls back to the env stamp.
+      let reachesEnv = feReachesTypeEnv env
+      let versioned = isJust (teReuse reachesEnv)
       let stampKey = case conDat con of
-            ArrowTo{}        -> feEnvStamp
-            PropEq{}         -> feEnvStamp
-            PropEqInferred{} -> feEnvStamp
-            _                -> 0
+            ArrowTo{} | not versioned        -> feEnvStamp
+            PropEq{} | not versioned         -> feEnvStamp
+            PropEqInferred{} | not versioned -> feEnvStamp
+            _                                -> 0
+      let depsCurrent deps = case teReuse reachesEnv of
+            Just ReuseScope{rsVersions} -> all (\(n, v) -> H.lookup n rsVersions == Just v) (H.toList deps)
+            Nothing                     -> H.null deps
       let oaKey = case conDat con of
             ArrowTo{}       -> conOaResolveKey env con
             BoundedByObjs{} -> conOaResolveKey env con
@@ -907,13 +921,22 @@ executeConstraint cid con = do
                                    , BoundedReads (conObjDeclsKey env con) (boundedByObjsUniverseReads (feTypeEnv env) con') )
             _ -> (con'{conOs=[], conCallArrs=[]}, BoundedReads [] [])
       case IM.lookup cid conMemo of
-        Just (ConMemo memoStamp memoCon memoOa memoReads memoPrune)
-          | memoStamp == stampKey && memoCon == conMemoKey && memoOa == oaKey && memoReads == readsKey -> return memoPrune
+        Just (ConMemo memoStamp memoCon memoOa memoReads memoDeps memoPrune)
+          | memoStamp == stampKey && memoCon == conMemoKey && memoOa == oaKey && memoReads == readsKey && depsCurrent memoDeps -> return memoPrune
         _ -> do
-          let (prune, con'') = computeConstraint env con'
+          let ((prune, con''), deps) = computeReading reachesEnv (computeConstraint env con')
           modify $ saveConstraint con con' con''
-          modify $ \e -> e{feConMemo = IM.insert cid (ConMemo stampKey conMemoKey oaKey readsKey prune) (feConMemo e)}
+          modify $ \e -> e{feConMemo = IM.insert cid (ConMemo stampKey conMemoKey oaKey readsKey deps prune) (feConMemo e)}
           return prune
+
+-- | A constraint's computed result, worked out with what it reads of the reaches graph noted
+-- ('memoReading'), forced through so every read is made inside the frame.
+{-# NOINLINE computeReading #-}
+computeReading :: FEnvTypeEnv -> (Bool, RConstraint) -> ((Bool, RConstraint), ReadDeps)
+computeReading reachesEnv result = unsafePerformIO $ memoReading reachesEnv $ do
+  _ <- evaluate (fst result)
+  _ <- evaluate (hash (snd result))
+  return result
 
 -- |
 -- Applies the constraints continuously to update the environment.
@@ -978,7 +1001,11 @@ runConstraintsIdx limit cons = do
       -- keeps its version, and one new or changed is given the next. A reach query asked again
       -- under the new token is then handed the answer it gave before wherever the items it read
       -- are all as they were ('Semantics.objArrGraphQuery').
-      let (vVersions, versionNext) = versionLiveItems (feReachesVPart env) (feVVersions env) (feVersionNext env) reachesVPart
+      let (itemVersions, itemsNext) = versionLiveItems (feReachesVPart env) (feVVersions env) (feVersionNext env) reachesVPart
+      -- The input-embedded names are a fact about every item at once, versioned as one more.
+      let (vVersions, versionNext) = case H.lookup inputArrowNamesVersionName (feVVersions env) of
+            Just v | inputArrowNames == feInputArrowNames env -> (H.insert inputArrowNamesVersionName v itemVersions, itemsNext)
+            _ -> (H.insert inputArrowNamesVersionName itemsNext itemVersions, itemsNext + 1)
       -- The reach-query memo's identity: an unchanged graph KEEPS the previous epoch's env
       -- value with its existing token (the memo stays warm across quiet epochs); a changed
       -- graph is stamped with a fresh process-unique token, which also retires the previous

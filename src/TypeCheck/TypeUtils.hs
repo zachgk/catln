@@ -238,8 +238,7 @@ declaredCallResult typeEnv vaenv p@PartialType{ptName, ptArgs=callArgs} = case m
   Just results@(_:_) -> foldl' (intersectTypesEnv typeEnv vaenv) (unionAllTypes typeEnv results) refinedResults
   _                  -> PTopType
   where
-    TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} = typeEnv
-    item = H.lookupDefault mempty ptName tg
+    item = graphItemOrEmpty typeEnv ptName
     -- Each refinement covering the whole call is a further promise about its result, read under the
     -- same rule as a declaration's ('fixedResult'); one covering only part of the call says nothing
     -- about it ('coveringRefinementResults').
@@ -288,9 +287,8 @@ linkedCallResult typeEnv vaenv p@PartialType{ptName, ptArgs=callArgs} = case nub
   [r] | not (S.null (S.filter inScope (typeExtVarAuxes r))) -> Just r
   _                                                         -> Nothing
   where
-    TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} = typeEnv
     applying = [ oa
-               | oa@ObjArr{oaArr=Just{}} <- maybe [] omiDecls (H.lookup ptName tg)
+               | oa@ObjArr{oaArr=Just{}} <- maybe [] omiDecls (graphItemOf typeEnv ptName)
                , let declType = getMetaType (getExprMeta (oaObjExpr oa))
                , Just declObj <- [maybeGetSingleton declType]
                , H.keysSet (ptArgs declObj) == H.keysSet callArgs
@@ -346,12 +344,11 @@ outVarBoundSrc env dest@(UnionType _ _ _) destDecl src@(UnionType Nothing srcLea
       UnionType Nothing destLeafs _ -> not (H.null destLeafs)
       _                             -> False
     typeEnv = feReachesTypeEnv env
-    TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} = typeEnv
     bindLeaf p = foldr bindVar p (outVarNames p)
     bindVar (vn, v) p@PartialType{ptVars} = p{ptVars=H.insertWith (flip (intersectTypes typeEnv)) vn v ptVars}
     outVarNames p@PartialType{ptName} = nub
       [ (vn, v)
-      | oa <- maybe [] omiDecls (H.lookup ptName tg)
+      | oa <- maybe [] omiDecls (graphItemOf typeEnv ptName)
       , Just (_, outM) <- [oaArr oa]
       , TypeVar (TVVar vn) _ _ <- [getMetaType outM]
       , Just declObj <- [maybeGetSingleton (getMetaType (getExprMeta (oaObjExpr oa)))]
@@ -406,14 +403,14 @@ outVarBoundSrc _ _ _ src = src
 -- it is closed, as there: an open class may gain members anywhere, so no argument is required to
 -- be within it.
 outVarReqKey :: FEnvTypeEnv -> Type -> PartialType -> PartialType
-outVarReqKey typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} dest key@PartialType{ptName, ptVars=keyVars}
+outVarReqKey typeEnv dest key@PartialType{ptName, ptVars=keyVars}
   | closed = key{ptVars = foldr bind keyVars outVars}
   | otherwise = key
   where
     closed = dest /= PTopType && not (isBottomType dest) && not (typeContainsTypeVar dest) && closedType typeEnv dest
     outVars = nub
       [ vn
-      | oa <- maybe [] omiDecls (H.lookup ptName tg)
+      | oa <- maybe [] omiDecls (graphItemOf typeEnv ptName)
       , Just (_, outM) <- [oaArr oa]
       , TypeVar (TVVar vn) _ _ <- [getMetaType outM]
       , Just declObj <- [maybeGetSingleton (getMetaType (getExprMeta (oaObjExpr oa)))]
@@ -490,11 +487,11 @@ localArrowTypeEnv env (Constraint callArrs maybeConOa stypeVaenv _) = do
   -- higher-order argument @fn(v)@ is the declaration's @fn(v -> $_A) -> $_B@, so the arrow it adds
   -- to the body's environment returns the declared @$_B@. The declared result is met into the
   -- argument's own; a declaration variable stays symbolic here and is bound per call at dispatch.
-  let TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap reachesTg)} = feReachesTypeEnv env
+  let reachesEnv = feReachesTypeEnv env
   let declArgResults = H.fromListWith (intersectTypes (feTypeEnv env))
         [ (inExprSingleton aObj, getMetaType aM)
         | oa <- maybeConOa
-        , decl <- maybe [] omiDecls (H.lookup (makeAbsoluteName (exprPath (oaObjExpr oa))) reachesTg)
+        , decl <- maybe [] omiDecls (graphItemOf reachesEnv (makeAbsoluteName (exprPath (oaObjExpr oa))))
         , ObjArr{oaObj=Just aObj, oaArr=Just (_, aM)} <- exprAppliedArgs (oaObjExpr decl)
         , not (null (exprAppliedArgs aObj)) ]
   let declResultFor k = case H.lookup k declArgResults of
@@ -765,7 +762,7 @@ arrowConstrainUbs env@FEnv{feTypeEnv} con@Constraint{conVaenv} SType{stypeAct=sr
   -- from Some[/T=raw ∪ …]" at TreeBuild).
   let settleForced l = not (null (typeGraphQueryAllWithReason reachesTypeEnv vaenv' ((partialVal (ptName l)){ptArgMode=PtArgUnbounded})))
                      && (not (reqAdmitsForm reachesTypeEnv vaenv' destReqDecl l)
-                          || (destIsArgArm && not (S.member (ptName l) (feInputArrowNames env))))
+                          || (destIsArgArm && not (S.member (ptName l) (noteGraphRead reachesTypeEnv inputArrowNamesVersionName (feInputArrowNames env)))))
                      && reachesTo reachesTypeEnv vaenv' (singletonType l) destBound
   let dropSettleForcedRaws t@(UnionType dMTop dLeafs dConsts)
         | (destReqDecl /= PTopType || destIsArgArm) && not (isBottomType destBound) =
