@@ -105,6 +105,22 @@ describe('Backend API contract', () => {
     expect(core.sbChildren[0].sbName).toBe('main.ct')
   })
 
+  // A page its syntax stands at with nothing on disk, as `import hsbuiltins()` reads, is a page of
+  // the program but not one a reader can open: it is named by a path where no file is. So the import
+  // graph draws it and the navigations leave it out.
+  it('#sidebar and #search leave out a page with no file behind it', async () => {
+    const builtins = '/stack/core/hsbuiltins.ct'
+    // Scoped to id.ct, which reaches the builtins through the core it is given, so the graph is of a
+    // page rather than of everything the server holds.
+    const graph = await annotValue('#prgmGraph', await idPageName())
+    expect(graph.name).toBe('/Catln/Doc/Show/PrgmGraph')
+    const drawn = JSON.parse(graph.args['/graph'].contents).map(n => n.pgnPath)
+    expect(drawn.some(p => p.endsWith(builtins))).toBe(true)
+
+    expect((await sidebarPages()).some(p => p.sbPath.endsWith(builtins))).toBe(false)
+    expect(await searchPages('hsbuiltins')).toEqual([])
+  })
+
   // The search box gets its pages from a search of its own rather than from the sidebar's tree. They
   // are two answers to the same question, so they are checked against each other here: the
   // duplication is deliberate for the moment, and a divergence should be a reported fact.

@@ -31,8 +31,8 @@ import           Data.Graph
 import qualified Data.HashMap.Strict      as H
 import           Data.IORef               (modifyIORef', newIORef, readIORef)
 import           Data.List
-import           Data.Maybe               (fromMaybe, isJust, listToMaybe,
-                                           mapMaybe)
+import           Data.Maybe               (fromMaybe, isJust, isNothing,
+                                           listToMaybe, mapMaybe)
 import qualified Data.Sequence            as Sq
 import           Data.Time.Clock          (UTCTime, getCurrentTime)
 import           MapMeta                  (MetaLocation (ImportMeta), mapMeta,
@@ -304,6 +304,20 @@ mkRawImportStr name = mkRawFileImport $ fromMaybe (rawStr name) (importExpr name
 
 mkDesCanonicalImportStr :: CTSSConfig -> String -> IO FileImport
 mkDesCanonicalImportStr config = canonicalImport config (rootImportCtx noImporters) . mkRawImportStr
+
+-- | Whether a page was read from a file, rather than being one its syntax stands at with nothing on
+-- disk behind it ('Syntax.Ct.Prgm.isPagePath').
+--
+-- A navigation offers the pages a reader can open, and a page with no file behind it is not one of
+-- those: it is named by the path it stands at, and nothing is at that path. It is still a page of the
+-- program, so the import graph draws it.
+--
+-- A syntax this compiler does not hold — one an @#importer@ declared in Catln reads — names its own
+-- path in every import of it, as every importer is handed the file it reads, so its pages are files.
+pageHasFile :: FileImport -> Bool
+pageHasFile imp = case importSyntax imp of
+  Just (_, syntax) -> isNothing (isPagePath syntax)
+  Nothing          -> True
 
 -- | The syntax a page is written in, and how that syntax is read and written back.
 --

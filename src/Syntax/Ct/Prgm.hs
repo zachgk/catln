@@ -714,6 +714,9 @@ data ImportSyntax = ImportSyntax {
   -- for the reason 'isUnparse' and 'isLinkDir' are: which page a syntax's import means is the
   -- syntax's own business, and a second table beside the table of syntaxes could drift out of step
   -- with it.
+  --
+  -- It is also what says a page has no file behind it ('Syntax.Parsers.pageHasFile'), which is why
+  -- a navigation of the pages a reader can open leaves such a page out.
   isPagePath :: Maybe FilePath,
   -- | Writes a page back where writing it back is more than 'isUnparse' can say: as every file the
   -- write reaches, the page's own first, or why it cannot be written. 'Nothing' for a syntax whose

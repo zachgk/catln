@@ -45,6 +45,7 @@ import           Semantics.Types     (ArgName, ClassGraph (..),
                                       mkName, nameStr, pkName,
                                       relativeNameMatches)
 import           Syntax.Ct.Prgm      (isCorePage)
+import           Syntax.Parsers      (pageHasFile)
 import           System.FilePath     (takeFileName)
 import           System.IO.Unsafe    (unsafePerformIO)
 import           Text.Printf
@@ -285,8 +286,12 @@ sidebar = EEnvPrim "sidebar" prim
 
 -- | The pages as the tree of directories they sit in, which is the shape a navigation of them is
 -- walked in.
+--
+-- Only the pages read from files ('Syntax.Parsers.pageHasFile'). A page its syntax stands at with
+-- nothing on disk, such as @core\/hsbuiltins.ct@, is named by a path nothing can be opened at, so a
+-- navigation offering it would offer a page that fails to open.
 sidebarNodes :: [FileImport] -> Either String [SidebarNode]
-sidebarNodes pages = sidebarLevel "" . map splitEntry =<< traverse pageEntry pages
+sidebarNodes pages = sidebarLevel "" . map splitEntry =<< traverse pageEntry (filter pageHasFile pages)
   where
     -- A page with no display path cannot be linked to, so it is reported rather than dropped from
     -- the navigation, where it would read as a page the doc server does not hold.
@@ -361,7 +366,8 @@ searchPagesFor = EEnvPrim "searchPagesFor" prim
         Nothing -> Left noService
         Just svc -> askService $ do
           pages <- esPages svc
-          return $ encodeJsonText . sort . filter (matchesQuery query) <$> traverse pagePath pages
+          -- The pages a reader can open, as in 'sidebarNodes'.
+          return $ encodeJsonText . sort . filter (matchesQuery query) <$> traverse pagePath (filter pageHasFile pages)
       Just v -> Left $ printf "searchPagesFor was given %s, which is not a String query" (show v)
     -- As in 'sidebar', a page with no display path cannot be opened, so it is reported rather than
     -- dropped from the list, where it would read as a page the doc server does not hold.
