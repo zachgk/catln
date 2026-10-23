@@ -72,6 +72,18 @@ module(Data/Map)
     >>> True
   > get(m= insert(m= insert(m= insert(m= Leaf, key= 2, value= 20), key= 1, value= 10), key= 3, value= 30), key= 3) == /Data/Maybe/Some(value= 30)
     >>> True
+  getOr[$MK -> /Data/Algebra/Ord, $MV](m -> /Data/Map[$K -> $_MK, $V -> $_MV], key -> $MK, def -> $_MV) -> $_MV
+    # [getOr] is the [value] stored under [key], or [def] if the key is absent: a [get] for a caller
+      that has a value to stand in for a missing entry, and so needs no [Maybe].
+  getOr(m, key, def)= match(get(m= m, key= key))
+    /Data/Maybe/Some(value)= value
+
+    r -> /Data/Maybe/Nothing= def
+
+  > getOr(m= insert(m= insert(m= Leaf, key= 1, value= 10), key= 2, value= 20), key= 2, def= 0)
+    >>> 20
+  > getOr(m= insert(m= Leaf, key= 1, value= 10), key= 9, def= 0)
+    >>> 0
   # ## Membership
   containsKey[$MK -> /Data/Algebra/Ord, $MV](m -> /Data/Map[$K -> $_MK, $V -> $_MV], key -> $MK) -> Boolean
     # [containsKey] reports whether the map has an entry for [key]. It reuses [get]: a key is present

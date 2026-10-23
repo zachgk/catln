@@ -165,6 +165,19 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Map/getOr.$d2ae28"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Map/getOr.$d2ae28( Value /def )
+                            ( Value /$d2ae28-arg= /Data/Maybe/Some( Value value ) )= Value value
+                        , /Data/Map/getOr.$d2ae28( Value /def )( Value /$d2ae28-arg@Value r -> /Data/Maybe/Nothing )= Value def
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Map/MapEqv"
                 , ObjectMapItem
                     { omiDecls = [ Value /Data/Map/MapEqv ]
@@ -402,6 +415,25 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/Map/getOr"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Map/getOr[ /MV : TopType ][ /MK : ∀/Data/Algebra/Ord ]
+                            ( Value m -> ∀/Data/Map
+                                [ /K=$_/MK
+                                , /V=$_/MV
+                                ]
+                            )( Value key -> $/MK )( Value def -> $/MV ) -> $_/MV
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Data/Map/getOr( Value m )( Value key )( Value def )= /Data/Map/getOr.$d2ae28( Value /def= Value /def )
+                            ( Value /$d2ae28-arg= get( Value m= Value m )( Value key= Value key ) )
+                        ]
+                    }
+                )
+            ,
                 ( "/Data/Map/mapEqual"
                 , ObjectMapItem
                     { omiDecls =
@@ -574,6 +606,8 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -929,6 +963,54 @@ Prgm
             )
             ( Value /result= CStr
                 { csValue = "True" }
+            )
+        , /Catln/#print
+            ( Value /p= getOr
+                ( Value m= insert
+                    ( Value m= insert( Value m= Value Leaf )
+                        ( Value key= CInt
+                            { ciValue = 1 }
+                        )
+                        ( Value value= CInt
+                            { ciValue = 10 }
+                        )
+                    )
+                    ( Value key= CInt
+                        { ciValue = 2 }
+                    )
+                    ( Value value= CInt
+                        { ciValue = 20 }
+                    )
+                )
+                ( Value key= CInt
+                    { ciValue = 2 }
+                )
+                ( Value def= CInt
+                    { ciValue = 0 }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "20" }
+            )
+        , /Catln/#print
+            ( Value /p= getOr
+                ( Value m= insert( Value m= Value Leaf )
+                    ( Value key= CInt
+                        { ciValue = 1 }
+                    )
+                    ( Value value= CInt
+                        { ciValue = 10 }
+                    )
+                )
+                ( Value key= CInt
+                    { ciValue = 9 }
+                )
+                ( Value def= CInt
+                    { ciValue = 0 }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "0" }
             )
         , /Catln/#md
             ( Value /text= CStr
