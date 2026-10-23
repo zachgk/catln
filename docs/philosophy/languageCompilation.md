@@ -14,7 +14,7 @@ Many rules for optimization can be embedded within the language itself. While ma
 
 One important feature of a file of code is to interact with external sources of information. This description sounds a bit vague because I believe it has far more power than it typically used by languages. The most typical usage is a standard code import.
 
-The standard code import would have to either be built-in or part of the standard library. It should allow importing another Catln file into the scope of the current file. Remember that the language consists of essentially objects and arrows. So, the objects and arrows of the other file are brought into the current file.
+The standard code import would have to either be built-in or part of the standard library. It should allow importing another Catln file into the scope of the current file. Remember that the language consists of essentially objects and arrows. So, the objects and arrows of the other file are brought into the current file. Two files may import each other, so code can be split across files by what it is about rather than arranged to avoid an import cycle.
 
 In addition, I may add an additional import type for dependency Catln code. These differ from a standard import in terms of the strictness. Bad formatting or warnings shouldn't be allowed within the main code, but could be excused in dependencies. They would also be excluded from coverage metrics and it may be worth skipping tests directed at dependencies as well.
 

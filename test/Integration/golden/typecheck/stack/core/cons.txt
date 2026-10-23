@@ -62,11 +62,7 @@ Prgm
                 on one concrete type, every list type reuses those same declarations just by being a [List]. The
                 [List] interface lives here directly under [Data]; the [ConsList] implementation and the
                 operations all live in the [Data/List] namespace it opens.
-                Only the types are declared on this page, and it imports nothing. Everything a list does is on
-                @core/list.ct@, which imports what those operations need (@ord@, @functor@, @monad@). The types
-                are split out so that a page every program compiles can name a list without reaching that: a
-                [String] is a list of [Char], and @core/string.ct@ is such a page (see @core/result.ct@ for what
-                reaching @core/list.ct@ from one costs)." }
+                Only the types are declared on this page. Everything a list does is on @core/list.ct@." }
             )
         , /Catln/#md
             ( Value /text -> /Catln/CStr = CStr

@@ -8,7 +8,10 @@ Prgm
                         [ /Data/String/words
                             ( EAppArg { eaaArg = Value /this -> ∀/Data/String } ) -> ∀/Data/List/ConsList[ /T=∀/Data/String ]
                         ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/words
+                            ( EAppArg { eaaArg = Value /this -> /Catln/CStr.. } ) -> ∀/Data/List/ConsList[ /T=/Catln/CStr ]
+                        ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/words
@@ -27,6 +30,19 @@ Prgm
                                 ( EAppArg { eaaArg = Value /cur -> /Data/List/Nil = Value /Data/List/Nil } ) ↦ ∀/Data/List/ConsList[ /T=∀/Data/String ]
                             )
                         ]
+                    }
+                )
+            ,
+                ( "/Data/cstrEqual"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/cstrEqual
+                            ( EAppArg { eaaArg = Value /a -> /Catln/CStr } )
+                            ( EAppArg { eaaArg = Value /b -> /Catln/CStr } ) -> ∀/Data/Primitive/Boolean
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
                     }
                 )
             ,
@@ -156,7 +172,15 @@ Prgm
                                 { eaaArg = Value /r -> ∀/Data/String = Hole ∀/Data/String HoleActive { haName = Nothing } }
                             ) -> ∀/Data/String
                         ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /operator++
+                            ( EAppArg
+                                { eaaArg = Value /l -> /Catln/CStr = Hole /Catln/CStr HoleActive { haName = Nothing } }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r -> /Catln/CStr = Hole /Catln/CStr HoleActive { haName = Nothing } }
+                            ) -> /Catln/CStr
+                        ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /operator++
@@ -352,7 +376,10 @@ Prgm
                         [ /Data/String/isEmpty
                             ( EAppArg { eaaArg = Value /this -> ∀/Data/String } ) -> ∀/Data/Primitive/Boolean
                         ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/isEmpty
+                            ( EAppArg { eaaArg = Value /this -> /Catln/CStr.. } ) -> ∀/Data/Primitive/Boolean
+                        ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/isEmpty
@@ -393,7 +420,11 @@ Prgm
                             ( EAppArg { eaaArg = Value /index -> /Data/Primitive/Integer } )
                             ( EAppArg { eaaArg = Value /this -> ∀/Data/String } ) -> ∀/Data/Maybe[ /T=/Data/Char ]
                         ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/at
+                            ( EAppArg { eaaArg = Value /index -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /this -> /Catln/CStr.. } ) -> ∀/Data/Maybe[ /T=/Data/Char ]
+                        ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/at
@@ -405,12 +436,13 @@ Prgm
                                         { eaaArg = Value /chars -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
                                     )
                                 }
-                            ) ->
-                            ( /Data/Maybe/Nothing + /Data/Maybe/Some[ /T=/Data/Char ]( /value=/Data/Char ) ) =
+                            ) -> ∀/Data/Maybe[ /T=/Data/Char ] =
                             ( /Data/String/first
                                 ( EAppArg
-                                    { eaaArg = Value /this -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
+                                    { eaaArg = Value /this ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                        ) = /Data/String/Text
                                         ( EAppArg
                                             { eaaArg = Value /chars -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
                                                 ( /Data/String/dropChars
@@ -424,8 +456,7 @@ Prgm
                                             }
                                         )
                                     }
-                                ) ↦
-                                ( /Data/Maybe/Nothing + /Data/Maybe/Some[ /T=/Data/Char ]( /value=/Data/Char ) )
+                                ) ↦ ∀/Data/Maybe[ /T=/Data/Char ]
                             )
                         ]
                     }
@@ -572,7 +603,11 @@ Prgm
                             ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } )
                             ( EAppArg { eaaArg = Value /this -> ∀/Data/String } ) -> ∀/Data/String
                         ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/drop
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /this -> /Catln/CStr.. } ) -> /Catln/CStr
+                        ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/drop
@@ -675,8 +710,10 @@ Prgm
                             ) -> ∀/Data/String =
                             ( /operator++
                                 ( EAppArg
-                                    { eaaArg = Value /l -> /Data/String/Text.. =
-                                        ( "-" ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /l ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = "-"
                                     }
                                 )
                                 ( EAppArg
@@ -722,7 +759,10 @@ Prgm
                         [ /Data/String/first
                             ( EAppArg { eaaArg = Value /this -> ∀/Data/String } ) -> ∀/Data/Maybe[ /T=/Data/Char ]
                         ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/first
+                            ( EAppArg { eaaArg = Value /this -> /Catln/CStr.. } ) -> ∀/Data/Maybe[ /T=/Data/Char ]
+                        ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/first
@@ -926,11 +966,13 @@ Prgm
                             ) -> ∀/Data/String =
                             ( /operator++
                                 ( EAppArg
-                                    { eaaArg = Value /l -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) =
+                                    { eaaArg = Value /l -> ∀/Data/String =
                                         ( /operator++
                                             ( EAppArg
-                                                { eaaArg = Value /l -> /Data/String/Text.. = /Data/String/Text
+                                                { eaaArg = Value /l ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = /Data/String/Text
                                                     ( EAppArg
                                                         { eaaArg = Value /chars -> /Data/List/Cons[ /T=/Data/Char ]
                                                             ( /head=/Data/Char
@@ -1017,13 +1059,12 @@ Prgm
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) =
-                                                    ( "e" ↦ /Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                    )
+                                                { eaaArg = Value /r ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "e"
                                                 }
-                                            ) ↦ /Data/String/Text..
+                                            ) ↦ ∀/Data/String
                                         )
                                     }
                                 )
@@ -1687,7 +1728,10 @@ Prgm
                         [ /Data/String/trimStart
                             ( EAppArg { eaaArg = Value /this -> ∀/Data/String } ) -> ∀/Data/String
                         ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/trimStart
+                            ( EAppArg { eaaArg = Value /this -> /Catln/CStr.. } ) -> /Catln/CStr
+                        ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/trimStart
@@ -1736,8 +1780,10 @@ Prgm
                             ) -> ∀/Data/String =
                             ( /operator++
                                 ( EAppArg
-                                    { eaaArg = Value /l -> /Data/String/Text.. =
-                                        ( "-" ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /l ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = "-"
                                     }
                                 )
                                 ( EAppArg
@@ -1957,6 +2003,18 @@ Prgm
                                     { eaaArg = Value /b -> TVArg /bc = ( Value /bc ↦ TVArg /bc ) }
                                 ) ↦ ∀/Data/Primitive/Boolean
                             )
+                        , /Data/Algebra/rel
+                            ( EAppArg { eaaArg = Value /a -> /Catln/CStr } )
+                            ( EAppArg { eaaArg = Value /b -> /Catln/CStr } )
+                            ( EAppArg { eaaArg = Value /this -> /Data/StrEqv.. } ) -> ∀/Data/Primitive/Boolean =
+                            ( /Data/cstrEqual
+                                ( EAppArg
+                                    { eaaArg = Value /a -> TVArg /a = ( Value /a ↦ TVArg /a ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /b -> TVArg /b = ( Value /b ↦ TVArg /b ) }
+                                ) ↦ ∀/Data/Primitive/Boolean
+                            )
                         ]
                     }
                 )
@@ -2034,16 +2092,22 @@ Prgm
                                     )
                                 }
                             ) -> /Data/List/Cons
-                            [ /T=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            [ /T=
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                )
                             ]
-                            ( /head=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( /head=
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                )
                             , /tail=/Data/List/Nil
                             ) = /Data/List/Cons
                             ( EAppArg
-                                { eaaArg = Value /head -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
+                                { eaaArg = Value /head ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                    ) = /Data/String/Text
                                     ( EAppArg
                                         { eaaArg = Value /chars -> /Data/List/Cons[ /T=/Data/Char ]
                                             ( /head=/Data/Char
@@ -2277,7 +2341,10 @@ Prgm
                         [ /Data/String/length
                             ( EAppArg { eaaArg = Value /this -> ∀/Data/String } ) -> /Data/Primitive/Integer
                         ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/length
+                            ( EAppArg { eaaArg = Value /this -> /Catln/CStr.. } ) -> /Data/Primitive/Integer
+                        ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/length
@@ -2307,7 +2374,10 @@ Prgm
                         [ /Data/String/lines
                             ( EAppArg { eaaArg = Value /this -> ∀/Data/String } ) -> ∀/Data/List/ConsList[ /T=∀/Data/String ]
                         ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/lines
+                            ( EAppArg { eaaArg = Value /this -> /Catln/CStr.. } ) -> ∀/Data/List/ConsList[ /T=/Catln/CStr ]
+                        ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/lines
@@ -2366,16 +2436,22 @@ Prgm
                             ( EAppArg
                                 { eaaArg = Value /cur -> ∀/Data/List/ConsList[ /T=/Data/Char ] }
                             ) -> /Data/List/Cons
-                            [ /T=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            [ /T=
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                )
                             ]
-                            ( /head=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( /head=
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                )
                             , /tail=/Data/List/Nil
                             ) = /Data/List/Cons
                             ( EAppArg
-                                { eaaArg = Value /head -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
+                                { eaaArg = Value /head ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                    ) = /Data/String/Text
                                     ( EAppArg
                                         { eaaArg = Value /chars -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
                                             ( /Data/String/reverseChars
@@ -2423,13 +2499,17 @@ Prgm
                             ( EAppArg
                                 { eaaArg = Value /prefix -> TVArg /sep = ( Value /sep ↦ TVArg /sep ) }
                             ) -> /Data/List/Cons[ /T=∀/Data/String ]
-                            ( /head=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( /head=
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                )
                             , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
                             ) = /Data/List/Cons
                             ( EAppArg
-                                { eaaArg = Value /head -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
+                                { eaaArg = Value /head ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                    ) = /Data/String/Text
                                     ( EAppArg
                                         { eaaArg = Value /chars -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
                                             ( /Data/String/reverseChars
@@ -2789,7 +2869,10 @@ Prgm
                         [ /Data/String/toUpper
                             ( EAppArg { eaaArg = Value /this -> ∀/Data/String } ) -> ∀/Data/String
                         ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/toUpper
+                            ( EAppArg { eaaArg = Value /this -> /Catln/CStr.. } ) -> /Catln/CStr
+                        ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/toUpper
@@ -2979,7 +3062,10 @@ Prgm
                         [ /Data/String/toLower
                             ( EAppArg { eaaArg = Value /this -> ∀/Data/String } ) -> ∀/Data/String
                         ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/toLower
+                            ( EAppArg { eaaArg = Value /this -> /Catln/CStr.. } ) -> /Catln/CStr
+                        ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/toLower
@@ -3014,7 +3100,11 @@ Prgm
                             ( EAppArg { eaaArg = Value /suffix -> ∀/Data/String } )
                             ( EAppArg { eaaArg = Value /this -> ∀/Data/String } ) -> ∀/Data/Primitive/Boolean
                         ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/endsWith
+                            ( EAppArg { eaaArg = Value /suffix -> /Catln/CStr } )
+                            ( EAppArg { eaaArg = Value /this -> /Catln/CStr.. } ) -> ∀/Data/Primitive/Boolean
+                        ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/endsWith
@@ -3313,6 +3403,19 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/cstrCompare"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/cstrCompare
+                            ( EAppArg { eaaArg = Value /a -> /Catln/CStr } )
+                            ( EAppArg { eaaArg = Value /b -> /Catln/CStr } ) -> ∀/Data/Algebra/Comparison
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Data/String/take"
                 , ObjectMapItem
                     { omiDecls =
@@ -3320,7 +3423,11 @@ Prgm
                             ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } )
                             ( EAppArg { eaaArg = Value /this -> ∀/Data/String } ) -> ∀/Data/String
                         ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/take
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /this -> /Catln/CStr.. } ) -> /Catln/CStr
+                        ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/take
@@ -3358,7 +3465,10 @@ Prgm
                         [ /Data/String/trimEnd
                             ( EAppArg { eaaArg = Value /this -> ∀/Data/String } ) -> ∀/Data/String
                         ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/trimEnd
+                            ( EAppArg { eaaArg = Value /this -> /Catln/CStr.. } ) -> /Catln/CStr
+                        ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/trimEnd
@@ -3458,6 +3568,18 @@ Prgm
                                     { eaaArg = Value /b -> TVArg /bc = ( Value /bc ↦ TVArg /bc ) }
                                 ) ↦ ∀/Data/Algebra/Comparison
                             )
+                        , /Data/Algebra/compare
+                            ( EAppArg { eaaArg = Value /a -> /Catln/CStr } )
+                            ( EAppArg { eaaArg = Value /b -> /Catln/CStr } )
+                            ( EAppArg { eaaArg = Value /this -> /Data/StrOrdering.. } ) -> ∀/Data/Algebra/Comparison =
+                            ( /Data/cstrCompare
+                                ( EAppArg
+                                    { eaaArg = Value /a -> TVArg /a = ( Value /a ↦ TVArg /a ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /b -> TVArg /b = ( Value /b ↦ TVArg /b ) }
+                                ) ↦ ∀/Data/Algebra/Comparison
+                            )
                         ]
                     }
                 )
@@ -3470,7 +3592,12 @@ Prgm
                             ( EAppArg { eaaArg = Value /new -> ∀/Data/String } )
                             ( EAppArg { eaaArg = Value /this -> ∀/Data/String } ) -> ∀/Data/String
                         ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/replace
+                            ( EAppArg { eaaArg = Value /old -> /Catln/CStr } )
+                            ( EAppArg { eaaArg = Value /new -> /Catln/CStr } )
+                            ( EAppArg { eaaArg = Value /this -> /Catln/CStr.. } ) -> /Catln/CStr
+                        ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/replace
@@ -3861,7 +3988,11 @@ Prgm
                             ( EAppArg { eaaArg = Value /sub -> ∀/Data/String } )
                             ( EAppArg { eaaArg = Value /this -> ∀/Data/String } ) -> ∀/Data/Primitive/Boolean
                         ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/contains
+                            ( EAppArg { eaaArg = Value /sub -> /Catln/CStr } )
+                            ( EAppArg { eaaArg = Value /this -> /Catln/CStr.. } ) -> ∀/Data/Primitive/Boolean
+                        ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/contains
@@ -3910,7 +4041,11 @@ Prgm
                             ( EAppArg { eaaArg = Value /prefix -> ∀/Data/String } )
                             ( EAppArg { eaaArg = Value /this -> ∀/Data/String } ) -> ∀/Data/Primitive/Boolean
                         ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/startsWith
+                            ( EAppArg { eaaArg = Value /prefix -> /Catln/CStr } )
+                            ( EAppArg { eaaArg = Value /this -> /Catln/CStr.. } ) -> ∀/Data/Primitive/Boolean
+                        ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/startsWith
@@ -3982,13 +4117,17 @@ Prgm
                                     )
                                 }
                             ) -> /Data/List/Cons[ /T=∀/Data/String ]
-                            ( /head=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( /head=
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                )
                             , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
                             ) = /Data/List/Cons
                             ( EAppArg
-                                { eaaArg = Value /head -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
+                                { eaaArg = Value /head ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                    ) = /Data/String/Text
                                     ( EAppArg
                                         { eaaArg = Value /chars -> /Data/List/Cons[ /T=/Data/Char ]
                                             ( /head=/Data/Char
@@ -4336,7 +4475,10 @@ Prgm
                         [ /Data/String/trim
                             ( EAppArg { eaaArg = Value /this -> ∀/Data/String } ) -> ∀/Data/String
                         ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/trim
+                            ( EAppArg { eaaArg = Value /this -> /Catln/CStr.. } ) -> /Catln/CStr
+                        ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/trim
@@ -4579,7 +4721,11 @@ Prgm
                             ( EAppArg { eaaArg = Value /sub -> ∀/Data/String } )
                             ( EAppArg { eaaArg = Value /this -> ∀/Data/String } ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
                         ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/indexOf
+                            ( EAppArg { eaaArg = Value /sub -> /Catln/CStr } )
+                            ( EAppArg { eaaArg = Value /this -> /Catln/CStr.. } ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
+                        ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/indexOf
@@ -4622,7 +4768,12 @@ Prgm
                             ( EAppArg { eaaArg = Value /end -> /Data/Primitive/Integer } )
                             ( EAppArg { eaaArg = Value /this -> ∀/Data/String } ) -> ∀/Data/String
                         ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/slice
+                            ( EAppArg { eaaArg = Value /start -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /end -> /Data/Primitive/Integer } )
+                            ( EAppArg { eaaArg = Value /this -> /Catln/CStr.. } ) -> /Catln/CStr
+                        ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/slice
@@ -4867,7 +5018,10 @@ Prgm
                         [ /Data/String/reversed
                             ( EAppArg { eaaArg = Value /this -> ∀/Data/String } ) -> ∀/Data/String
                         ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/reversed
+                            ( EAppArg { eaaArg = Value /this -> /Catln/CStr.. } ) -> /Catln/CStr
+                        ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/reversed
@@ -5488,16 +5642,22 @@ Prgm
                                     )
                                 }
                             ) -> /Data/List/Cons
-                            [ /T=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            [ /T=
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                )
                             ]
-                            ( /head=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( /head=
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                )
                             , /tail=/Data/List/Nil
                             ) = /Data/List/Cons
                             ( EAppArg
-                                { eaaArg = Value /head -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
+                                { eaaArg = Value /head ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                    ) = /Data/String/Text
                                     ( EAppArg
                                         { eaaArg = Value /chars -> /Data/List/Cons[ /T=/Data/Char ]
                                             ( /head=/Data/Char
@@ -5548,13 +5708,17 @@ Prgm
                             ( EAppArg
                                 { eaaArg = Value /r -> /Data/Char = '\n' }
                             ) -> /Data/List/Cons[ /T=∀/Data/String ]
-                            ( /head=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( /head=
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                )
                             , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
                             ) = /Data/List/Cons
                             ( EAppArg
-                                { eaaArg = Value /head -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
+                                { eaaArg = Value /head ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                    ) = /Data/String/Text
                                     ( EAppArg
                                         { eaaArg = Value /chars -> ∀/Data/List/ConsList[ /T=/Data/Char ] =
                                             ( /Data/String/reverseChars
@@ -5621,7 +5785,11 @@ Prgm
                             ( EAppArg { eaaArg = Value /sep -> ∀/Data/String } )
                             ( EAppArg { eaaArg = Value /this -> ∀/Data/String } ) -> ∀/Data/List/ConsList[ /T=∀/Data/String ]
                         ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/split
+                            ( EAppArg { eaaArg = Value /sep -> /Catln/CStr } )
+                            ( EAppArg { eaaArg = Value /this -> /Catln/CStr.. } ) -> ∀/Data/List/ConsList[ /T=/Catln/CStr ]
+                        ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/split
@@ -5638,16 +5806,22 @@ Prgm
                                     )
                                 }
                             ) -> /Data/List/Cons
-                            [ /T=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            [ /T=
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                )
                             ]
-                            ( /head=/Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                            ( /head=
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                )
                             , /tail=/Data/List/Nil
                             ) = /Data/List/Cons
                             ( EAppArg
-                                { eaaArg = Value /head -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
+                                { eaaArg = Value /head ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                    ) = /Data/String/Text
                                     ( EAppArg
                                         { eaaArg = Value /chars -> TVArg /cs = ( Value /cs ↦ TVArg /cs ) }
                                     )
@@ -5711,6 +5885,8 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -5858,8 +6034,11 @@ Prgm
                   Every string converts to a [String/Text], so everything a string does is written here once,
                   over the list of its characters, and works on any string: the tree build converts a [CStr] on
                   the way into such a definition. The operations recur over the characters directly rather than
-                  through the list operations of @core/list.ct@, which builds a list's text out of strings and so
-                  imports this page."
+                  through the list operations of @core/list.ct@.
+                  Most operations also have a [#runtime] arm over the [/Catln/CStr], written beside the one over
+                  the characters, which does the same on the packed text without taking it apart. Which of the two
+                  runs is the arm the string's representation reaches, and the two are held to agree by the
+                  representation-agreement test derived for each pair."
                 }
             )
         , /Catln/#print
@@ -6879,7 +7058,7 @@ Prgm
         , /Catln/#print
             ( EAppArg
                 { eaaArg = Value /p -> /Data/Primitive/Integer =
-                    ( /Data/String/length
+                    ( /length
                         ( EAppArg
                             { eaaArg = Value /this ->
                                 ( /Data/String/Text
@@ -6900,7 +7079,7 @@ Prgm
         , /Catln/#print
             ( EAppArg
                 { eaaArg = Value /p -> /Data/Primitive/Integer =
-                    ( /Data/String/length
+                    ( /length
                         ( EAppArg
                             { eaaArg = Value /this ->
                                 ( /Data/String/Text
@@ -6916,6 +7095,50 @@ Prgm
                     ( /Data/String/Text
                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
                     ) = "0"
+                }
+            )
+        , /Catln/#print
+            ( EAppArg
+                { eaaArg = Value /p -> /Data/Primitive/Integer =
+                    ( /length
+                        ( EAppArg
+                            { eaaArg = Value /this -> ∀/Data/String =
+                                ( /Data/String/fromChars
+                                    ( EAppArg
+                                        { eaaArg = Value /chars -> /Data/List/Cons[ /T=/Data/Char ]
+                                            ( /head=/Data/Char
+                                            , /tail=/Data/List/Cons[ /T=/Data/Char ]
+                                                ( /head=/Data/Char
+                                                , /tail=/Data/List/Nil
+                                                )
+                                            ) = /Data/List/Cons
+                                            ( EAppArg
+                                                { eaaArg = Value /head -> /Data/Char = 'h' }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /tail -> /Data/List/Cons[ /T=/Data/Char ]
+                                                    ( /head=/Data/Char
+                                                    , /tail=/Data/List/Nil
+                                                    ) = /Data/List/Cons
+                                                    ( EAppArg
+                                                        { eaaArg = Value /head -> /Data/Char = 'i' }
+                                                    )
+                                                    ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                                }
+                                            )
+                                        }
+                                    ) ↦ ∀/Data/String
+                                )
+                            }
+                        ) ↦ /Data/Primitive/Integer
+                    )
+                }
+            )
+            ( EAppArg
+                { eaaArg = Value /result ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "2"
                 }
             )
         , /Catln/#print
@@ -7183,7 +7406,10 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ∀/Data/String =
+                { eaaArg = Value /p ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                    ) =
                     ( /Data/String/take
                         ( EAppArg
                             { eaaArg = Value /n -> /Data/Primitive/Integer = 2 }
@@ -7194,7 +7420,7 @@ Prgm
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
                                 ) = "hello"
                             }
-                        ) ↦ ∀/Data/String
+                        ) ↦ ( /Data/String/Text.. + /Catln/CStr )
                     )
                 }
             )
@@ -7207,7 +7433,10 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ∀/Data/String =
+                { eaaArg = Value /p ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                    ) =
                     ( /Data/String/drop
                         ( EAppArg
                             { eaaArg = Value /n -> /Data/Primitive/Integer = 2 }
@@ -7218,7 +7447,7 @@ Prgm
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
                                 ) = "hello"
                             }
-                        ) ↦ ∀/Data/String
+                        ) ↦ ( /Data/String/Text.. + /Catln/CStr )
                     )
                 }
             )
@@ -7231,7 +7460,10 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ∀/Data/String =
+                { eaaArg = Value /p ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                    ) =
                     ( /Data/String/take
                         ( EAppArg
                             { eaaArg = Value /n -> /Data/Primitive/Integer = 9 }
@@ -7242,7 +7474,7 @@ Prgm
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
                                 ) = "hello"
                             }
-                        ) ↦ ∀/Data/String
+                        ) ↦ ( /Data/String/Text.. + /Catln/CStr )
                     )
                 }
             )
@@ -7255,7 +7487,10 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ∀/Data/String =
+                { eaaArg = Value /p ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                    ) =
                     ( /Data/String/slice
                         ( EAppArg
                             { eaaArg = Value /start -> /Data/Primitive/Integer = 1 }
@@ -7269,7 +7504,7 @@ Prgm
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
                                 ) = "hello"
                             }
-                        ) ↦ ∀/Data/String
+                        ) ↦ ( /Data/String/Text.. + /Catln/CStr )
                     )
                 }
             )
@@ -7282,15 +7517,24 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ∀/Data/String =
-                    ( /Data/String/reversed
+                { eaaArg = Value /p ->
+                    ( /Data/String/Text
+                        ( /chars=
+                            ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                ( /head=/Data/Char
+                                , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                )
+                            )
+                        ) + /Catln/CStr
+                    ) =
+                    ( /reversed
                         ( EAppArg
                             { eaaArg = Value /this ->
                                 ( /Data/String/Text
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
                                 ) = "hello"
                             }
-                        ) ↦ ∀/Data/String
+                        ) ↦ ( /Data/String/Text.. + /Catln/CStr )
                     )
                 }
             )
@@ -7535,7 +7779,10 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ∀/Data/String =
+                { eaaArg = Value /p ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                    ) =
                     ( /toUpper
                         ( EAppArg
                             { eaaArg = Value /this ->
@@ -7543,7 +7790,7 @@ Prgm
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
                                 ) = "Hello"
                             }
-                        ) ↦ ∀/Data/String
+                        ) ↦ ( /Data/String/Text.. + /Catln/CStr )
                     )
                 }
             )
@@ -7556,7 +7803,10 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p -> ∀/Data/String =
+                { eaaArg = Value /p ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                    ) =
                     ( /toLower
                         ( EAppArg
                             { eaaArg = Value /this ->
@@ -7564,7 +7814,7 @@ Prgm
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
                                 ) = "Hello"
                             }
-                        ) ↦ ∀/Data/String
+                        ) ↦ ( /Data/String/Text.. + /Catln/CStr )
                     )
                 }
             )
@@ -7580,7 +7830,16 @@ Prgm
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
                     ( /operator==
                         ( EAppArg
-                            { eaaArg = Value /l -> ∀/Data/String =
+                            { eaaArg = Value /l ->
+                                ( /Data/String/Text
+                                    ( /chars=
+                                        ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                            ( /head=/Data/Char
+                                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                            )
+                                        )
+                                    ) + /Catln/CStr
+                                ) =
                                 ( /Data/String/trim
                                     ( EAppArg
                                         { eaaArg = Value /this ->
@@ -7589,7 +7848,7 @@ Prgm
                                             ) = "  hi 
                                           "
                                         }
-                                    ) ↦ ∀/Data/String
+                                    ) ↦ ( /Data/String/Text.. + /Catln/CStr )
                                 )
                             }
                         )
@@ -7615,7 +7874,10 @@ Prgm
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
                     ( /operator==
                         ( EAppArg
-                            { eaaArg = Value /l -> ∀/Data/String =
+                            { eaaArg = Value /l ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                ) =
                                 ( /Data/String/trimStart
                                     ( EAppArg
                                         { eaaArg = Value /this ->
@@ -7623,7 +7885,7 @@ Prgm
                                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
                                             ) = "  hi "
                                         }
-                                    ) ↦ ∀/Data/String
+                                    ) ↦ ( /Data/String/Text.. + /Catln/CStr )
                                 )
                             }
                         )
@@ -7649,7 +7911,16 @@ Prgm
                 { eaaArg = Value /p -> ∀/Data/Primitive/Boolean =
                     ( /operator==
                         ( EAppArg
-                            { eaaArg = Value /l -> ∀/Data/String =
+                            { eaaArg = Value /l ->
+                                ( /Data/String/Text
+                                    ( /chars=
+                                        ( /Data/List/Nil + /Data/List/Cons[ /T=/Data/Char ]
+                                            ( /head=/Data/Char
+                                            , /tail=∀/Data/List/ConsList[ /T=/Data/Char ]
+                                            )
+                                        )
+                                    ) + /Catln/CStr
+                                ) =
                                 ( /Data/String/trimEnd
                                     ( EAppArg
                                         { eaaArg = Value /this ->
@@ -7657,7 +7928,7 @@ Prgm
                                                 ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
                                             ) = " hi  "
                                         }
-                                    ) ↦ ∀/Data/String
+                                    ) ↦ ( /Data/String/Text.. + /Catln/CStr )
                                 )
                             }
                         )
@@ -7778,22 +8049,6 @@ Prgm
                     ( /Data/String/Text
                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
                     ) = "## Splitting and joining"
-                }
-            )
-        , /Catln/#md
-            ( EAppArg
-                { eaaArg = Value /text ->
-                    ( /Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
-                    ) = "A list of strings renders through @core/list.ct@, which this page cannot import, so the pieces"
-                }
-            )
-        , /Catln/#md
-            ( EAppArg
-                { eaaArg = Value /text ->
-                    ( /Data/String/Text
-                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
-                    ) = "  below are shown [join]ed with a bar between them."
                 }
             )
         , /Catln/#print

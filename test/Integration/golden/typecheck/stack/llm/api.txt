@@ -378,23 +378,23 @@ Prgm
                                     ( /body=/Catln/CStr
                                     , /headers=/Data/List/Cons
                                         [ /T=/Http/Header
-                                            ( /name=/Data/String/Text..
+                                            ( /name=( /Data/String/Text.. + /Catln/CStr )
                                             , /value=∀/Data/String
                                             )
                                         ]
                                         ( /head=/Http/Header
-                                            ( /name=/Data/String/Text..
-                                            , /value=/Data/String/Text..
+                                            ( /name=( /Data/String/Text.. + /Catln/CStr )
+                                            , /value=( /Data/String/Text.. + /Catln/CStr )
                                             )
                                         , /tail=
                                             ( /Data/List/Nil + /Data/List/Cons
                                                 [ /T=/Http/Header
-                                                    ( /name=/Data/String/Text..
+                                                    ( /name=( /Data/String/Text.. + /Catln/CStr )
                                                     , /value=∀/Data/String
                                                     )
                                                 ]
                                                 ( /head=/Http/Header
-                                                    ( /name=/Data/String/Text..
+                                                    ( /name=( /Data/String/Text.. + /Catln/CStr )
                                                     , /value=∀/Data/String
                                                     )
                                                 , /tail=/Data/List/Nil
@@ -413,23 +413,23 @@ Prgm
                                     )
                                     ( Value /headers -> /Data/List/Cons
                                         [ /T=/Http/Header
-                                            ( /name=/Data/String/Text..
+                                            ( /name=( /Data/String/Text.. + /Catln/CStr )
                                             , /value=∀/Data/String
                                             )
                                         ]
                                         ( /head=/Http/Header
-                                            ( /name=/Data/String/Text..
-                                            , /value=/Data/String/Text..
+                                            ( /name=( /Data/String/Text.. + /Catln/CStr )
+                                            , /value=( /Data/String/Text.. + /Catln/CStr )
                                             )
                                         , /tail=
                                             ( /Data/List/Nil + /Data/List/Cons
                                                 [ /T=/Http/Header
-                                                    ( /name=/Data/String/Text..
+                                                    ( /name=( /Data/String/Text.. + /Catln/CStr )
                                                     , /value=∀/Data/String
                                                     )
                                                 ]
                                                 ( /head=/Http/Header
-                                                    ( /name=/Data/String/Text..
+                                                    ( /name=( /Data/String/Text.. + /Catln/CStr )
                                                     , /value=∀/Data/String
                                                     )
                                                 , /tail=/Data/List/Nil
@@ -497,7 +497,10 @@ Prgm
                                 [ /T=∀/Data/Json
                                 , /E=∀/Data/JsonAccessErr
                                 ] = /Data/jsonMember( Value /value -> TVArg /value = Value /value )
-                                ( Value /key -> /Data/String/Text.. = CStr
+                                ( Value /key ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = "error" }
                                 )
                             )( Value /response -> TVArg /value = Value /value )
@@ -706,7 +709,10 @@ Prgm
                                 [ /T=∀/Data/Json
                                 , /E=∀/Data/JsonAccessErr
                                 ] = /Data/jsonMember( Value /value -> TVArg /e = Value /e )
-                                ( Value /key -> /Data/String/Text.. = CStr
+                                ( Value /key ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = "message" }
                                 )
                             )( Value /e -> TVArg /e = Value /e )
@@ -801,83 +807,101 @@ Prgm
                     , omiDefs =
                         [ /Llm/llmHeaders( Value /key -> /Data/Maybe/Nothing = Value /Data/Maybe/Nothing ) -> /Data/List/Cons
                             [ /T=/Http/Header
-                                ( /name=/Data/String/Text..
-                                , /value=/Data/String/Text..
+                                ( /name=( /Data/String/Text.. + /Catln/CStr )
+                                , /value=( /Data/String/Text.. + /Catln/CStr )
                                 )
                             ]
                             ( /head=/Http/Header
-                                ( /name=/Data/String/Text..
-                                , /value=/Data/String/Text..
+                                ( /name=( /Data/String/Text.. + /Catln/CStr )
+                                , /value=( /Data/String/Text.. + /Catln/CStr )
                                 )
                             , /tail=/Data/List/Nil
                             ) = /Data/List/Cons
                             ( Value /head -> /Http/Header
-                                ( /name=/Data/String/Text..
-                                , /value=/Data/String/Text..
+                                ( /name=( /Data/String/Text.. + /Catln/CStr )
+                                , /value=( /Data/String/Text.. + /Catln/CStr )
                                 ) = /Http/Header
-                                ( Value /name -> /Data/String/Text.. = CStr
+                                ( Value /name ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = "Content-Type" }
                                 )
-                                ( Value /value -> /Data/String/Text.. = CStr
+                                ( Value /value ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = "application/json" }
                                 )
                             )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                         , /Llm/llmHeaders
                             ( Value /key -> /Data/Maybe/Some[ /T=∀/Data/String ]( /value=∀/Data/String ) = /Data/Maybe/Some( Value /value@Value /k -> ∀/Data/String ) ) -> /Data/List/Cons
                             [ /T=/Http/Header
-                                ( /name=/Data/String/Text..
+                                ( /name=( /Data/String/Text.. + /Catln/CStr )
                                 , /value=∀/Data/String
                                 )
                             ]
                             ( /head=/Http/Header
-                                ( /name=/Data/String/Text..
-                                , /value=/Data/String/Text..
+                                ( /name=( /Data/String/Text.. + /Catln/CStr )
+                                , /value=( /Data/String/Text.. + /Catln/CStr )
                                 )
                             , /tail=/Data/List/Cons
                                 [ /T=/Http/Header
-                                    ( /name=/Data/String/Text..
+                                    ( /name=( /Data/String/Text.. + /Catln/CStr )
                                     , /value=∀/Data/String
                                     )
                                 ]
                                 ( /head=/Http/Header
-                                    ( /name=/Data/String/Text..
+                                    ( /name=( /Data/String/Text.. + /Catln/CStr )
                                     , /value=∀/Data/String
                                     )
                                 , /tail=/Data/List/Nil
                                 )
                             ) = /Data/List/Cons
                             ( Value /head -> /Http/Header
-                                ( /name=/Data/String/Text..
-                                , /value=/Data/String/Text..
+                                ( /name=( /Data/String/Text.. + /Catln/CStr )
+                                , /value=( /Data/String/Text.. + /Catln/CStr )
                                 ) = /Http/Header
-                                ( Value /name -> /Data/String/Text.. = CStr
+                                ( Value /name ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = "Content-Type" }
                                 )
-                                ( Value /value -> /Data/String/Text.. = CStr
+                                ( Value /value ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = "application/json" }
                                 )
                             )
                             ( Value /tail -> /Data/List/Cons
                                 [ /T=/Http/Header
-                                    ( /name=/Data/String/Text..
+                                    ( /name=( /Data/String/Text.. + /Catln/CStr )
                                     , /value=∀/Data/String
                                     )
                                 ]
                                 ( /head=/Http/Header
-                                    ( /name=/Data/String/Text..
+                                    ( /name=( /Data/String/Text.. + /Catln/CStr )
                                     , /value=∀/Data/String
                                     )
                                 , /tail=/Data/List/Nil
                                 ) = /Data/List/Cons
                                 ( Value /head -> /Http/Header
-                                    ( /name=/Data/String/Text..
+                                    ( /name=( /Data/String/Text.. + /Catln/CStr )
                                     , /value=∀/Data/String
                                     ) = /Http/Header
-                                    ( Value /name -> /Data/String/Text.. = CStr
+                                    ( Value /name ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = CStr
                                         { csValue = "Authorization" }
                                     )
                                     ( Value /value -> ∀/Data/String = /operator++
-                                        ( Value /l -> /Data/String/Text.. = CStr
+                                        ( Value /l ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                            ) = CStr
                                             { csValue = "Bearer " }
                                         )( Value /r -> TVArg /k = Value /k )
                                     )
@@ -919,7 +943,10 @@ Prgm
                                 [ /T=∀/Data/Json
                                 , /E=∀/Data/JsonAccessErr
                                 ] = /Data/jsonMember( Value /value -> TVArg /response = Value /response )
-                                ( Value /key -> /Data/String/Text.. = CStr
+                                ( Value /key ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = "choices" }
                                 )
                             )
@@ -983,22 +1010,23 @@ Prgm
                                                         ( /entries=/Data/List/Cons
                                                             [ /T=/Data/Json/Member
                                                                 ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                , /key=/Data/String/Text..
+                                                                , /key=( /Data/String/Text.. + /Catln/CStr )
                                                                 )
                                                             ]
                                                             ( /head=/Data/Json/Member
-                                                                ( /value=/Data/Json/Str( /value=/Data/String/Text.. )
-                                                                , /key=/Data/String/Text..
+                                                                ( /value=/Data/Json/Str
+                                                                    ( /value=( /Data/String/Text.. + /Catln/CStr ) )
+                                                                , /key=( /Data/String/Text.. + /Catln/CStr )
                                                                 )
                                                             , /tail=/Data/List/Cons
                                                                 [ /T=/Data/Json/Member
                                                                     ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                    , /key=/Data/String/Text..
+                                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
                                                                     )
                                                                 ]
                                                                 ( /head=/Data/Json/Member
                                                                     ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                    , /key=/Data/String/Text..
+                                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
                                                                     )
                                                                 , /tail=/Data/List/Nil
                                                                 )
@@ -1009,22 +1037,23 @@ Prgm
                                                         ( /entries=/Data/List/Cons
                                                             [ /T=/Data/Json/Member
                                                                 ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                , /key=/Data/String/Text..
+                                                                , /key=( /Data/String/Text.. + /Catln/CStr )
                                                                 )
                                                             ]
                                                             ( /head=/Data/Json/Member
-                                                                ( /value=/Data/Json/Str( /value=/Data/String/Text.. )
-                                                                , /key=/Data/String/Text..
+                                                                ( /value=/Data/Json/Str
+                                                                    ( /value=( /Data/String/Text.. + /Catln/CStr ) )
+                                                                , /key=( /Data/String/Text.. + /Catln/CStr )
                                                                 )
                                                             , /tail=/Data/List/Cons
                                                                 [ /T=/Data/Json/Member
                                                                     ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                    , /key=/Data/String/Text..
+                                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
                                                                     )
                                                                 ]
                                                                 ( /head=/Data/Json/Member
                                                                     ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                    , /key=/Data/String/Text..
+                                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
                                                                     )
                                                                 , /tail=/Data/List/Nil
                                                                 )
@@ -1034,12 +1063,12 @@ Prgm
                                                     )
                                                 )
                                             )
-                                        , /key=/Data/String/Text..
+                                        , /key=( /Data/String/Text.. + /Catln/CStr )
                                         )
                                     ]
                                     ( /head=/Data/Json/Member
                                         ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                        , /key=/Data/String/Text..
+                                        , /key=( /Data/String/Text.. + /Catln/CStr )
                                         )
                                     , /tail=/Data/List/Cons
                                         [ /T=/Data/Json/Member
@@ -1049,541 +1078,533 @@ Prgm
                                                         ( /entries=/Data/List/Cons
                                                             [ /T=/Data/Json/Member
                                                                 ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                , /key=/Data/String/Text..
+                                                                , /key=( /Data/String/Text.. + /Catln/CStr )
                                                                 )
                                                             ]
                                                             ( /head=/Data/Json/Member
-                                                                ( /value=/Data/Json/Str( /value=/Data/String/Text.. )
-                                                                , /key=/Data/String/Text..
+                                                                ( /value=/Data/Json/Str
+                                                                    ( /value=( /Data/String/Text.. + /Catln/CStr ) )
+                                                                , /key=( /Data/String/Text.. + /Catln/CStr )
                                                                 )
                                                             , /tail=/Data/List/Cons
                                                                 [ /T=/Data/Json/Member
                                                                     ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                    , /key=/Data/String/Text..
+                                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
                                                                     )
                                                                 ]
                                                                 ( /head=/Data/Json/Member
-                                                                    ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                    , /key=/Data/String/Text..
-                                                                    )
-                                                                , /tail=/Data/List/Nil
-                                                                )
-                                                            )
-                                                        )
-                                                    ]
-                                                    ( /head=/Data/Json/Object
-                                                        ( /entries=/Data/List/Cons
-                                                            [ /T=/Data/Json/Member
-                                                                ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                , /key=/Data/String/Text..
-                                                                )
-                                                            ]
-                                                            ( /head=/Data/Json/Member
-                                                                ( /value=…( truncated ) = /Data/Json/Object
-                                                                    ( Value /entries -> /Data/List/Cons
-                                                                        [ /T=/Data/Json/Member
-                                                                            ( /value=
-                                                                                ( /Data/Json/Str( /value=∀/Data/String ) + /Data/Json/Array
-                                                                                    ( /entries=/Data/List/Cons
-                                                                                        [ /T=/Data/Json/Object
-                                                                                            ( /entries=/Data/List/Cons
-                                                                                                [ /T=/Data/Json/Member
-                                                                                                    ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                    , /key=/Data/String/Text..
-                                                                                                    )
-                                                                                                ]
-                                                                                                ( /head=/Data/Json/Member
-                                                                                                    ( /value=/Data/Json/Str( /value=/Data/String/Text.. )
-                                                                                                    , /key=/Data/String/Text..
-                                                                                                    )
-                                                                                                , /tail=/Data/List/Cons
-                                                                                                    [ /T=/Data/Json/Member
-                                                                                                        ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                        , /key=/Data/String/Text..
-                                                                                                        )
-                                                                                                    ]
-                                                                                                    ( /head=/Data/Json/Member
-                                                                                                        ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                        , /key=/Data/String/Text..
-                                                                                                        )
-                                                                                                    , /tail=/Data/List/Nil
-                                                                                                    )
-                                                                                                )
-                                                                                            )
-                                                                                        ]
-                                                                                        ( /head=/Data/Json/Object
-                                                                                            ( /entries=/Data/List/Cons
-                                                                                                [ /T=/Data/Json/Member
-                                                                                                    ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                    , /key=/Data/String/Text..
-                                                                                                    )
-                                                                                                ]
-                                                                                                ( /head=/Data/Json/Member
-                                                                                                    ( /value=/Data/Json/Str( /value=/Data/String/Text.. )
-                                                                                                    , /key=/Data/String/Text..
-                                                                                                    )
-                                                                                                , /tail=/Data/List/Cons
-                                                                                                    [ /T=/Data/Json/Member
-                                                                                                        ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                        , /key=/Data/String/Text..
-                                                                                                        )
-                                                                                                    ]
-                                                                                                    ( /head=/Data/Json/Member
-                                                                                                        ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                        , /key=/Data/String/Text..
-                                                                                                        )
-                                                                                                    , /tail=/Data/List/Nil
-                                                                                                    )
-                                                                                                )
-                                                                                            )
-                                                                                        , /tail=/Data/List/Nil
-                                                                                        )
-                                                                                    )
-                                                                                )
-                                                                            , /key=/Data/String/Text..
-                                                                            )
-                                                                        ]
-                                                                        ( /head=/Data/Json/Member
-                                                                            ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                            , /key=/Data/String/Text..
-                                                                            )
-                                                                        , /tail=/Data/List/Cons
+                                                                    ( /value=/Data/J…( truncated ) = /Data/Json/Object
+                                                                        ( Value /entries -> /Data/List/Cons
                                                                             [ /T=/Data/Json/Member
-                                                                                ( /value=/Data/Json/Array
-                                                                                    ( /entries=/Data/List/Cons
-                                                                                        [ /T=/Data/Json/Object
-                                                                                            ( /entries=/Data/List/Cons
-                                                                                                [ /T=/Data/Json/Member
-                                                                                                    ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                    , /key=/Data/String/Text..
-                                                                                                    )
-                                                                                                ]
-                                                                                                ( /head=/Data/Json/Member
-                                                                                                    ( /value=/Data/Json/Str( /value=/Data/String/Text.. )
-                                                                                                    , /key=/Data/String/Text..
-                                                                                                    )
-                                                                                                , /tail=/Data/List/Cons
+                                                                                ( /value=
+                                                                                    ( /Data/Json/Str( /value=∀/Data/String ) + /Data/Json/Array
+                                                                                        ( /entries=/Data/List/Cons
+                                                                                            [ /T=/Data/Json/Object
+                                                                                                ( /entries=/Data/List/Cons
                                                                                                     [ /T=/Data/Json/Member
                                                                                                         ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                        , /key=/Data/String/Text..
+                                                                                                        , /key=( /Data/String/Text.. + /Catln/CStr )
                                                                                                         )
                                                                                                     ]
                                                                                                     ( /head=/Data/Json/Member
+                                                                                                        ( /value=/Data/Json/Str
+                                                                                                            ( /value=( /Data/String/Text.. + /Catln/CStr ) )
+                                                                                                        , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                        )
+                                                                                                    , /tail=/Data/List/Cons
+                                                                                                        [ /T=/Data/Json/Member
+                                                                                                            ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                            , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                            )
+                                                                                                        ]
+                                                                                                        ( /head=/Data/Json/Member
+                                                                                                            ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                            , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                            )
+                                                                                                        , /tail=/Data/List/Nil
+                                                                                                        )
+                                                                                                    )
+                                                                                                )
+                                                                                            ]
+                                                                                            ( /head=/Data/Json/Object
+                                                                                                ( /entries=/Data/List/Cons
+                                                                                                    [ /T=/Data/Json/Member
                                                                                                         ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                        , /key=/Data/String/Text..
+                                                                                                        , /key=( /Data/String/Text.. + /Catln/CStr )
                                                                                                         )
-                                                                                                    , /tail=/Data/List/Nil
-                                                                                                    )
-                                                                                                )
-                                                                                            )
-                                                                                        ]
-                                                                                        ( /head=/Data/Json/Object
-                                                                                            ( /entries=/Data/List/Cons
-                                                                                                [ /T=/Data/Json/Member
-                                                                                                    ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                    , /key=/Data/String/Text..
-                                                                                                    )
-                                                                                                ]
-                                                                                                ( /head=/Data/Json/Member
-                                                                                                    ( /value=/Data/Json/Str
-                                                                                                        ( /value=/Data…( truncated ) = /Data/List/Cons
-                                                                                                            ( Value /head -> /Data/Json/Member
-                                                                                                                ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                                , /key=/Data/String/Text..
-                                                                                                                ) = /Data/Json/Member
-                                                                                                                ( Value /key -> /Data/String/Text.. = CStr
-                                                                                                                    { csValue = "model" }
-                                                                                                                )
-                                                                                                                ( Value /value -> /Data/Json/Str( /value=∀/Data/String ) = /Data/Json/Str( Value /value -> TVArg /model = Value /model ) )
+                                                                                                    ]
+                                                                                                    ( /head=/Data/Json/Member
+                                                                                                        ( /value=/Data/Json/Str
+                                                                                                            ( /value=( /Data/String/Text.. + /Catln/CStr ) )
+                                                                                                        , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                        )
+                                                                                                    , /tail=/Data/List/Cons
+                                                                                                        [ /T=/Data/Json/Member
+                                                                                                            ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                            , /key=( /Data/String/Text.. + /Catln/CStr )
                                                                                                             )
-                                                                                                            ( Value /tail -> /Data/List/Cons
-                                                                                                                [ /T=/Data/Json/Member
-                                                                                                                    ( /value=/Data/Json/Array
-                                                                                                                        ( /entries=/Data/List/Cons
-                                                                                                                            [ /T=/Data/Json/Object
-                                                                                                                                ( /entries=/Data/List/Cons
-                                                                                                                                    [ /T=/Data/Json/Member
-                                                                                                                                        ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                                                        , /key=/Data/String/Text..
-                                                                                                                                        )
-                                                                                                                                    ]
-                                                                                                                                    ( /head=/Data/Json/Member
-                                                                                                                                        ( /value=/Data/Json/Str( /value=/Data/String/Text.. )
-                                                                                                                                        , /key=/Data/String/Text..
-                                                                                                                                        )
-                                                                                                                                    , /tail=/Data/List/Cons
-                                                                                                                                        [ /T=/Data/Json/Member
-                                                                                                                                            ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                                                            , /key=/Data/String/Text..
-                                                                                                                                            )
-                                                                                                                                        ]
-                                                                                                                                        ( /head=/Data/Json/Member
-                                                                                                                                            ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                                                            , /key=/Data/String/Text..
-                                                                                                                                            )
-                                                                                                                                        , /tail=/Data/List/Nil
-                                                                                                                                        )
-                                                                                                                                    )
-                                                                                                                                )
-                                                                                                                            ]
-                                                                                                                            ( /head=/Data/Json/Object
-                                                                                                                                ( /entries=/Data/List/Cons
-                                                                                                                                    [ /T=/Data/Json/Member
-                                                                                                                                        ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                                                        , /key=/Data/String/Text..
-                                                                                                                                        )
-                                                                                                                                    ]
-                                                                                                                                    ( /head=/Data/Json/Member
-                                                                                                                                        ( /value=/Data/Json/Str( /value=/Data/String/Text.. )
-                                                                                                                                        , /key=/Data/String/Text..
-                                                                                                                                        )
-                                                                                                                                    , /tail=/Data/List/Cons
-                                                                                                                                        [ /T=/Data/Json/Member
-                                                                                                                                            ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                                                            , /key=/Data/String/Text..
-                                                                                                                                            )
-                                                                                                                                        ]
-                                                                                                                                        ( /head=/Data/Json/Member
-                                                                                                                                            ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                                                            , /key=/Data/String/Text..
-                                                                                                                                            )
-                                                                                                                                        , /tail=/Data/List/Nil
-                                                                                                                                        )
-                                                                                                                                    )
-                                                                                                                                )
-                                                                                                                            , /tail=/Data/List/Nil
-                                                                                                                            )
-                                                                                                                        )
-                                                                                                                    , /key=/Data/String/Text..
-                                                                                                                    )
-                                                                                                                ]
-                                                                                                                ( /head=/Data/Json/Member
-                                                                                                                    ( /value=/Data/Json/Array
-                                                                                                                        ( /entries=/Data/List/Cons
-                                                                                                                            [ /T=/Data/Json/Object
-                                                                                                                                ( /entries=/Data/List/Cons
-                                                                                                                                    [ /T=/Data/Json/Member
-                                                                                                                                        ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                                                        , /key=/Data/String/Text..
-                                                                                                                                        )
-                                                                                                                                    ]
-                                                                                                                                    ( /head=/Data/Json/Member
-                                                                                                                                        ( /value=/Data/Json/Str( /value=/Data/String/Text.. )
-                                                                                                                                        , /key=/Data/String/Text..
-                                                                                                                                        )
-                                                                                                                                    , /tail=/Data/List/Cons
-                                                                                                                                        [ /T=/Data/Json/Member
-                                                                                                                                            ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                                                            , /key=/Data/String/Text..
-                                                                                                                                            )
-                                                                                                                                        ]
-                                                                                                                                        ( /head=/Data/Json/Member
-                                                                                                                                            ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                                                            , /key=/Data/String/Text..
-                                                                                                                                            )
-                                                                                                                                        , /tail=/Data/List/Nil
-                                                                                                                                        )
-                                                                                                                                    )
-                                                                                                                                )
-                                                                                                                            ]
-                                                                                                                            ( /head=/Data/Json/Object
-                                                                                                                                ( /entries=/Data/List/Cons
-                                                                                                                                    [ /T=/Data/Json/Member
-                                                                                                                                        ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                                                        , /key=/Data/String/Text..
-                                                                                                                                        )
-                                                                                                                                    ]
-                                                                                                                                    ( /head=/Data/Json/Member
-                                                                                                                                        ( /value=/Data/Json/Str( /value=/Data/String/Text.. )
-                                                                                                                                        , /key=/Data/String/Text..
-                                                                                                                                        )
-                                                                                                                                    , /tail=/Data/List/Cons
-                                                                                                                                        [ /T=/Data/Json/Member
-                                                                                                                                            ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                                                            , /key=/Data/String/Text..…( truncated ) = /Data/List/Cons
-                                                                                                                                                ( Value /head -> /Data/Json/Member
-                                                                                                                                                    ( /value=/Data/Json/Array
-                                                                                                                                                        ( /entries=/Data/List/Cons
-                                                                                                                                                            [ /T=/Data/Json/Object
-                                                                                                                                                                ( /entries=/Data/List/Cons
-                                                                                                                                                                    [ /T=/Data/Json/Member
-                                                                                                                                                                        ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                                                                                        , /key=/Data/String/Text..
-                                                                                                                                                                        )
-                                                                                                                                                                    ]
-                                                                                                                                                                    ( /head=/Data/Json/Member
-                                                                                                                                                                        ( /value=/Data/Json/Str( /value=/Data/String/Text.. )
-                                                                                                                                                                        , /key=/Data/String/Text..
-                                                                                                                                                                        )
-                                                                                                                                                                    , /tail=/Data/List/Cons
-                                                                                                                                                                        [ /T=/Data/Json/Member
-                                                                                                                                                                            ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                                                                                            , /key=/Data/String/Text..
-                                                                                                                                                                            )
-                                                                                                                                                                        ]
-                                                                                                                                                                        ( /head=/Data/Json/Member
-                                                                                                                                                                            ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                                                                                            , /key=/Data/String/Text..
-                                                                                                                                                                            )
-                                                                                                                                                                        , /tail=/Data/List/Nil
-                                                                                                                                                                        )
-                                                                                                                                                                    )
-                                                                                                                                                                )
-                                                                                                                                                            ]
-                                                                                                                                                            ( /head=/Data/Json/Object
-                                                                                                                                                                ( /entries=/Data/List/Cons
-                                                                                                                                                                    [ /T=/Data/Json/Member
-                                                                                                                                                                        ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                                                                                        , /key=/Data/String/Text..
-                                                                                                                                                                        )
-                                                                                                                                                                    ]
-                                                                                                                                                                    ( /head=/Data/Json/Member
-                                                                                                                                                                        ( /value=/Data/Json/Str( /value=/Data/String/Text.. )
-                                                                                                                                                                        , /key=/Data/String/Text..
-                                                                                                                                                                        )
-                                                                                                                                                                    , /tail=/Data/List/Cons
-                                                                                                                                                                        [ /T=/Data/Json/Member
-                                                                                                                                                                            ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                                                                                            , /key=/Data/String/Text..
-                                                                                                                                                                            )
-                                                                                                                                                                        ]
-                                                                                                                                                                        ( /head=/Data/Json/Member
-                                                                                                                                                                            ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                                                                                            , /key=/Data/String/Text..
-                                                                                                                                                                            )
-                                                                                                                                                                        , /tail=/Data/List/Nil
-                                                                                                                                                                        )
-                                                                                                                                                                    )
-                                                                                                                                                                )
-                                                                                                                                                            , /tail=/Data/List/Nil
-                                                                                                                                                            )
-                                                                                                                                                        )
-                                                                                                                                                    , /key=/Data/String/Text..
-                                                                                                                                                    ) = /Data/Json/Member
-                                                                                                                                                    ( Value /key -> /Data/String/Text.. = CStr
-                                                                                                                                                        { csValue = "messages" }
-                                                                                                                                                    )
-                                                                                                                                                    ( Value /value -> /Data/Json/Array
-                                                                                                                                                        ( /entries=/Data/List/Cons
-                                                                                                                                                            [ /T=/Data/Json/Object
-                                                                                                                                                                ( /entries=/Data/List/Cons
-                                                                                                                                                                    [ /T=/Data/Json/Member
-                                                                                                                                                                        ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                                                                                        , /key=/Data/String/Text..
-                                                                                                                                                                        )
-                                                                                                                                                                    ]
-                                                                                                                                                                    ( /head=/Data/Json/Member
-                                                                                                                                                                        ( /value=/Data/Json/Str( /value=/Data/String/Text.. )
-                                                                                                                                                                        , /key=/Data/String/Text..
-                                                                                                                                                                        )
-                                                                                                                                                                    , /tail=/Data/List/Cons
-                                                                                                                                                                        [ /T=/Data/Json/Member
-                                                                                                                                                                            ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                                                                                            , /key=/Data/String/Text..
-                                                                                                                                                                            )
-                                                                                                                                                                        ]
-                                                                                                                                                                        ( /head=/Data/Json/Member
-                                                                                                                                                                            ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                                                                                            , /key=/Data/String/Text..
-                                                                                                                                                                            )
-                                                                                                                                                                        , /tail=/Data/List/Nil
-                                                                                                                                                                        )
-                                                                                                                                                                    )
-                                                                                                                                                                )
-                                                                                                                                                            ]
-                                                                                                                                                            ( /head=/Data/Json/Object
-                                                                                                                                                                ( /entries=/Data/List/Cons
-                                                                                                                                                                    [ /T=/Data/Json/Member
-                                                                                                                                                                        ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                                                                                        , /key=/Data/String/Text..
-                                                                                                                                                                        )
-                                                                                                                                                                    ]
-                                                                                                                                                                    ( /head=/Data/Json/Member
-                                                                                                                                                                        ( /value=/Data/Json/Str( /value=/Data/String/Text.. )
-                                                                                                                                                                        , /key=/Data/String/Text..
-                                                                                                                                                                        )
-                                                                                                                                                                    , /tail=/Data/List/Cons
-                                                                                                                                                                        [ /T=/Data/Json/Member
-                                                                                                                                                                            ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                                                                                            , /key=/Data/String/Text..
-                                                                                                                                                                            )
-                                                                                                                                                                        ]
-                                                                                                                                                                        ( /head=/Data/Json/Member
-                                                                                                                                                                            ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                                                                                            , /key=/Data/String/Text..
-                                                                                                                                                                            )
-                                                                                                                                                                        , /tail=/Data/List/Nil
-                                                                                                                                                                        )
-                                                                                                                                                                    )
-                                                                                                                                                                )
-                                                                                                                                                            , /tail=/Data/List/Nil
-                                                                                                                                                            )
-                                                                                                                                                        ) = /Data/Json/Array
-                                                                                                                                                        ( Value /entries -> /Data/List/Cons
-                                                                                                                                                            [ /T=/Data/Json/Object
-                                                                                                                                                                ( /entries=/Data/List/Cons
-                                                                                                                                                                    [ /T=/Data/Json/Member
-                                                                                                                                                                        ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                                                                                        , /key=/Data/String/Text..
-                                                                                                                                                                        )
-                                                                                                                                                                    ]
-                                                                                                                                                                    ( /head=/Data/Json/Member
-                                                                                                                                                                        ( /value=/Data/Json/Str( /value=/Data/String/Text.. )
-                                                                                                                                                                        , /key=/Data/String/Text..
-                                                                                                                                                                        )
-                                                                                                                                                                    , /tail=/Data/List/Cons
-                                                                                                                                                                        [ /T=/Data/Json/Member
-                                                                                                                                                                            ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                                                                                            , /key=/Data/String/Text..
-                                                                                                                                                                            )
-                                                                                                                                                                        ]
-                                                                                                                                                                        ( /head=/Data/Json/Member
-                                                                                                                                                                            ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                                                                                            , /key=/Data/String/Text..
-                                                                                                                                                                            )
-                                                                                                                                                                        , /tail=/Data/List/Nil
-                                                                                                                                                                        )
-                                                                                                                                                                    )
-                                                                                                                                                                )
-                                                                                                                                                            ]
-                                                                                                                                                            ( /head=/Data/Json/Object
-                                                                                                                                                                ( /entries=/Data/List/Cons
-                                                                                                                                                                    [ /T=/Data/Json/Member
-                                                                                                                                                                        ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                                                                                        , /key=/Data/String/Text..
-                                                                                                                                                                        )
-                                                                                                                                                                    ]
-                                                                                                                                                                    ( /head=/Data/Json/Member
-                                                                                                                                                                        ( /value=/Data/Json/Str( /value=/Data/String/Text.. )
-                                                                                                                                                                        , /key=/Data/String/Text..
-                                                                                                                                                                        )
-                                                                                                                                                                    , /tail=/Data/List/Cons
-                                                                                                                                                                        [ /T=/Data/Json/Member
-                                                                                                                                                                            ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                                                                                            , /key=/Data/String/Text..
-                                                                                                                                                                            )
-                                                                                                                                                                        ]
-                                                                                                                                                                        ( /head=/Data/Json/Member
-                                                                                                                                                                            ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                                                                                            , /key=/Data/String/Text..
-                                                                                                                                                                            )
-                                                                                                                                                                        , /tail=/Data/List/Nil
-                                                                                                                                                                        )
-                                                                                                                                                                    )
-                                                                                                                                                                )
-                                                                                                                                                            , /tail=/Data/List/Nil
-                                                                                                                                                            ) = /Data/List/Cons
-                                                                                                                                                            ( Value /head -> /Data/Json/Object
-                                                                                                                                                                ( /entries=/Data/List/Cons
-                                                                                                                                                                    [ /T=/Data/Json/Member
-                                                                                                                                                                        ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                                                                                        , /key=/Data/String/Text..
-                                                                                                                                                                        )
-                                                                                                                                                                    ]
-                                                                                                                                                                    ( /head=/Data/Json/Member
-                                                                                                                                                                        ( /value=/Data/Json/Str( /value=/Data/String/Text.. )
-                                                                                                                                                                        , /key=/Data/String/Text..
-                                                                                                                                                                        )
-                                                                                                                                                                    , /tail=/Data/List/Cons
-                                                                                                                                                                        [ /T=/Data/Json/Member
-                                                                                                                                                                            ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                                                                                            , /key=/Data/String/Text..
-                                                                                                                                                                            )
-                                                                                                                                                                        ]
-                                                                                                                                                                        ( /head=/Data/Json/Member
-                                                                                                                                                                            ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                                                                                            , /key=/Data/String/Text..
-                                                                                                                                                                            )
-                                                                                                                                                                        , /tail=/Data/List/Nil
-                                                                                                                                                                        )
-                                                                                                                                                                    )
-                                                                                                                                                                ) = /Data/Json/Object
-                                                                                                                                                                ( Value /entries -> /Data/List/Cons
-                                                                                                                                                                    [ /T=/Data/Json/Member
-                                                                                                                                                                        ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                                                                                        , /key=/Data/String/Text..
-                                                                                                                                                                        )
-                                                                                                                                                                    ]
-                                                                                                                                                                    ( /head=/Data/Json/Member
-                                                                                                                                                                        ( /value=/Data/Json/Str( /value=/Data/String/Text.. )
-                                                                                                                                                                        , /key=/Data/String/Text..
-                                                                                                                                                                        )
-                                                                                                                                                                    , /tail=/Data/List/Cons
-                                                                                                                                                                        [ /T=/Data/Json/Member
-                                                                                                                                                                            ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                                                                                            , /key=/Data/String/Text..
-                                                                                                                                                                            )
-                                                                                                                                                                        ]
-                                                                                                                                                                        ( /head=/Data/Json/Member
-                                                                                                                                                                            ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                                                                                            , /key=/Data/String/Text..
-                                                                                                                                                                            )
-                                                                                                                                                                        , /tail=/Data/List/Nil
-                                                                                                                                                                        )
-                                                                                                                                                                    ) = /Data/List/Cons
-                                                                                                                                                                    ( Value /head -> /Data/Json/Member
-                                                                                                                                                                        ( /value=/Data/Json/Str( /value=/Data/String/Text.. )
-                                                                                                                                                                        , /key=/Data/String/Text..
-                                                                                                                                                                        ) = /Data/Json/Member
-                                                                                                                                                                        ( Value /key -> /Data/String/Text.. = CStr
-                                                                                                                                                                            { csValue = "role" }
-                                                                                                                                                                        )
-                                                                                                                                                                        ( Value /value -> /Data/Json/Str( /value=/Data/String/Text.. ) = /Data/Json/Str
-                                                                                                                                                                            ( Value /value -> /Data/String/Text.. = CStr
-                                                                                                                                                                                { csValue = "user" }
-                                                                                                                                                                            )
-                                                                                                                                                                        )
-                                                                                                                                                                    )
-                                                                                                                                                                    ( Value /tail -> /Data/List/Cons
-                                                                                                                                                                        [ /T=/Data/Json/Member
-                                                                                                                                                                            ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                                                                                            , /key=/Data/String/Text..
-                                                                                                                                                                            )
-                                                                                                                                                                        ]
-                                                                                                                                                                        ( /head=/Data/Json/Member
-                                                                                                                                                                            ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                                                                                            , /key=/Data/String/Text..
-                                                                                                                                                                            )
-                                                                                                                                                                        , /tail=/Data/List/Nil
-                                                                                                                                                                        ) = /Data/List/Cons
-                                                                                                                                                                        ( Value /head -> /Data/Json/Member
-                                                                                                                                                                            ( /value=/Data/Json/Str( /value=∀/Data/String )
-                                                                                                                                                                            , /key=/Data/String/Text..
-                                                                                                                                                                            ) = /Data/Json/Member
-                                                                                                                                                                            ( Value /key -> /Data/String/Text.. = CStr
-                                                                                                                                                                                { csValue = "content" }
-                                                                                                                                                                            )
-                                                                                                                                                                            ( Value /value -> /Data/Json/Str( /value=∀/Data/String ) = /Data/Json/Str( Value /value -> TVArg /input = Value /input ) )
-                                                                                                                                                                        )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
-                                                                                                                                                                    )
-                                                                                                                                                                )
-                                                                                                                                                            )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
-                                                                                                                                                        )
-                                                                                                                                                    )
-                                                                                                                                                )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
-                                                                                                                                            )
-                                                                                                                                        ]
-                                                                                                                                    )
-                                                                                                                                )
-                                                                                                                            )
-                                                                                                                        )
-                                                                                                                    )
-                                                                                                                )
+                                                                                                        ]
+                                                                                                        ( /head=/Data/Json/Member
+                                                                                                            ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                            , /key=( /Data/String/Text.. + /Catln/CStr )
                                                                                                             )
+                                                                                                        , /tail=/Data/List/Nil
                                                                                                         )
                                                                                                     )
                                                                                                 )
+                                                                                            , /tail=/Data/List/Nil
                                                                                             )
                                                                                         )
                                                                                     )
+                                                                                , /key=( /Data/String/Text.. + /Catln/CStr )
                                                                                 )
                                                                             ]
+                                                                            ( /head=/Data/Json/Member
+                                                                                ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                )
+                                                                            , /tail=/Data/List/Cons
+                                                                                [ /T=/Data/Json/Member
+                                                                                    ( /value=/Data/Json/Array
+                                                                                        ( /entries=/Data/List/Cons
+                                                                                            [ /T=/Data/Json/Object
+                                                                                                ( /entries=/Data/List/Cons
+                                                                                                    [ /T=/Data/Json/Member
+                                                                                                        ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                        , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                        )
+                                                                                                    ]
+                                                                                                    ( /head=/Data/Json/Member
+                                                                                                        ( /value=/Data/Json/Str
+                                                                                                            ( /value=( /Data/String/Text.. + /Catln/CStr ) )
+                                                                                                        , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                        )
+                                                                                                    , /tail=/Data/List/Cons
+                                                                                                        [ /T=/Data/Json/Member
+                                                                                                            ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                            , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                            )
+                                                                                                        ]
+                                                                                                        ( /head=/Data/Json/Member
+                                                                                                            ( /value=/Data/Json/Str
+                                                                                                                ( /value=∀/Data/Strin…( truncated ) = /Data/List/Cons
+                                                                                                                    ( Value /head -> /Data/Json/Member
+                                                                                                                        ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                                        , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                        ) = /Data/Json/Member
+                                                                                                                        ( Value /key ->
+                                                                                                                            ( /Data/String/Text
+                                                                                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                                                                            ) = CStr
+                                                                                                                            { csValue = "model" }
+                                                                                                                        )
+                                                                                                                        ( Value /value -> /Data/Json/Str( /value=∀/Data/String ) = /Data/Json/Str( Value /value -> TVArg /model = Value /model ) )
+                                                                                                                    )
+                                                                                                                    ( Value /tail -> /Data/List/Cons
+                                                                                                                        [ /T=/Data/Json/Member
+                                                                                                                            ( /value=/Data/Json/Array
+                                                                                                                                ( /entries=/Data/List/Cons
+                                                                                                                                    [ /T=/Data/Json/Object
+                                                                                                                                        ( /entries=/Data/List/Cons
+                                                                                                                                            [ /T=/Data/Json/Member
+                                                                                                                                                ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                                                                , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                )
+                                                                                                                                            ]
+                                                                                                                                            ( /head=/Data/Json/Member
+                                                                                                                                                ( /value=/Data/Json/Str
+                                                                                                                                                    ( /value=( /Data/String/Text.. + /Catln/CStr ) )
+                                                                                                                                                , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                )
+                                                                                                                                            , /tail=/Data/List/Cons
+                                                                                                                                                [ /T=/Data/Json/Member
+                                                                                                                                                    ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                    )
+                                                                                                                                                ]
+                                                                                                                                                ( /head=/Data/Json/Member
+                                                                                                                                                    ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                    )
+                                                                                                                                                , /tail=/Data/List/Nil
+                                                                                                                                                )
+                                                                                                                                            )
+                                                                                                                                        )
+                                                                                                                                    ]
+                                                                                                                                    ( /head=/Data/Json/Object
+                                                                                                                                        ( /entries=/Data/List/Cons
+                                                                                                                                            [ /T=/Data/Json/Member
+                                                                                                                                                ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                                                                , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                )
+                                                                                                                                            ]
+                                                                                                                                            ( /head=/Data/Json/Member
+                                                                                                                                                ( /value=/Data/Json/Str
+                                                                                                                                                    ( /value=( /Data/String/Text.. + /Catln/CStr ) )
+                                                                                                                                                , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                )
+                                                                                                                                            , /tail=/Data/List/Cons
+                                                                                                                                                [ /T=/Data/Json/Member
+                                                                                                                                                    ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                    )
+                                                                                                                                                ]
+                                                                                                                                                ( /head=/Data/Json/Member
+                                                                                                                                                    ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                    )
+                                                                                                                                                , /tail=/Data/List/Nil
+                                                                                                                                                )
+                                                                                                                                            )
+                                                                                                                                        )
+                                                                                                                                    , /tail=/Data/List/Nil
+                                                                                                                                    )
+                                                                                                                                )
+                                                                                                                            , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                            )
+                                                                                                                        ]
+                                                                                                                        ( /head=/Data/Json/Member
+                                                                                                                            ( /value=/Data/Json/Array
+                                                                                                                                ( /entries=/Data/List/Cons
+                                                                                                                                    [ /T=/Data/Json/Object
+                                                                                                                                        ( /entries=/Data/List/Cons
+                                                                                                                                            [ /T=/Data/Json/Member
+                                                                                                                                                ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                                                                , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                )
+                                                                                                                                            ]
+                                                                                                                                            ( /head=/Data/Json/Member
+                                                                                                                                                ( /value=/Data/Json/Str
+                                                                                                                                                    ( /value=( /Data/String/Text.. + /Catln/CStr ) )
+                                                                                                                                                , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                )
+                                                                                                                                            , /tail=/Data/List/Cons
+                                                                                                                                                [ /T=/Data/Json/Member
+                                                                                                                                                    ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                    )
+                                                                                                                                                ]
+                                                                                                                                                ( /head=/Data/Json/Member
+                                                                                                                                                    ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                    )
+                                                                                                                                                , /tail=/Data/List/Nil
+                                                                                                                                                )
+                                                                                                                                            )
+                                                                                                                                        )
+                                                                                                                                    ]
+                                                                                                                                    ( /head=/Data/Json/Object
+                                                                                                                                        ( /entries=/Data/List/Cons
+                                                                                                                                            [ /T=/Data/Json/Member
+                                                                                                                                                ( /value=/Data/Json/Str
+                                                                                                                                                    ( /value=∀…( truncated ) = /Data/List/Cons
+                                                                                                                                                        ( Value /head -> /Data/Json/Member
+                                                                                                                                                            ( /value=/Data/Json/Array
+                                                                                                                                                                ( /entries=/Data/List/Cons
+                                                                                                                                                                    [ /T=/Data/Json/Object
+                                                                                                                                                                        ( /entries=/Data/List/Cons
+                                                                                                                                                                            [ /T=/Data/Json/Member
+                                                                                                                                                                                ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                                                                                                , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                                                )
+                                                                                                                                                                            ]
+                                                                                                                                                                            ( /head=/Data/Json/Member
+                                                                                                                                                                                ( /value=/Data/Json/Str
+                                                                                                                                                                                    ( /value=( /Data/String/Text.. + /Catln/CStr ) )
+                                                                                                                                                                                , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                                                )
+                                                                                                                                                                            , /tail=/Data/List/Cons
+                                                                                                                                                                                [ /T=/Data/Json/Member
+                                                                                                                                                                                    ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                                                                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                                                    )
+                                                                                                                                                                                ]
+                                                                                                                                                                                ( /head=/Data/Json/Member
+                                                                                                                                                                                    ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                                                                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                                                    )
+                                                                                                                                                                                , /tail=/Data/List/Nil
+                                                                                                                                                                                )
+                                                                                                                                                                            )
+                                                                                                                                                                        )
+                                                                                                                                                                    ]
+                                                                                                                                                                    ( /head=/Data/Json/Object
+                                                                                                                                                                        ( /entries=/Data/List/Cons
+                                                                                                                                                                            [ /T=/Data/Json/Member
+                                                                                                                                                                                ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                                                                                                , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                                                )
+                                                                                                                                                                            ]
+                                                                                                                                                                            ( /head=/Data/Json/Member
+                                                                                                                                                                                ( /value=/Data/Json/Str
+                                                                                                                                                                                    ( /value=( /Data/String/Text.. + /Catln/CStr ) )
+                                                                                                                                                                                , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                                                )
+                                                                                                                                                                            , /tail=/Data/List/Cons
+                                                                                                                                                                                [ /T=/Data/Json/Member
+                                                                                                                                                                                    ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                                                                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                                                    )
+                                                                                                                                                                                ]
+                                                                                                                                                                                ( /head=/Data/Json/Member
+                                                                                                                                                                                    ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                                                                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                                                    )
+                                                                                                                                                                                , /tail=/Data/List/Nil
+                                                                                                                                                                                )
+                                                                                                                                                                            )
+                                                                                                                                                                        )
+                                                                                                                                                                    , /tail=/Data/List/Nil
+                                                                                                                                                                    )
+                                                                                                                                                                )
+                                                                                                                                                            , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                            ) = /Data/Json/Member
+                                                                                                                                                            ( Value /key ->
+                                                                                                                                                                ( /Data/String/Text
+                                                                                                                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                                                                                                                ) = CStr
+                                                                                                                                                                { csValue = "messages" }
+                                                                                                                                                            )
+                                                                                                                                                            ( Value /value -> /Data/Json/Array
+                                                                                                                                                                ( /entries=/Data/List/Cons
+                                                                                                                                                                    [ /T=/Data/Json/Object
+                                                                                                                                                                        ( /entries=/Data/List/Cons
+                                                                                                                                                                            [ /T=/Data/Json/Member
+                                                                                                                                                                                ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                                                                                                , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                                                )
+                                                                                                                                                                            ]
+                                                                                                                                                                            ( /head=/Data/Json/Member
+                                                                                                                                                                                ( /value=/Data/Json/Str
+                                                                                                                                                                                    ( /value=( /Data/String/Text.. + /Catln/CStr ) )
+                                                                                                                                                                                , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                                                )
+                                                                                                                                                                            , /tail=/Data/List/Cons
+                                                                                                                                                                                [ /T=/Data/Json/Member
+                                                                                                                                                                                    ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                                                                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                                                    )
+                                                                                                                                                                                ]
+                                                                                                                                                                                ( /head=/Data/Json/Member
+                                                                                                                                                                                    ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                                                                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                                                    )
+                                                                                                                                                                                , /tail=/Data/List/Nil
+                                                                                                                                                                                )
+                                                                                                                                                                            )
+                                                                                                                                                                        )
+                                                                                                                                                                    ]
+                                                                                                                                                                    ( /head=/Data/Json/Object
+                                                                                                                                                                        ( /entries=/Data/List/Cons
+                                                                                                                                                                            [ /T=/Data/Json/Member
+                                                                                                                                                                                ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                                                                                                , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                                                )
+                                                                                                                                                                            ]
+                                                                                                                                                                            ( /head=/Data/Json/Member
+                                                                                                                                                                                ( /value=/Data/Json/Str
+                                                                                                                                                                                    ( /value=( /Data/String/Text.. + /Catln/CStr ) )
+                                                                                                                                                                                , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                                                )
+                                                                                                                                                                            , /tail=/Data/List/Cons
+                                                                                                                                                                                [ /T=/Data/Json/Member
+                                                                                                                                                                                    ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                                                                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                                                    )
+                                                                                                                                                                                ]
+                                                                                                                                                                                ( /head=/Data/Json/Member
+                                                                                                                                                                                    ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                                                                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                                                    )
+                                                                                                                                                                                , /tail=/Data/List/Nil
+                                                                                                                                                                                )
+                                                                                                                                                                            )
+                                                                                                                                                                        )
+                                                                                                                                                                    , /tail=/Data/List/Nil
+                                                                                                                                                                    )
+                                                                                                                                                                ) = /Data/Json/Array
+                                                                                                                                                                ( Value /entries -> /Data/List/Cons
+                                                                                                                                                                    [ /T=/Data/Json/Object
+                                                                                                                                                                        ( /entries=/Data/List/Cons
+                                                                                                                                                                            [ /T=/Data/Json/Member
+                                                                                                                                                                                ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                                                                                                , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                                                )
+                                                                                                                                                                            ]
+                                                                                                                                                                            ( /head=/Data/Json/Member
+                                                                                                                                                                                ( /value=/Data/Json/Str
+                                                                                                                                                                                    ( /value=( /Data/String/Text.. + /Catln/CStr ) )
+                                                                                                                                                                                , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                                                )
+                                                                                                                                                                            , /tail=/Data/List/Cons
+                                                                                                                                                                                [ /T=/Data/Json/Member
+                                                                                                                                                                                    ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                                                                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                                                    )
+                                                                                                                                                                                ]
+                                                                                                                                                                                ( /head=/Data/Json/Member
+                                                                                                                                                                                    ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                                                                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                                                    )
+                                                                                                                                                                                , /tail=/Data/List/Nil
+                                                                                                                                                                                )
+                                                                                                                                                                            )
+                                                                                                                                                                        )
+                                                                                                                                                                    ]
+                                                                                                                                                                    ( /head=/Data/Json/Object
+                                                                                                                                                                        ( /entries=/Data/List/Cons
+                                                                                                                                                                            [ /T=/Data/Json/Member
+                                                                                                                                                                                ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                                                                                                , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                                                )
+                                                                                                                                                                            ]
+                                                                                                                                                                            ( /head=/Data/Json/Member
+                                                                                                                                                                                ( /value=/Data/Json/Str
+                                                                                                                                                                                    ( /value=( /Data/String/Text.. + /Catln/CStr ) )
+                                                                                                                                                                                , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                                                )
+                                                                                                                                                                            , /tail=/Data/List/Cons
+                                                                                                                                                                                [ /T=/Data/Json/Member
+                                                                                                                                                                                    ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                                                                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                                                    )
+                                                                                                                                                                                ]
+                                                                                                                                                                                ( /head=/Data/Json/Member
+                                                                                                                                                                                    ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                                                                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                                                    )
+                                                                                                                                                                                , /tail=/Data/List/Nil
+                                                                                                                                                                                )
+                                                                                                                                                                            )
+                                                                                                                                                                        )
+                                                                                                                                                                    , /tail=/Data/List/Nil
+                                                                                                                                                                    ) = /Data/List/Cons
+                                                                                                                                                                    ( Value /head -> /Data/Json/Object
+                                                                                                                                                                        ( /entries=/Data/List/Cons
+                                                                                                                                                                            [ /T=/Data/Json/Member
+                                                                                                                                                                                ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                                                                                                , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                                                )
+                                                                                                                                                                            ]
+                                                                                                                                                                            ( /head=/Data/Json/Member
+                                                                                                                                                                                ( /value=/Data/Json/Str
+                                                                                                                                                                                    ( /value=( /Data/String/Text.. + /Catln/CStr ) )
+                                                                                                                                                                                , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                                                )
+                                                                                                                                                                            , /tail=/Data/List/Cons
+                                                                                                                                                                                [ /T=/Data/Json/Member
+                                                                                                                                                                                    ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                                                                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                                                    )
+                                                                                                                                                                                ]
+                                                                                                                                                                                ( /head=/Data/Json/Member
+                                                                                                                                                                                    ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                                                                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                                                    )
+                                                                                                                                                                                , /tail=/Data/List/Nil
+                                                                                                                                                                                )
+                                                                                                                                                                            )
+                                                                                                                                                                        ) = /Data/Json/Object
+                                                                                                                                                                        ( Value /entries -> /Data/List/Cons
+                                                                                                                                                                            [ /T=/Data/Json/Member
+                                                                                                                                                                                ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                                                                                                , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                                                )
+                                                                                                                                                                            ]
+                                                                                                                                                                            ( /head=/Data/Json/Member
+                                                                                                                                                                                ( /value=/Data/Json/Str
+                                                                                                                                                                                    ( /value=( /Data/String/Text.. + /Catln/CStr ) )
+                                                                                                                                                                                , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                                                )
+                                                                                                                                                                            , /tail=/Data/List/Cons
+                                                                                                                                                                                [ /T=/Data/Json/Member
+                                                                                                                                                                                    ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                                                                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                                                    )
+                                                                                                                                                                                ]
+                                                                                                                                                                                ( /head=/Data/Json/Member
+                                                                                                                                                                                    ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                                                                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                                                    )
+                                                                                                                                                                                , /tail=/Data/List/Nil
+                                                                                                                                                                                )
+                                                                                                                                                                            ) = /Data/List/Cons
+                                                                                                                                                                            ( Value /head -> /Data/Json/Member
+                                                                                                                                                                                ( /value=/Data/Json/Str
+                                                                                                                                                                                    ( /value=( /Data/String/Text.. + /Catln/CStr ) )
+                                                                                                                                                                                , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                                                ) = /Data/Json/Member
+                                                                                                                                                                                ( Value /key ->
+                                                                                                                                                                                    ( /Data/String/Text
+                                                                                                                                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                                                                                                                                    ) = CStr
+                                                                                                                                                                                    { csValue = "role" }
+                                                                                                                                                                                )
+                                                                                                                                                                                ( Value /value -> /Data/Json/Str
+                                                                                                                                                                                    ( /value=( /Data/String/Text.. + /Catln/CStr ) ) = /Data/Json/Str
+                                                                                                                                                                                    ( Value /value ->
+                                                                                                                                                                                        ( /Data/String/Text
+                                                                                                                                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                                                                                                                                        ) = CStr
+                                                                                                                                                                                        { csValue = "user" }
+                                                                                                                                                                                    )
+                                                                                                                                                                                )
+                                                                                                                                                                            )
+                                                                                                                                                                            ( Value /tail -> /Data/List/Cons
+                                                                                                                                                                                [ /T=/Data/Json/Member
+                                                                                                                                                                                    ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                                                                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                                                    )
+                                                                                                                                                                                ]
+                                                                                                                                                                                ( /head=/Data/Json/Member
+                                                                                                                                                                                    ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                                                                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                                                    )
+                                                                                                                                                                                , /tail=/Data/List/Nil
+                                                                                                                                                                                ) = /Data/List/Cons
+                                                                                                                                                                                ( Value /head -> /Data/Json/Member
+                                                                                                                                                                                    ( /value=/Data/Json/Str( /value=∀/Data/String )
+                                                                                                                                                                                    , /key=( /Data/String/Text.. + /Catln/CStr )
+                                                                                                                                                                                    ) = /Data/Json/Member
+                                                                                                                                                                                    ( Value /key ->
+                                                                                                                                                                                        ( /Data/String/Text
+                                                                                                                                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                                                                                                                                        ) = CStr
+                                                                                                                                                                                        { csValue = "content" }
+                                                                                                                                                                                    )
+                                                                                                                                                                                    ( Value /value -> /Data/Json/Str( /value=∀/Data/String ) = /Data/Json/Str( Value /value -> TVArg /input = Value /input ) )
+                                                                                                                                                                                )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                                                                                                                                                                            )
+                                                                                                                                                                        )
+                                                                                                                                                                    )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                                                                                                                                                                )
+                                                                                                                                                            )
+                                                                                                                                                        )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                                                                                                                                                    )
+                                                                                                                                                )
+                                                                                                                                            ]
+                                                                                                                                        )
+                                                                                                                                    )
+                                                                                                                                )
+                                                                                                                            )
+                                                                                                                        )
+                                                                                                                    )
+                                                                                                                )
+                                                                                                            )
+                                                                                                        )
+                                                                                                    )
+                                                                                                )
+                                                                                            ]
+                                                                                        )
+                                                                                    )
+                                                                                ]
+                                                                            )
                                                                         )
                                                                     )
                                                                 )
                                                             )
                                                         )
-                                                    )
+                                                    ]
                                                 )
                                             )
                                         ]

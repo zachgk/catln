@@ -49,11 +49,14 @@ Prgm
                                 )
                             , /operator++
                                 ( /r=∀/Data/String
-                                , /l=/Data/String/Text..
+                                , /l=( /Data/String/Text.. + /Catln/CStr )
                                 )
                             , []
                             ) = /operator++
-                            ( Value /l -> /Data/String/Text.. = CStr
+                            ( Value /l ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "hint: " }
                             )( Value /r -> TVArg /text = Value /text )
                         ]

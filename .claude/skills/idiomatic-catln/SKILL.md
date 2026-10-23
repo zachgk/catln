@@ -293,6 +293,9 @@ reversed(lst) =                                              # bare '=', body co
   render (a `Set` built through the generic `add`, whose item type stays the abstract `Ord` bound —
   see the note in `stack/core/set.ct`), compare instead: `> (expr == known)` prints `True`, which is
   `ToString`. Try printing first; only fall back to comparison when it actually fails.
+- **Pages may import each other.** When a page needs something from a page that imports it (as
+  `core/string.ct` needs `core/list.ct`'s list `==`), write the import. Don't move definitions
+  to a new page, drop the feature, or write around it to keep imports one-directional.
 - **Formatting:** `stack exec catln -- fmt <file>` formats one file; `make ctformat` formats the
   whole repo (large diff — mention unrelated churn rather than committing it). `.ct` uses 2-space
   indent.

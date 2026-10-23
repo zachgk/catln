@@ -8,7 +8,7 @@ import "core/list.ct"
 
 # # The Catln Program
 # These are the compiler's own types for the program it is compiling, declared so that a Catln program can be handed one and read it.
-# They are reached by writing `import hsprgm()`. The standard library does not write that import and must not: these declarations reach `core/list.ct`, and a page every program compiles reaching it is the import cycle `core/result.ct` measures at seven hundred seconds. A program which wants to read programs asks for them and pays for them.
+# They are reached by writing `import hsprgm()`. The standard library does not write that import: a program which wants to read programs asks for them and pays for them.
 # Each is derived from the shape of the Haskell type the compiler itself uses, by the same reading that converts a value of that type to and from an evaluated one — so what a program is handed and what the compiler holds cannot come apart.
 class(/Catln/ObjectBasis, [/Catln/ObjectBasis/FunctionObj, /Catln/ObjectBasis/TypeObj, /Catln/ObjectBasis/PatternObj, /Catln/ObjectBasis/MatchObj, /Catln/ObjectBasis/ArgObj])
   # What an object is: which of the ways of writing one it was written as.

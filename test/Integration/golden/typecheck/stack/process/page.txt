@@ -87,7 +87,10 @@ Prgm
                     , omiDefs =
                         [ /Data/msg
                             ( Value /this -> /Process/ParsePageErr/Syntax( /message=∀/Data/String ) = /Process/ParsePageErr/Syntax( Value /message -> ∀/Data/String ) ) -> ∀/Data/String = /operator++
-                            ( Value /l -> /Data/String/Text.. = CStr
+                            ( Value /l ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "the text is not a page: " }
                             )( Value /r -> TVArg /message = Value /message )
                         ]

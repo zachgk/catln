@@ -48,7 +48,10 @@ Prgm
                                 { ciValue = 0 }
                             ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /operator++
-                                ( Value /l -> /Data/String/Text.. = CStr
+                                ( Value /l ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = "-" }
                                 )( Value /r -> TVArg /prefix = Value /prefix )
                             )
@@ -124,7 +127,10 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Python/Builtins/hex( Value /this -> /Data/Primitive/Integer.. ) -> ∀/Data/String = /Python/Builtins/prefixed( Value /n -> TVArg /this = Value /this )
-                            ( Value /prefix -> /Data/String/Text.. = CStr
+                            ( Value /prefix ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "0x" }
                             )
                             ( Value /base -> /Data/Primitive/Integer = CInt
@@ -154,7 +160,10 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Python/Builtins/oct( Value /this -> /Data/Primitive/Integer.. ) -> ∀/Data/String = /Python/Builtins/prefixed( Value /n -> TVArg /this = Value /this )
-                            ( Value /prefix -> /Data/String/Text.. = CStr
+                            ( Value /prefix ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "0o" }
                             )
                             ( Value /base -> /Data/Primitive/Integer = CInt
@@ -224,7 +233,10 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Python/Builtins/bin( Value /this -> /Data/Primitive/Integer.. ) -> ∀/Data/String = /Python/Builtins/prefixed( Value /n -> TVArg /this = Value /this )
-                            ( Value /prefix -> /Data/String/Text.. = CStr
+                            ( Value /prefix ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "0b" }
                             )
                             ( Value /base -> /Data/Primitive/Integer = CInt

@@ -11,4 +11,4 @@ import "python/importer.ct"
   It is deliberately not under @core/@, and nothing under @core/@ may import it. Naming an importer
   means importing the page declaring it, and every importer page imports @hsrawprgm()@ — so a
   registry the standard library reached would put the whole of the compiler's own syntax into every
-  program, which is the import cycle @core/result.ct@ measures at seven hundred seconds.
+  program.

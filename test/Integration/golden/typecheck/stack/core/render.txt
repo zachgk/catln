@@ -193,18 +193,6 @@ Prgm
                 ( /Data/String/Text
                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
                 ) = CStr
-                { csValue = "# Why this is not written in core/webdoc.ct
-                [assets] is a [/Data/List], and @core/webdoc.ct@ may not name one. That page is reached from
-                @core/compile.ct@, which every program reaches, so an import of @core/list.ct@ written there closes
-                the cycle @core/result.ct@ measures at seven hundred seconds. This page sits where @core/result.ct@
-                sits for the same reason and by the same arrangement: it reaches @core/list.ct@ freely, and only
-                @core/main.ct@ reaches it." }
-            )
-        , /Catln/#md
-            ( Value /text ->
-                ( /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
-                ) = CStr
                 { csValue = "# What a doc server does not do with these files
                 A library's assets are not pages. Nothing reads them, nothing watches them, and the extensions a
                 read knows ([Syntax.InferImport.isSupportedFileExtension]) do not include them. So a script edited

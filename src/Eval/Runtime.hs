@@ -30,6 +30,7 @@ import           Eval.ExprBuilder
 import           Eval.Runtime.Calendar (calendarPrims)
 import           Eval.Runtime.Import   (importPrims)
 import           Eval.Runtime.Prgm     (prgmPrims)
+import           Eval.Runtime.String   (stringPrims)
 import           Eval.Runtime.System   (systemPrims)
 import           Eval.Runtime.Tasks    (tasksPrims)
 import           Eval.Runtime.WebDocs  (webDocsPrims)
@@ -424,7 +425,7 @@ primEnv :: ResBuildPrims
 primEnv = H.fromList [(mkName k, v) | (k, v) <- map mapPrim prims ++ macros]
   where
     mapPrim p = (ePrimName p, Left p)
-    prims = webDocsPrims ++ tasksPrims ++ calendarPrims ++ prgmPrims ++ importPrims ++ systemPrims ++
+    prims = webDocsPrims ++ tasksPrims ++ calendarPrims ++ prgmPrims ++ importPrims ++ systemPrims ++ stringPrims ++
             [ liftIntOp "+" (+)
             , liftIntOp "-" (-)
             , liftIntOp "*" (*)

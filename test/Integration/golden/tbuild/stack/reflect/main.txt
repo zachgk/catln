@@ -140,8 +140,10 @@ Prgm
                             ) -> ∀/Data/String =
                             ( /operator++
                                 ( EAppArg
-                                    { eaaArg = Value /l -> /Data/String/Text.. =
-                                        ( "the text is not a Catln expression: " ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /l ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = "the text is not a Catln expression: "
                                     }
                                 )
                                 ( EAppArg
@@ -156,8 +158,10 @@ Prgm
                             ) -> ∀/Data/String =
                             ( /operator++
                                 ( EAppArg
-                                    { eaaArg = Value /l -> /Data/String/Text.. =
-                                        ( "the expression is not of the type asked for: " ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /l ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = "the expression is not of the type asked for: "
                                     }
                                 )
                                 ( EAppArg
@@ -178,8 +182,10 @@ Prgm
                             ) -> ∀/Data/String =
                             ( /operator++
                                 ( EAppArg
-                                    { eaaArg = Value /l -> /Data/String/Text.. =
-                                        ( "the expression failed to evaluate: " ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /l ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = "the expression failed to evaluate: "
                                     }
                                 )
                                 ( EAppArg
@@ -218,7 +224,7 @@ Prgm
                             ,
                                 ( /operator++
                                     ( /r=∀/Data/String
-                                    , /l=/Data/String/Text..
+                                    , /l=( /Data/String/Text.. + /Catln/CStr )
                                     ) + /Data/toString( /this=/Data/Primitive/Integer ) + /Data/toStringBase
                                     ( /this=/Data/Primitive/Integer
                                     , /base=/Data/Primitive/Integer
@@ -238,7 +244,7 @@ Prgm
                                 ,
                                     ( /operator++
                                         ( /r=∀/Data/String
-                                        , /l=/Data/String/Text..
+                                        , /l=( /Data/String/Text.. + /Catln/CStr )
                                         ) + /Data/toStringBase
                                         ( /this=/Data/Primitive/Integer
                                         , /base=/Data/Primitive/Integer
@@ -276,8 +282,10 @@ Prgm
                                                 { eaaArg = Value /l -> ∀/Data/String =
                                                     ( /operator++
                                                         ( EAppArg
-                                                            { eaaArg = Value /l -> /Data/String/Text.. =
-                                                                ( "Point at " ↦ /Data/String/Text.. )
+                                                            { eaaArg = Value /l ->
+                                                                ( /Data/String/Text
+                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                ) = "Point at "
                                                             }
                                                         )
                                                         ( EAppArg
@@ -293,8 +301,10 @@ Prgm
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/String/Text.. =
-                                                    ( ", " ↦ /Data/String/Text.. )
+                                                { eaaArg = Value /r ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = ", "
                                                 }
                                             ) ↦ ∀/Data/String
                                         )

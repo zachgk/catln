@@ -6,12 +6,23 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/String/words( Value /this -> ∀/Data/String ) -> ∀/Data/List/ConsList[ /T=∀/Data/String ] ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/words( Value /this -> /Catln/CStr.. ) -> ∀/Data/List/ConsList[ /T=/Catln/CStr ] ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/words
                             ( Value /this= /Data/String/Text( Value chars ) ) -> ∀/Data/List/ConsList[ /T=∀/Data/String ] = wordsOf( Value cs= Value chars )( Value cur= Value /Data/List/Nil )
                         ]
+                    }
+                )
+            ,
+                ( "/Data/cstrEqual"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/cstrEqual( Value a -> /Catln/CStr )( Value b -> /Catln/CStr ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
                     }
                 )
             ,
@@ -53,7 +64,11 @@ Prgm
                             ( Value /l -> ∀/Data/String = Hole TopType HoleActive { haName = Nothing } )
                             ( Value /r -> ∀/Data/String = Hole TopType HoleActive { haName = Nothing } ) -> ∀/Data/String
                         ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /operator++
+                            ( Value /l -> /Catln/CStr = Hole TopType HoleActive { haName = Nothing } )
+                            ( Value /r -> /Catln/CStr = Hole TopType HoleActive { haName = Nothing } ) -> /Catln/CStr
+                        ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /operator++
@@ -119,7 +134,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/String/isEmpty( Value /this -> ∀/Data/String ) -> ∀/Data/Primitive/Boolean ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/isEmpty( Value /this -> /Catln/CStr.. ) -> ∀/Data/Primitive/Boolean ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/isEmpty
@@ -136,7 +152,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/String/at( Value index -> /Data/Primitive/Integer )( Value /this -> ∀/Data/String ) -> ∀/Data/Maybe[ /T=/Data/Char ] ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/at( Value index -> /Data/Primitive/Integer )( Value /this -> /Catln/CStr.. ) -> ∀/Data/Maybe[ /T=/Data/Char ] ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/at( Value index )
@@ -211,7 +228,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/String/drop( Value n -> /Data/Primitive/Integer )( Value /this -> ∀/Data/String ) -> ∀/Data/String ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/drop( Value n -> /Data/Primitive/Integer )( Value /this -> /Catln/CStr.. ) -> /Catln/CStr ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/drop( Value n )
@@ -269,7 +287,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/String/first( Value /this -> ∀/Data/String ) -> ∀/Data/Maybe[ /T=/Data/Char ] ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/first( Value /this -> /Catln/CStr.. ) -> ∀/Data/Maybe[ /T=/Data/Char ] ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/first
@@ -544,7 +563,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/String/trimStart( Value /this -> ∀/Data/String ) -> ∀/Data/String ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/trimStart( Value /this -> /Catln/CStr.. ) -> /Catln/CStr ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/trimStart
@@ -647,6 +667,7 @@ Prgm
                         [ /Data/Algebra/rel
                             ( Value a= String/Text( Value chars@Value ac ) )
                             ( Value b= String/Text( Value chars@Value bc ) )( Value /this -> /Data/StrEqv.. ) -> ∀/Data/Primitive/Boolean = charsEqual( Value a= Value ac )( Value b= Value bc )
+                        , /Data/Algebra/rel( Value a -> /Catln/CStr )( Value b -> /Catln/CStr )( Value /this -> /Data/StrEqv.. ) -> ∀/Data/Primitive/Boolean = cstrEqual( Value a= Value a )( Value b= Value b )
                         ]
                     }
                 )
@@ -739,7 +760,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/String/length( Value /this -> ∀/Data/String ) -> /Data/Primitive/Integer ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/length( Value /this -> /Catln/CStr.. ) -> /Data/Primitive/Integer ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/length
@@ -755,7 +777,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/String/lines( Value /this -> ∀/Data/String ) -> ∀/Data/List/ConsList[ /T=∀/Data/String ] ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/lines( Value /this -> /Catln/CStr.. ) -> ∀/Data/List/ConsList[ /T=/Catln/CStr ] ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/lines
@@ -876,7 +899,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/String/toUpper( Value /this -> ∀/Data/String ) -> ∀/Data/String ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/toUpper( Value /this -> /Catln/CStr.. ) -> /Catln/CStr ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/toUpper
@@ -934,7 +958,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/String/toLower( Value /this -> ∀/Data/String ) -> ∀/Data/String ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/toLower( Value /this -> /Catln/CStr.. ) -> /Catln/CStr ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/toLower
@@ -948,7 +973,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/String/endsWith( Value suffix -> ∀/Data/String )( Value /this -> ∀/Data/String ) -> ∀/Data/Primitive/Boolean ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/endsWith( Value suffix -> /Catln/CStr )( Value /this -> /Catln/CStr.. ) -> ∀/Data/Primitive/Boolean ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/endsWith
@@ -1052,11 +1078,22 @@ Prgm
                     }
                 )
             ,
+                ( "/Data/cstrCompare"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/cstrCompare( Value a -> /Catln/CStr )( Value b -> /Catln/CStr ) -> ∀/Data/Algebra/Comparison ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Data/String/take"
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/String/take( Value n -> /Data/Primitive/Integer )( Value /this -> ∀/Data/String ) -> ∀/Data/String ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/take( Value n -> /Data/Primitive/Integer )( Value /this -> /Catln/CStr.. ) -> /Catln/CStr ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/take( Value n )
@@ -1070,7 +1107,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/String/trimEnd( Value /this -> ∀/Data/String ) -> ∀/Data/String ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/trimEnd( Value /this -> /Catln/CStr.. ) -> /Catln/CStr ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/trimEnd
@@ -1093,6 +1131,7 @@ Prgm
                         [ /Data/Algebra/compare
                             ( Value a= String/Text( Value chars@Value ac ) )
                             ( Value b= String/Text( Value chars@Value bc ) )( Value /this -> /Data/StrOrdering.. ) -> ∀/Data/Algebra/Comparison = compareChars( Value a= Value ac )( Value b= Value bc )
+                        , /Data/Algebra/compare( Value a -> /Catln/CStr )( Value b -> /Catln/CStr )( Value /this -> /Data/StrOrdering.. ) -> ∀/Data/Algebra/Comparison = cstrCompare( Value a= Value a )( Value b= Value b )
                         ]
                     }
                 )
@@ -1101,7 +1140,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/String/replace( Value old -> ∀/Data/String )( Value new -> ∀/Data/String )( Value /this -> ∀/Data/String ) -> ∀/Data/String ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/replace( Value old -> /Catln/CStr )( Value new -> /Catln/CStr )( Value /this -> /Catln/CStr.. ) -> /Catln/CStr ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/replace
@@ -1224,7 +1264,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/String/contains( Value sub -> ∀/Data/String )( Value /this -> ∀/Data/String ) -> ∀/Data/Primitive/Boolean ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/contains( Value sub -> /Catln/CStr )( Value /this -> /Catln/CStr.. ) -> ∀/Data/Primitive/Boolean ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/contains
@@ -1243,7 +1284,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/String/startsWith( Value prefix -> ∀/Data/String )( Value /this -> ∀/Data/String ) -> ∀/Data/Primitive/Boolean ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/startsWith( Value prefix -> /Catln/CStr )( Value /this -> /Catln/CStr.. ) -> ∀/Data/Primitive/Boolean ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/startsWith
@@ -1399,7 +1441,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/String/trim( Value /this -> ∀/Data/String ) -> ∀/Data/String ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/trim( Value /this -> /Catln/CStr.. ) -> /Catln/CStr ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/trim
@@ -1472,7 +1515,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/String/indexOf( Value sub -> ∀/Data/String )( Value /this -> ∀/Data/String ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/indexOf( Value sub -> /Catln/CStr )( Value /this -> /Catln/CStr.. ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/indexOf
@@ -1489,7 +1533,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/String/slice( Value start -> /Data/Primitive/Integer )( Value end -> /Data/Primitive/Integer )( Value /this -> ∀/Data/String ) -> ∀/Data/String ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/slice( Value start -> /Data/Primitive/Integer )( Value end -> /Data/Primitive/Integer )( Value /this -> /Catln/CStr.. ) -> /Catln/CStr ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/slice( Value start )( Value end )
@@ -1565,7 +1610,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/String/reversed( Value /this -> ∀/Data/String ) -> ∀/Data/String ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/reversed( Value /this -> /Catln/CStr.. ) -> /Catln/CStr ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/reversed
@@ -1860,7 +1906,8 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /Data/String/split( Value sep -> ∀/Data/String )( Value /this -> ∀/Data/String ) -> ∀/Data/List/ConsList[ /T=∀/Data/String ] ]
-                    , omiRuntimeDecls = []
+                    , omiRuntimeDecls =
+                        [ /Data/String/split( Value sep -> /Catln/CStr )( Value /this -> /Catln/CStr.. ) -> ∀/Data/List/ConsList[ /T=/Catln/CStr ] ]
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/String/split
@@ -1882,6 +1929,8 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -2026,8 +2075,11 @@ Prgm
                 Every string converts to a [String/Text], so everything a string does is written here once,
                 over the list of its characters, and works on any string: the tree build converts a [CStr] on
                 the way into such a definition. The operations recur over the characters directly rather than
-                through the list operations of @core/list.ct@, which builds a list's text out of strings and so
-                imports this page." }
+                through the list operations of @core/list.ct@.
+                Most operations also have a [#runtime] arm over the [/Catln/CStr], written beside the one over
+                the characters, which does the same on the packed text without taking it apart. Which of the two
+                runs is the arm the string's representation reaches, and the two are held to agree by the
+                representation-agreement test derived for each pair." }
             )
         , /Catln/#print
             ( Value /p= toString
@@ -2539,6 +2591,24 @@ Prgm
                 { csValue = "0" }
             )
         , /Catln/#print
+            ( Value /p= length
+                ( Value /this= fromChars
+                    ( Value chars= /Data/List/Cons
+                        ( Value /head= CChar
+                            { chValue = 'h' }
+                        )
+                        ( Value /tail= /Data/List/Cons
+                            ( Value /head= CChar
+                                { chValue = 'i' }
+                            )( Value /tail= Value /Data/List/Nil )
+                        )
+                    )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "2" }
+            )
+        , /Catln/#print
             ( Value /p= isEmpty
                 ( Value /this= CStr
                     { csValue = "" }
@@ -2912,14 +2982,6 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr
                 { csValue = "## Splitting and joining" }
-            )
-        , /Catln/#md
-            ( Value /text= CStr
-                { csValue = "A list of strings renders through @core/list.ct@, which this page cannot import, so the pieces" }
-            )
-        , /Catln/#md
-            ( Value /text= CStr
-                { csValue = "  below are shown [join]ed with a bar between them." }
             )
         , /Catln/#print
             ( Value /p= join

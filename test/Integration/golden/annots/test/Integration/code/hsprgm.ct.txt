@@ -27,8 +27,8 @@
         ( /text = "## What the suite checks
         The integration suite typechecks and builds this file, then runs [main] and compares what it
         printed against @hsprgm.stdout.txt@, which is the one mechanism the integration runner has for
-        saying what a program produced. No page under @stack/@ may import [hsprgm] without closing the
-        import cycle @core/result.ct@ measures, so the values cannot be print goldens of a library page." )
+        saying what a program produced. No page under @stack/@ imports [hsprgm], so the values cannot
+        be print goldens of a library page." )
     )
 ,
     ( "/Catln/#md"

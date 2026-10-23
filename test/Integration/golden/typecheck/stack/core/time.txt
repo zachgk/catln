@@ -30,20 +30,20 @@ Prgm
                             ) | /operator&&
                             ( Value /l -> ( /Data/Primitive/True + /Data/Primitive/False ) = /operator&&
                                 ( Value /l -> ∀/Data/Primitive/Boolean = /operator>=
-                                    ( Value /l -> /Data/Primitive/Integer = /Data/String/length( Value /this -> TVArg /h = Value /h ) )
+                                    ( Value /l -> /Data/Primitive/Integer = /length( Value /this -> TVArg /h = Value /h ) )
                                     ( Value /r -> /Data/Primitive/Integer = CInt
                                         { ciValue = 1 }
                                     )
                                 )
                                 ( Value /r -> ∀/Data/Primitive/Boolean = /operator<=
-                                    ( Value /l -> /Data/Primitive/Integer = /Data/String/length( Value /this -> TVArg /h = Value /h ) )
+                                    ( Value /l -> /Data/Primitive/Integer = /length( Value /this -> TVArg /h = Value /h ) )
                                     ( Value /r -> /Data/Primitive/Integer = CInt
                                         { ciValue = 2 }
                                     )
                                 )
                             )
                             ( Value /r -> ∀/Data/Primitive/Boolean = /operator==
-                                ( Value /l -> /Data/Primitive/Integer = /Data/String/length( Value /this -> TVArg /m = Value /m ) )
+                                ( Value /l -> /Data/Primitive/Integer = /length( Value /this -> TVArg /m = Value /m ) )
                                 ( Value /r -> /Data/Primitive/Integer = CInt
                                     { ciValue = 2 }
                                 )
@@ -384,7 +384,10 @@ Prgm
                                     )
                                 )
                             )
-                            ( Value /r -> /Data/String/Text.. = CStr
+                            ( Value /r ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "h" }
                             )
                         , /Data/Time/hoursText( Value /minutes -> /Data/Primitive/Integer ) -> ∀/Data/String = /operator++
@@ -397,7 +400,10 @@ Prgm
                                             )
                                         )
                                     )
-                                    ( Value /r -> /Data/String/Text.. = CStr
+                                    ( Value /r ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = CStr
                                         { csValue = "h " }
                                     )
                                 )
@@ -409,7 +415,10 @@ Prgm
                                     )
                                 )
                             )
-                            ( Value /r -> /Data/String/Text.. = CStr
+                            ( Value /r ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "m" }
                             )
                         ]
@@ -437,7 +446,10 @@ Prgm
                                                 { ciValue = 4 }
                                             )
                                         )
-                                        ( Value /r -> /Data/String/Text.. = CStr
+                                        ( Value /r ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                            ) = CStr
                                             { csValue = "-" }
                                         )
                                     )
@@ -447,7 +459,10 @@ Prgm
                                         )
                                     )
                                 )
-                                ( Value /r -> /Data/String/Text.. = CStr
+                                ( Value /r ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = "-" }
                                 )
                             )
@@ -468,7 +483,10 @@ Prgm
                                         { ciValue = 2 }
                                     )
                                 )
-                                ( Value /r -> /Data/String/Text.. = CStr
+                                ( Value /r ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = ":" }
                                 )
                             )
@@ -483,7 +501,10 @@ Prgm
                                 { ciValue = 60 }
                             ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /toString( Value /this -> TVArg /minutes = Value /minutes ) )
-                            ( Value /r -> /Data/String/Text.. = CStr
+                            ( Value /r ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "m" }
                             )
                         , /Data/toString
@@ -496,7 +517,10 @@ Prgm
                             ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /operator++
                                 ( Value /l -> ∀/Data/String = /toString( Value /this -> TVArg /start = Value /start ) )
-                                ( Value /r -> /Data/String/Text.. = CStr
+                                ( Value /r ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = " - " }
                                 )
                             )
@@ -517,14 +541,20 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Time/clockParts( Value /clock -> ∀/Data/String )( Value /bare -> ∀/Data/Primitive/Boolean ) | /Data/String/contains
-                            ( Value /sub -> /Data/String/Text.. = CStr
+                            ( Value /sub ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = ":" }
                             )( Value /this -> TVArg /clock = Value /clock ) -> ∀/Data/Result
                             [ /T=/Data/Time/TimeOfDay..
                             , /E=∀/Data/Time/TimeParseErr
                             ] = /Data/Time/partsOf( Value /clock -> TVArg /clock = Value /clock )
                             ( Value /parts -> ∀/Data/List/ConsList[ /T=∀/Data/String ] = /Data/String/split
-                                ( Value /sep -> /Data/String/Text.. = CStr
+                                ( Value /sep ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = ":" }
                                 )( Value /this -> TVArg /clock = Value /clock )
                             )
@@ -687,7 +717,7 @@ Prgm
                         [ /Data/Time/parseDate( Value /s -> ∀/Data/String ) | /operator&&
                             ( Value /l -> ( /Data/Primitive/True + /Data/Primitive/False ) = /operator&&
                                 ( Value /l -> ∀/Data/Primitive/Boolean = /operator==
-                                    ( Value /l -> /Data/Primitive/Integer = /Data/String/length( Value /this -> TVArg /s = Value /s ) )
+                                    ( Value /l -> /Data/Primitive/Integer = /length( Value /this -> TVArg /s = Value /s ) )
                                     ( Value /r -> /Data/Primitive/Integer = CInt
                                         { ciValue = 10 }
                                     )
@@ -813,7 +843,10 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Time/clockOf( Value /t -> ∀/Data/String ) | /Data/String/endsWith
-                            ( Value /suffix -> /Data/String/Text.. = CStr
+                            ( Value /suffix ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "am" }
                             )( Value /this -> TVArg /t = Value /t ) -> ∀/Data/Result
                             [ /T=/Data/Time/TimeOfDay..
@@ -826,7 +859,7 @@ Prgm
                                 ( Value /clock -> ∀/Data/String = /Data/String/trimEnd
                                     ( Value /this -> ∀/Data/String = /Data/String/take
                                         ( Value /n -> /Data/Primitive/Integer = /operator-
-                                            ( Value /l -> /Data/Primitive/Integer = /Data/String/length( Value /this -> TVArg /t = Value /t ) )
+                                            ( Value /l -> /Data/Primitive/Integer = /length( Value /this -> TVArg /t = Value /t ) )
                                             ( Value /r -> /Data/Primitive/Integer = CInt
                                                 { ciValue = 2 }
                                             )
@@ -835,7 +868,10 @@ Prgm
                                 )( Value /bare -> /Data/Primitive/True = Value /Data/Primitive/True )
                             )( Value /pm -> /Data/Primitive/False = Value /Data/Primitive/False )
                         , /Data/Time/clockOf( Value /t -> ∀/Data/String ) | /Data/String/endsWith
-                            ( Value /suffix -> /Data/String/Text.. = CStr
+                            ( Value /suffix ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "pm" }
                             )( Value /this -> TVArg /t = Value /t ) -> ∀/Data/Result
                             [ /T=/Data/Time/TimeOfDay..
@@ -848,7 +884,7 @@ Prgm
                                 ( Value /clock -> ∀/Data/String = /Data/String/trimEnd
                                     ( Value /this -> ∀/Data/String = /Data/String/take
                                         ( Value /n -> /Data/Primitive/Integer = /operator-
-                                            ( Value /l -> /Data/Primitive/Integer = /Data/String/length( Value /this -> TVArg /t = Value /t ) )
+                                            ( Value /l -> /Data/Primitive/Integer = /length( Value /this -> TVArg /t = Value /t ) )
                                             ( Value /r -> /Data/Primitive/Integer = CInt
                                                 { ciValue = 2 }
                                             )
@@ -1131,10 +1167,13 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Time/padded( Value /n -> /Data/Primitive/Integer )( Value /width -> /Data/Primitive/Integer ) | /operator<
-                            ( Value /l -> /Data/Primitive/Integer = /Data/String/length
+                            ( Value /l -> /Data/Primitive/Integer = /length
                                 ( Value /this -> ∀/Data/String = /toString( Value /this -> TVArg /n = Value /n ) )
                             )( Value /r -> TVArg /width = Value /width ) -> ∀/Data/String = /operator++
-                            ( Value /l -> /Data/String/Text.. = CStr
+                            ( Value /l ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "0" }
                             )
                             ( Value /r -> ∀/Data/String = /Data/Time/padded( Value /n -> TVArg /n = Value /n )
@@ -1511,11 +1550,17 @@ Prgm
                         [ /Data/msg
                             ( Value /this -> /Data/Time/DateParseErr/BadShape( /text=∀/Data/String ) = /Data/Time/DateParseErr/BadShape( Value /text -> ∀/Data/String ) ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /operator++
-                                ( Value /l -> /Data/String/Text.. = CStr
+                                ( Value /l ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = """ }
                                 )( Value /r -> TVArg /text = Value /text )
                             )
-                            ( Value /r -> /Data/String/Text.. = CStr
+                            ( Value /r ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "" is not a date written YYYY-MM-DD" }
                             )
                         , /Data/msg
@@ -1526,11 +1571,17 @@ Prgm
                             ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /operator++
                                 ( Value /l -> ∀/Data/String = /operator++
-                                    ( Value /l -> /Data/String/Text.. = CStr
+                                    ( Value /l ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = CStr
                                         { csValue = "the " }
                                     )( Value /r -> TVArg /part = Value /part )
                                 )
-                                ( Value /r -> /Data/String/Text.. = CStr
+                                ( Value /r ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = " is not a number: " }
                                 )
                             )
@@ -1538,7 +1589,10 @@ Prgm
                         , /Data/msg
                             ( Value /this -> /Data/Time/DateParseErr/MonthOutOfRange( /month=/Data/Primitive/Integer ) = /Data/Time/DateParseErr/MonthOutOfRange( Value /month -> /Data/Primitive/Integer ) ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /toString( Value /this -> TVArg /month = Value /month ) )
-                            ( Value /r -> /Data/String/Text.. = CStr
+                            ( Value /r ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = " is not a month from 1 to 12" }
                             )
                         , /Data/msg
@@ -1556,17 +1610,26 @@ Prgm
                                     ) = /Data/Time/Date( Value /year -> TVArg /year = Value /year )( Value /month -> TVArg /month = Value /month )( Value /day -> TVArg /day = Value /day )
                                 )
                             )
-                            ( Value /r -> /Data/String/Text.. = CStr
+                            ( Value /r ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = " is not a day that exists" }
                             )
                         , /Data/msg
                             ( Value /this -> /Data/Time/TimeParseErr/BadShape( /text=∀/Data/String ) = /Data/Time/TimeParseErr/BadShape( Value /text -> ∀/Data/String ) ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /operator++
-                                ( Value /l -> /Data/String/Text.. = CStr
+                                ( Value /l ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = """ }
                                 )( Value /r -> TVArg /text = Value /text )
                             )
-                            ( Value /r -> /Data/String/Text.. = CStr
+                            ( Value /r ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "" does not write an hour and minutes apart" }
                             )
                         , /Data/msg
@@ -1578,16 +1641,25 @@ Prgm
                             ( Value /l -> ∀/Data/String = /operator++
                                 ( Value /l -> ∀/Data/String = /operator++
                                     ( Value /l -> ∀/Data/String = /operator++
-                                        ( Value /l -> /Data/String/Text.. = CStr
+                                        ( Value /l ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                            ) = CStr
                                             { csValue = """ }
                                         )( Value /r -> TVArg /hour = Value /hour )
                                     )
-                                    ( Value /r -> /Data/String/Text.. = CStr
+                                    ( Value /r ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = CStr
                                         { csValue = "" and "" }
                                     )
                                 )( Value /r -> TVArg /minute = Value /minute )
                             )
-                            ( Value /r -> /Data/String/Text.. = CStr
+                            ( Value /r ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "" are not an hour of one or two digits and minutes of two" }
                             )
                         , /Data/msg
@@ -1598,11 +1670,17 @@ Prgm
                             ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /operator++
                                 ( Value /l -> ∀/Data/String = /operator++
-                                    ( Value /l -> /Data/String/Text.. = CStr
+                                    ( Value /l ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = CStr
                                         { csValue = "the " }
                                     )( Value /r -> TVArg /part = Value /part )
                                 )
-                                ( Value /r -> /Data/String/Text.. = CStr
+                                ( Value /r ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = " is not a number: " }
                                 )
                             )
@@ -1610,19 +1688,28 @@ Prgm
                         , /Data/msg
                             ( Value /this -> /Data/Time/TimeParseErr/MinuteOutOfRange( /minute=/Data/Primitive/Integer ) = /Data/Time/TimeParseErr/MinuteOutOfRange( Value /minute -> /Data/Primitive/Integer ) ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /toString( Value /this -> TVArg /minute = Value /minute ) )
-                            ( Value /r -> /Data/String/Text.. = CStr
+                            ( Value /r ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = " is not a minute, 0 to 59" }
                             )
                         , /Data/msg
                             ( Value /this -> /Data/Time/TimeParseErr/HourOutOfRange( /hour=/Data/Primitive/Integer ) = /Data/Time/TimeParseErr/HourOutOfRange( Value /hour -> /Data/Primitive/Integer ) ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /toString( Value /this -> TVArg /hour = Value /hour ) )
-                            ( Value /r -> /Data/String/Text.. = CStr
+                            ( Value /r ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = " is not an hour of a 24-hour clock, 0 to 23" }
                             )
                         , /Data/msg
                             ( Value /this -> /Data/Time/TimeParseErr/TwelveHourOutOfRange( /hour=/Data/Primitive/Integer ) = /Data/Time/TimeParseErr/TwelveHourOutOfRange( Value /hour -> /Data/Primitive/Integer ) ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /toString( Value /this -> TVArg /hour = Value /hour ) )
-                            ( Value /r -> /Data/String/Text.. = CStr
+                            ( Value /r ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = " is not an hour of a 12-hour clock, 1 to 12" }
                             )
                         ]
@@ -1947,28 +2034,34 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/Time/dottedOrBare( Value /clock -> ∀/Data/String )( Value /bare -> ∀/Data/Primitive/Boolean ) | /Data/String/contains
-                            ( Value /sub -> /Data/String/Text.. = CStr
+                            ( Value /sub ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "." }
                             )( Value /this -> TVArg /clock = Value /clock ) -> ∀/Data/Result
                             [ /T=/Data/Time/TimeOfDay..
                             , /E=∀/Data/Time/TimeParseErr
                             ] = /Data/Time/partsOf( Value /clock -> TVArg /clock = Value /clock )
                             ( Value /parts -> ∀/Data/List/ConsList[ /T=∀/Data/String ] = /Data/String/split
-                                ( Value /sep -> /Data/String/Text.. = CStr
+                                ( Value /sep ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = "." }
                                 )( Value /this -> TVArg /clock = Value /clock )
                             )
                         , /Data/Time/dottedOrBare( Value /clock -> ∀/Data/String )( Value /bare -> ∀/Data/Primitive/Boolean ) | /operator&&
                             ( Value /l -> ∀/Data/Primitive/Boolean = /operator&&( Value /l -> TVArg /bare = Value /bare )
                                 ( Value /r -> ∀/Data/Primitive/Boolean = /operator>=
-                                    ( Value /l -> /Data/Primitive/Integer = /Data/String/length( Value /this -> TVArg /clock = Value /clock ) )
+                                    ( Value /l -> /Data/Primitive/Integer = /length( Value /this -> TVArg /clock = Value /clock ) )
                                     ( Value /r -> /Data/Primitive/Integer = CInt
                                         { ciValue = 3 }
                                     )
                                 )
                             )
                             ( Value /r -> ∀/Data/Primitive/Boolean = /operator<=
-                                ( Value /l -> /Data/Primitive/Integer = /Data/String/length( Value /this -> TVArg /clock = Value /clock ) )
+                                ( Value /l -> /Data/Primitive/Integer = /length( Value /this -> TVArg /clock = Value /clock ) )
                                 ( Value /r -> /Data/Primitive/Integer = CInt
                                     { ciValue = 4 }
                                 )
@@ -1985,7 +2078,7 @@ Prgm
                                 ) = /Data/List/Cons
                                 ( Value /head -> ∀/Data/String = /Data/String/take
                                     ( Value /n -> /Data/Primitive/Integer = /operator-
-                                        ( Value /l -> /Data/Primitive/Integer = /Data/String/length( Value /this -> TVArg /clock = Value /clock ) )
+                                        ( Value /l -> /Data/Primitive/Integer = /length( Value /this -> TVArg /clock = Value /clock ) )
                                         ( Value /r -> /Data/Primitive/Integer = CInt
                                             { ciValue = 2 }
                                         )
@@ -1997,7 +2090,7 @@ Prgm
                                     ) = /Data/List/Cons
                                     ( Value /head -> ∀/Data/String = /Data/String/drop
                                         ( Value /n -> /Data/Primitive/Integer = /operator-
-                                            ( Value /l -> /Data/Primitive/Integer = /Data/String/length( Value /this -> TVArg /clock = Value /clock ) )
+                                            ( Value /l -> /Data/Primitive/Integer = /length( Value /this -> TVArg /clock = Value /clock ) )
                                             ( Value /r -> /Data/Primitive/Integer = CInt
                                                 { ciValue = 2 }
                                             )

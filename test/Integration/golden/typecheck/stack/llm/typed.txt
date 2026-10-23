@@ -44,7 +44,10 @@ Prgm
                         [ /Llm/typedDecls( Value /decls -> ∀/Data/String ) | /isEmpty( Value /this -> TVArg /decls = Value /decls ) -> ( /Data/String/Text.. + /Catln/CStr ) = CStr
                             { csValue = "" }
                         , /Llm/typedDecls( Value /decls -> ∀/Data/String ) -> ∀/Data/String = /operator++
-                            ( Value /l -> /Data/String/Text.. = CStr
+                            ( Value /l ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = " It is declared as:
                                 " }
                             )( Value /r -> TVArg /decls = Value /decls )
@@ -220,7 +223,10 @@ Prgm
                             ( Value /l -> ∀/Data/String = /operator++
                                 ( Value /l -> ∀/Data/String = /operator++
                                     ( Value /l -> ∀/Data/String = /operator++( Value /l -> TVArg /input = Value /input )
-                                        ( Value /r -> /Data/String/Text.. = CStr
+                                        ( Value /r ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                            ) = CStr
                                             { csValue = "
 
                                             Answer with only a Catln expression of type " }
@@ -228,7 +234,10 @@ Prgm
                                     )
                                     ( Value /r -> ∀/Data/String = /Catln/typeText( Value /type -> TVArg /type = Value /type ) )
                                 )
-                                ( Value /r -> /Data/String/Text.. = CStr
+                                ( Value /r ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = ", with nothing before or after it." }
                                 )
                             )
@@ -296,7 +305,10 @@ Prgm
                                 , /cause=∀/Catln/ParseExprErr
                                 ) = /Llm/LlmErr/NotOf( Value /reply -> ∀/Data/String )( Value /cause -> ∀/Catln/ParseExprErr )
                             ) -> ∀/Data/String = /operator++
-                            ( Value /l -> /Data/String/Text.. = CStr
+                            ( Value /l ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "the reply is not an answer: " }
                             )( Value /r -> TVArg /reply = Value /reply )
                         , /Llm/TypedExample/answerErrShown( Value /e -> ∀/Llm/LlmErr ) -> ∀/Data/String = /msg( Value /this -> TVArg /e = Value /e )
@@ -421,11 +433,18 @@ Prgm
                                 )
                             ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /operator++( Value /l -> TVArg /text = Value /text )
-                                ( Value /r -> /Data/String/Text.. = CStr
+                                ( Value /r ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = ", sure: " }
                                 )
                             )
-                            ( Value /r -> /Data/String/Text.. = /Data/toString( Value /this -> TVArg /sure = Value /sure ) )
+                            ( Value /r ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = /Data/toString( Value /this -> TVArg /sure = Value /sure )
+                            )
                         , /Llm/TypedExample/answerShown
                             ( Value /r -> /Data/Result/Fail[ /E=∀/Llm/LlmErr ]( /err=∀/Llm/LlmErr ) = /Data/Result/Fail( Value /err -> ∀/Llm/LlmErr ) ) -> ∀/Data/String = /Llm/TypedExample/answerErrShown( Value /e -> TVArg /err = Value /err )
                         , /Llm/TypedExample/answerShown

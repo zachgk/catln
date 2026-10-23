@@ -23,7 +23,10 @@ Prgm
                             ) = /operator++
                             ( Value /l -> ∀/Data/String = /operator++
                                 ( Value /l -> ∀/Data/String = /Llm/showPage( Value /page -> TVArg /page = Value /page ) )
-                                ( Value /r -> /Data/String/Text.. = CStr
+                                ( Value /r ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = "
                                     " }
                                 )

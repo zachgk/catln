@@ -131,9 +131,8 @@ module(Test)
 
   # ## What the suite checks
     The integration suite typechecks and builds this file, then runs [main] and compares what it
-    printed against @hsrawprgm.stdout.txt@. No page under @stack/@ may import [hsrawprgm] without
-    closing the import cycle @core/result.ct@ measures, so the values cannot be print goldens of a
-    library page.
+    printed against @hsrawprgm.stdout.txt@. No page under @stack/@ imports [hsrawprgm], so the
+    values cannot be print goldens of a library page.
 
 main{io -> IO} -> (){IO} =
   _<- println(msg= pathOf(r= /Catln/ReadPath/ReadFile(path= "a.ct")))

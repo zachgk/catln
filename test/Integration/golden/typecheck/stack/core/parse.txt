@@ -285,24 +285,33 @@ Prgm
                             ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /operator++
                                 ( Value /l -> ∀/Data/String = /operator++
-                                    ( Value /l -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /operator++
-                                        ( Value /l -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /operator++
-                                            ( Value /l -> /Data/String/Text.. = CStr
+                                    ( Value /l -> ∀/Data/String = /operator++
+                                        ( Value /l -> ∀/Data/String = /operator++
+                                            ( Value /l ->
+                                                ( /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                ) = CStr
                                                 { csValue = "'" }
                                             )
-                                            ( Value /r -> /Data/String/Text
-                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/toString( Value /this -> TVArg /c = Value /c )
+                                            ( Value /r ->
+                                                ( /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                ) = /Data/toString( Value /this -> TVArg /c = Value /c )
                                             )
                                         )
-                                        ( Value /r -> /Data/String/Text.. = CStr
+                                        ( Value /r ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                            ) = CStr
                                             { csValue = "' at " }
                                         )
                                     )
                                     ( Value /r -> ∀/Data/String = /Data/toString( Value /this -> TVArg /at = Value /at ) )
                                 )
-                                ( Value /r -> /Data/String/Text.. = CStr
+                                ( Value /r ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = " is not a digit of base " }
                                 )
                             )
@@ -310,7 +319,10 @@ Prgm
                         , /Data/msg
                             ( Value /this -> /Data/IntegerParseErr/BadBase( /base=/Data/Primitive/Integer ) = /Data/IntegerParseErr/BadBase( Value /base -> /Data/Primitive/Integer ) ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /Data/toString( Value /this -> TVArg /base = Value /base ) )
-                            ( Value /r -> /Data/String/Text.. = CStr
+                            ( Value /r ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = " is not a base from 2 to 36" }
                             )
                         ]

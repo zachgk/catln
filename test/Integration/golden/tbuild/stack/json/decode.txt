@@ -314,8 +314,10 @@ Prgm
                                     { eaaArg = Value /cs -> TVArg /rest = ( Value /rest ↦ TVArg /rest ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /expected -> /Data/String/Text.. =
-                                        ( "a digit of the exponent" ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /expected ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = "a digit of the exponent"
                                     }
                                 ) ↦ ∀/Data/Result
                                 [ /T=/Data/JsonParsed..
@@ -657,8 +659,10 @@ Prgm
                                     { eaaArg = Value /cs -> TVArg /rest = ( Value /rest ↦ TVArg /rest ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /expected -> /Data/String/Text.. =
-                                        ( "a number" ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /expected ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = "a number"
                                     }
                                 ) ↦ ∀/Data/Result
                                 [ /T=/Data/JsonParsed..
@@ -1038,8 +1042,10 @@ Prgm
                                                 { eaaArg = Value /l -> ∀/Data/String =
                                                     ( /operator++
                                                         ( EAppArg
-                                                            { eaaArg = Value /l -> /Data/String/Text.. =
-                                                                ( "'" ↦ /Data/String/Text.. )
+                                                            { eaaArg = Value /l ->
+                                                                ( /Data/String/Text
+                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                ) = "'"
                                                             }
                                                         )
                                                         ( EAppArg
@@ -1049,8 +1055,10 @@ Prgm
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/String/Text.. =
-                                                    ( "'" ↦ /Data/String/Text.. )
+                                                { eaaArg = Value /r ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "'"
                                                 }
                                             ) ↦ ∀/Data/String
                                         )
@@ -1160,8 +1168,10 @@ Prgm
                                                 { eaaArg = Value /l -> ∀/Data/String =
                                                     ( /operator++
                                                         ( EAppArg
-                                                            { eaaArg = Value /l -> /Data/String/Text.. =
-                                                                ( "'" ↦ /Data/String/Text.. )
+                                                            { eaaArg = Value /l ->
+                                                                ( /Data/String/Text
+                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                ) = "'"
                                                             }
                                                         )
                                                         ( EAppArg
@@ -1171,8 +1181,10 @@ Prgm
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/String/Text.. =
-                                                    ( "'" ↦ /Data/String/Text.. )
+                                                { eaaArg = Value /r ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "'"
                                                 }
                                             ) ↦ ∀/Data/String
                                         )
@@ -1748,10 +1760,13 @@ Prgm
                             ] =
                             ( /Data/jsonCharsStuck
                                 ( EAppArg
-                                    { eaaArg = Value /problem -> /Data/JsonProblem/UnexpectedEnd( /expected=/Data/String/Text.. ) = /Data/JsonProblem/UnexpectedEnd
+                                    { eaaArg = Value /problem -> /Data/JsonProblem/UnexpectedEnd
+                                        ( /expected=( /Data/String/Text.. + /Catln/CStr ) ) = /Data/JsonProblem/UnexpectedEnd
                                         ( EAppArg
-                                            { eaaArg = Value /expected -> /Data/String/Text.. =
-                                                ( "a closing quote" ↦ /Data/String/Text.. )
+                                            { eaaArg = Value /expected ->
+                                                ( /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                ) = "a closing quote"
                                             }
                                         )
                                     }
@@ -2010,8 +2025,10 @@ Prgm
                             ( /Data/jsonUnexpected
                                 ( EAppArg { eaaArg = Value /cs -> /Data/List/Nil = Value /Data/List/Nil } )
                                 ( EAppArg
-                                    { eaaArg = Value /expected -> /Data/String/Text.. =
-                                        ( "a value" ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /expected ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = "a value"
                                     }
                                 ) ↦ ∀/Data/Result
                                 [ /T=/Data/JsonParsed..
@@ -2041,8 +2058,10 @@ Prgm
                             ] =
                             ( /Data/jsonExpect
                                 ( EAppArg
-                                    { eaaArg = Value /literal -> /Data/String/Text.. =
-                                        ( "null" ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /literal ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = "null"
                                     }
                                 )
                                 ( EAppArg
@@ -2116,8 +2135,10 @@ Prgm
                             ] =
                             ( /Data/jsonExpect
                                 ( EAppArg
-                                    { eaaArg = Value /literal -> /Data/String/Text.. =
-                                        ( "true" ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /literal ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = "true"
                                     }
                                 )
                                 ( EAppArg
@@ -2195,8 +2216,10 @@ Prgm
                             ] =
                             ( /Data/jsonExpect
                                 ( EAppArg
-                                    { eaaArg = Value /literal -> /Data/String/Text.. =
-                                        ( "false" ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /literal ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = "false"
                                     }
                                 )
                                 ( EAppArg
@@ -2526,8 +2549,10 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /expected -> /Data/String/Text.. =
-                                        ( "a value" ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /expected ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = "a value"
                                     }
                                 ) ↦ ∀/Data/Result
                                 [ /T=/Data/JsonParsed..
@@ -3017,8 +3042,10 @@ Prgm
                                     { eaaArg = Value /cs -> TVArg /cs = ( Value /cs ↦ TVArg /cs ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /expected -> /Data/String/Text.. =
-                                        ( "',' or ']'" ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /expected ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = "',' or ']'"
                                     }
                                 ) ↦ ∀/Data/Result
                                 [ /T=/Data/JsonEntries..
@@ -3108,8 +3135,10 @@ Prgm
                                     { eaaArg = Value /cs -> TVArg /cs = ( Value /cs ↦ TVArg /cs ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /expected -> /Data/String/Text.. =
-                                        ( "':'" ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /expected ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = "':'"
                                     }
                                 ) ↦ ∀/Data/Result
                                 [ /T=/Data/JsonMembers..
@@ -3175,8 +3204,10 @@ Prgm
                             ] =
                             ( /Data/jsonMemberColon
                                 ( EAppArg
-                                    { eaaArg = Value /key -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text
+                                    { eaaArg = Value /key ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                        ) = /Data/String/Text
                                         ( EAppArg
                                             { eaaArg = Value /chars -> TVArg /chars = ( Value /chars ↦ TVArg /chars ) }
                                         )
@@ -3679,7 +3710,7 @@ Prgm
                             [ /E=/Data/JsonParseErr
                                 ( /at=/Data/Primitive/Integer
                                 , /problem=/Data/JsonProblem/Unexpected
-                                    ( /expected=/Data/String/Text..
+                                    ( /expected=( /Data/String/Text.. + /Catln/CStr )
                                     , /c=/Data/Char
                                     )
                                 )
@@ -3687,7 +3718,7 @@ Prgm
                             ( /err=/Data/JsonParseErr
                                 ( /at=/Data/Primitive/Integer
                                 , /problem=/Data/JsonProblem/Unexpected
-                                    ( /expected=/Data/String/Text..
+                                    ( /expected=( /Data/String/Text.. + /Catln/CStr )
                                     , /c=/Data/Char
                                     )
                                 )
@@ -3696,21 +3727,23 @@ Prgm
                                 { eaaArg = Value /err -> /Data/JsonParseErr
                                     ( /at=/Data/Primitive/Integer
                                     , /problem=/Data/JsonProblem/Unexpected
-                                        ( /expected=/Data/String/Text..
+                                        ( /expected=( /Data/String/Text.. + /Catln/CStr )
                                         , /c=/Data/Char
                                         )
                                     ) = /Data/JsonParseErr
                                     ( EAppArg
                                         { eaaArg = Value /problem -> /Data/JsonProblem/Unexpected
-                                            ( /expected=/Data/String/Text..
+                                            ( /expected=( /Data/String/Text.. + /Catln/CStr )
                                             , /c=/Data/Char
                                             ) = /Data/JsonProblem/Unexpected
                                             ( EAppArg
                                                 { eaaArg = Value /c -> TVArg /head = ( Value /head ↦ TVArg /head ) }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /expected -> /Data/String/Text.. =
-                                                    ( "the end of the text" ↦ /Data/String/Text.. )
+                                                { eaaArg = Value /expected ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "the end of the text"
                                                 }
                                             )
                                         }
@@ -4114,8 +4147,10 @@ Prgm
                                     { eaaArg = Value /cs -> TVArg /cs = ( Value /cs ↦ TVArg /cs ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /expected -> /Data/String/Text.. =
-                                        ( "',' or '}'" ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /expected ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = "',' or '}'"
                                     }
                                 ) ↦ ∀/Data/Result
                                 [ /T=/Data/JsonMembers..
@@ -4159,10 +4194,13 @@ Prgm
                             ] =
                             ( /Data/jsonCharsStuck
                                 ( EAppArg
-                                    { eaaArg = Value /problem -> /Data/JsonProblem/UnexpectedEnd( /expected=/Data/String/Text.. ) = /Data/JsonProblem/UnexpectedEnd
+                                    { eaaArg = Value /problem -> /Data/JsonProblem/UnexpectedEnd
+                                        ( /expected=( /Data/String/Text.. + /Catln/CStr ) ) = /Data/JsonProblem/UnexpectedEnd
                                         ( EAppArg
-                                            { eaaArg = Value /expected -> /Data/String/Text.. =
-                                                ( "an escape" ↦ /Data/String/Text.. )
+                                            { eaaArg = Value /expected ->
+                                                ( /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                ) = "an escape"
                                             }
                                         )
                                     }
@@ -5263,8 +5301,10 @@ Prgm
                             ) -> ∀/Data/String =
                             ( /operator++
                                 ( EAppArg
-                                    { eaaArg = Value /l -> /Data/String/Text.. =
-                                        ( "error: " ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /l ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = "error: "
                                     }
                                 )
                                 ( EAppArg
@@ -5378,7 +5418,7 @@ Prgm
                                 [ /E=/Data/JsonParseErr
                                     ( /at=/Data/Primitive/Integer
                                     , /problem=/Data/JsonProblem/Unexpected
-                                        ( /expected=/Data/String/Text..
+                                        ( /expected=( /Data/String/Text.. + /Catln/CStr )
                                         , /c=/Data/Char
                                         )
                                     )
@@ -5386,7 +5426,7 @@ Prgm
                                 ( /err=/Data/JsonParseErr
                                     ( /at=/Data/Primitive/Integer
                                     , /problem=/Data/JsonProblem/Unexpected
-                                        ( /expected=/Data/String/Text..
+                                        ( /expected=( /Data/String/Text.. + /Catln/CStr )
                                         , /c=/Data/Char
                                         )
                                     )
@@ -5412,7 +5452,7 @@ Prgm
                                     [ /E=/Data/JsonParseErr
                                         ( /at=/Data/Primitive/Integer
                                         , /problem=/Data/JsonProblem/Unexpected
-                                            ( /expected=/Data/String/Text..
+                                            ( /expected=( /Data/String/Text.. + /Catln/CStr )
                                             , /c=/Data/Char
                                             )
                                         )
@@ -5420,7 +5460,7 @@ Prgm
                                     ( /err=/Data/JsonParseErr
                                         ( /at=/Data/Primitive/Integer
                                         , /problem=/Data/JsonProblem/Unexpected
-                                            ( /expected=/Data/String/Text..
+                                            ( /expected=( /Data/String/Text.. + /Catln/CStr )
                                             , /c=/Data/Char
                                             )
                                         )
@@ -5894,8 +5934,10 @@ Prgm
                                                 { eaaArg = Value /l -> ∀/Data/String =
                                                     ( /operator++
                                                         ( EAppArg
-                                                            { eaaArg = Value /l -> /Data/String/Text.. =
-                                                                ( "not JSON: " ↦ /Data/String/Text.. )
+                                                            { eaaArg = Value /l ->
+                                                                ( /Data/String/Text
+                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                ) = "not JSON: "
                                                             }
                                                         )
                                                         ( EAppArg
@@ -5911,8 +5953,10 @@ Prgm
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/String/Text.. =
-                                                    ( ", at character " ↦ /Data/String/Text.. )
+                                                { eaaArg = Value /r ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = ", at character "
                                                 }
                                             ) ↦ ∀/Data/String
                                         )
@@ -5949,8 +5993,10 @@ Prgm
                                                             { eaaArg = Value /l -> ∀/Data/String =
                                                                 ( /operator++
                                                                     ( EAppArg
-                                                                        { eaaArg = Value /l -> /Data/String/Text.. =
-                                                                            ( "there is no member "" ↦ /Data/String/Text.. )
+                                                                        { eaaArg = Value /l ->
+                                                                            ( /Data/String/Text
+                                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                            ) = "there is no member ""
                                                                         }
                                                                     )
                                                                     ( EAppArg
@@ -5960,19 +6006,24 @@ Prgm
                                                             }
                                                         )
                                                         ( EAppArg
-                                                            { eaaArg = Value /r -> /Data/String/Text.. =
-                                                                ( "" of " ↦ /Data/String/Text.. )
+                                                            { eaaArg = Value /r ->
+                                                                ( /Data/String/Text
+                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                ) = "" of "
                                                             }
                                                         ) ↦ ∀/Data/String
                                                     )
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/String/Text.. =
+                                                { eaaArg = Value /r ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) =
                                                     ( /Data/jsonKind
                                                         ( EAppArg
                                                             { eaaArg = Value /j -> TVArg /found = ( Value /found ↦ TVArg /found ) }
-                                                        ) ↦ /Data/String/Text..
+                                                        ) ↦ ( /Data/String/Text.. + /Catln/CStr )
                                                     )
                                                 }
                                             ) ↦ ∀/Data/String
@@ -5980,8 +6031,10 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text.. =
-                                        ( ", which is not an object" ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /r ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = ", which is not an object"
                                     }
                                 ) ↦ ∀/Data/String
                             )
@@ -5996,8 +6049,10 @@ Prgm
                                     { eaaArg = Value /l -> ∀/Data/String =
                                         ( /operator++
                                             ( EAppArg
-                                                { eaaArg = Value /l -> /Data/String/Text.. =
-                                                    ( "the object has no member "" ↦ /Data/String/Text.. )
+                                                { eaaArg = Value /l ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "the object has no member ""
                                                 }
                                             )
                                             ( EAppArg
@@ -6007,8 +6062,10 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text.. =
-                                        ( """ ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /r ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = """
                                     }
                                 ) ↦ ∀/Data/String
                             )
@@ -6033,8 +6090,10 @@ Prgm
                                                             { eaaArg = Value /l -> ∀/Data/String =
                                                                 ( /operator++
                                                                     ( EAppArg
-                                                                        { eaaArg = Value /l -> /Data/String/Text.. =
-                                                                            ( "there is no entry " ↦ /Data/String/Text.. )
+                                                                        { eaaArg = Value /l ->
+                                                                            ( /Data/String/Text
+                                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                            ) = "there is no entry "
                                                                         }
                                                                     )
                                                                     ( EAppArg
@@ -6050,19 +6109,24 @@ Prgm
                                                             }
                                                         )
                                                         ( EAppArg
-                                                            { eaaArg = Value /r -> /Data/String/Text.. =
-                                                                ( " of " ↦ /Data/String/Text.. )
+                                                            { eaaArg = Value /r ->
+                                                                ( /Data/String/Text
+                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                ) = " of "
                                                             }
                                                         ) ↦ ∀/Data/String
                                                     )
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/String/Text.. =
+                                                { eaaArg = Value /r ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) =
                                                     ( /Data/jsonKind
                                                         ( EAppArg
                                                             { eaaArg = Value /j -> TVArg /found = ( Value /found ↦ TVArg /found ) }
-                                                        ) ↦ /Data/String/Text..
+                                                        ) ↦ ( /Data/String/Text.. + /Catln/CStr )
                                                     )
                                                 }
                                             ) ↦ ∀/Data/String
@@ -6070,8 +6134,10 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text.. =
-                                        ( ", which is not an array" ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /r ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = ", which is not an array"
                                     }
                                 ) ↦ ∀/Data/String
                             )
@@ -6093,8 +6159,10 @@ Prgm
                                                 { eaaArg = Value /l -> ∀/Data/String =
                                                     ( /operator++
                                                         ( EAppArg
-                                                            { eaaArg = Value /l -> /Data/String/Text.. =
-                                                                ( "there is no entry " ↦ /Data/String/Text.. )
+                                                            { eaaArg = Value /l ->
+                                                                ( /Data/String/Text
+                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                ) = "there is no entry "
                                                             }
                                                         )
                                                         ( EAppArg
@@ -6110,8 +6178,10 @@ Prgm
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/String/Text.. =
-                                                    ( " of an array of " ↦ /Data/String/Text.. )
+                                                { eaaArg = Value /r ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = " of an array of "
                                                 }
                                             ) ↦ ∀/Data/String
                                         )
@@ -7054,8 +7124,10 @@ Prgm
                                     { eaaArg = Value /cs -> TVArg /rest = ( Value /rest ↦ TVArg /rest ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /expected -> /Data/String/Text.. =
-                                        ( "a digit" ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /expected ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = "a digit"
                                     }
                                 ) ↦ ∀/Data/Result
                                 [ /T=/Data/JsonParsed..
@@ -7413,8 +7485,10 @@ Prgm
                                     { eaaArg = Value /cs -> TVArg /cs = ( Value /cs ↦ TVArg /cs ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /expected -> /Data/String/Text.. =
-                                        ( "a quoted key" ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /expected ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = "a quoted key"
                                     }
                                 ) ↦ ∀/Data/Result
                                 [ /T=/Data/JsonMembers..
@@ -7489,8 +7563,10 @@ Prgm
                                     { eaaArg = Value /cs -> TVArg /rest = ( Value /rest ↦ TVArg /rest ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /expected -> /Data/String/Text.. =
-                                        ( "a digit" ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /expected ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = "a digit"
                                     }
                                 ) ↦ ∀/Data/Result
                                 [ /T=/Data/JsonParsed..
@@ -7744,8 +7820,10 @@ Prgm
                                     { eaaArg = Value /l -> ∀/Data/String =
                                         ( /operator++
                                             ( EAppArg
-                                                { eaaArg = Value /l -> /Data/String/Text.. =
-                                                    ( "the text ends where " ↦ /Data/String/Text.. )
+                                                { eaaArg = Value /l ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "the text ends where "
                                                 }
                                             )
                                             ( EAppArg
@@ -7755,8 +7833,10 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text.. =
-                                        ( " was expected" ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /r ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = " was expected"
                                     }
                                 ) ↦ ∀/Data/String
                             )
@@ -7775,36 +7855,40 @@ Prgm
                                     { eaaArg = Value /l -> ∀/Data/String =
                                         ( /operator++
                                             ( EAppArg
-                                                { eaaArg = Value /l -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) =
+                                                { eaaArg = Value /l -> ∀/Data/String =
                                                     ( /operator++
                                                         ( EAppArg
-                                                            { eaaArg = Value /l -> /Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) =
+                                                            { eaaArg = Value /l -> ∀/Data/String =
                                                                 ( /operator++
                                                                     ( EAppArg
-                                                                        { eaaArg = Value /l -> /Data/String/Text.. =
-                                                                            ( "'" ↦ /Data/String/Text.. )
+                                                                        { eaaArg = Value /l ->
+                                                                            ( /Data/String/Text
+                                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                            ) = "'"
                                                                         }
                                                                     )
                                                                     ( EAppArg
-                                                                        { eaaArg = Value /r -> /Data/String/Text
-                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) =
+                                                                        { eaaArg = Value /r ->
+                                                                            ( /Data/String/Text
+                                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                            ) =
                                                                             ( /Data/toString
                                                                                 ( EAppArg
                                                                                     { eaaArg = Value /this -> TVArg /c = ( Value /c ↦ TVArg /c ) }
-                                                                                ) ↦ /Data/String/Text..
+                                                                                ) ↦ ( /Data/String/Text.. + /Catln/CStr )
                                                                             )
                                                                         }
-                                                                    ) ↦ /Data/String/Text..
+                                                                    ) ↦ ∀/Data/String
                                                                 )
                                                             }
                                                         )
                                                         ( EAppArg
-                                                            { eaaArg = Value /r -> /Data/String/Text.. =
-                                                                ( "' is where " ↦ /Data/String/Text.. )
+                                                            { eaaArg = Value /r ->
+                                                                ( /Data/String/Text
+                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                ) = "' is where "
                                                             }
-                                                        ) ↦ /Data/String/Text..
+                                                        ) ↦ ∀/Data/String
                                                     )
                                                 }
                                             )
@@ -7815,8 +7899,10 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text.. =
-                                        ( " was expected" ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /r ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = " was expected"
                                     }
                                 ) ↦ ∀/Data/String
                             )
@@ -7825,38 +7911,40 @@ Prgm
                                 { eaaArg = Value /problem -> /Data/JsonProblem/BadEscape( /c=/Data/Char ) = /Data/JsonProblem/BadEscape
                                     ( EAppArg { eaaArg = Value /c -> /Data/Char } )
                                 }
-                            ) ->
-                            ( /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
-                            ) =
+                            ) -> ∀/Data/String =
                             ( /operator++
                                 ( EAppArg
-                                    { eaaArg = Value /l -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) =
+                                    { eaaArg = Value /l -> ∀/Data/String =
                                         ( /operator++
                                             ( EAppArg
-                                                { eaaArg = Value /l -> /Data/String/Text.. =
-                                                    ( "'\" ↦ /Data/String/Text.. )
+                                                { eaaArg = Value /l ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "'\"
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) =
+                                                { eaaArg = Value /r ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) =
                                                     ( /Data/toString
                                                         ( EAppArg
                                                             { eaaArg = Value /this -> TVArg /c = ( Value /c ↦ TVArg /c ) }
-                                                        ) ↦ /Data/String/Text..
+                                                        ) ↦ ( /Data/String/Text.. + /Catln/CStr )
                                                     )
                                                 }
-                                            ) ↦ /Data/String/Text..
+                                            ) ↦ ∀/Data/String
                                         )
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text.. =
-                                        ( "' is not an escape" ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /r ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = "' is not an escape"
                                     }
-                                ) ↦ ( /Data/String/Text.. + /Catln/CStr )
+                                ) ↦ ∀/Data/String
                             )
                         , /Data/jsonProblemText
                             ( EAppArg { eaaArg = Value /problem -> /Data/JsonProblem/BadUnicodeEscape = Value /Data/JsonProblem/BadUnicodeEscape } ) -> ( /Data/String/Text.. + /Catln/CStr ) = "'\u' is not followed by four hexadecimal digits"

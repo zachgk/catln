@@ -4,6 +4,7 @@ import "core/ord.ct"
 import "core/cons.ct"
 import "core/char.ct"
 import "core/maybe.ct"
+import "core/list.ct"
 
 
 module(Data)
@@ -22,8 +23,11 @@ module(Data)
     Every string converts to a [String/Text], so everything a string does is written here once,
     over the list of its characters, and works on any string: the tree build converts a [CStr] on
     the way into such a definition. The operations recur over the characters directly rather than
-    through the list operations of @core/list.ct@, which builds a list's text out of strings and so
-    imports this page.
+    through the list operations of @core/list.ct@.
+    Most operations also have a [#runtime] arm over the [/Catln/CStr], written beside the one over
+    the characters, which does the same on the packed text without taking it apart. Which of the two
+    runs is the arm the string's representation reaches, and the two are held to agree by the
+    representation-agreement test derived for each pair.
   class(String)
 
   data(String/Text(chars -> /Data/List/ConsList[$T -> Char]))
@@ -69,6 +73,11 @@ module(Data)
   data(StrEqv, isa= [/Data/Algebra/Eqv])
 
   :StrEqv.rel(a= String/Text(chars@ac), b= String/Text(chars@bc))= charsEqual(a= ac, b= bc)
+  :StrEqv.rel(a -> /Catln/CStr, b -> /Catln/CStr)= cstrEqual(a= a, b= b)
+
+  cstrEqual(a -> /Catln/CStr, b -> /Catln/CStr) -> Boolean
+    # [cstrEqual] is whether two packed strings hold the same characters.
+    #runtime("cstrEqual")
 
   :String.eq= StrEqv
 
@@ -95,6 +104,8 @@ module(Data)
     # [operator++] joins two strings, the [Semigroup] operation on [String]: the characters of the
       first followed by those of the second.
   (String/Text(chars@a) ++ String/Text(chars@b))= String/Text(chars= appendChars(l= a, r= b))
+  (_ :: /Catln/CStr ++ _ :: /Catln/CStr) -> /Catln/CStr
+    #runtime("cstr++")
 
   > ("foo" ++ "bar")
     >>> foobar
@@ -315,6 +326,11 @@ module(Data)
   data(StrOrdering, isa= [/Data/Algebra/Ordering])
 
   :StrOrdering.compare(a= String/Text(chars@ac), b= String/Text(chars@bc))= compareChars(a= ac, b= bc)
+  :StrOrdering.compare(a -> /Catln/CStr, b -> /Catln/CStr)= cstrCompare(a= a, b= b)
+
+  cstrCompare(a -> /Catln/CStr, b -> /Catln/CStr) -> /Data/Algebra/Comparison
+    # [cstrCompare] compares two packed strings by their first characters that differ.
+    #runtime("cstrCompare")
 
   :String.ord= StrOrdering
 
@@ -340,15 +356,21 @@ module(Data/String)
     countChars(cs= /Data/List/Nil, n)= n
     countChars(cs= /Data/List/Cons(head, tail), n)= countChars(cs= tail, n= n + 1)
     countChars(cs= chars, n= 0)
+  :/Catln/CStr.length -> /Data/Primitive/Integer
+    #runtime("cstrLength")
 
   > "hello".length
     >>> 5
   > "".length
     >>> 0
+  > fromChars(chars= ['h', 'i']).length
+    >>> 2
   :/Data/String.isEmpty -> /Data/Primitive/Boolean
     # [isEmpty] is whether the string holds no characters.
   :/Data/String/Text(chars= /Data/List/Nil).isEmpty= /Data/Primitive/True
   :/Data/String/Text(chars= /Data/List/Cons(head, tail)).isEmpty= /Data/Primitive/False
+  :/Catln/CStr.isEmpty -> /Data/Primitive/Boolean
+    #runtime("cstrIsEmpty")
 
   > "".isEmpty
     >>> True
@@ -363,11 +385,15 @@ module(Data/String)
     # [first] is the string's first character, or [Nothing] for the empty string.
   :/Data/String/Text(chars= /Data/List/Nil).first= /Data/Maybe/Nothing
   :/Data/String/Text(chars= /Data/List/Cons(head, tail)).first= /Data/Maybe/Some(value= head)
+  :/Catln/CStr.first -> /Data/Maybe[$T -> /Data/Char]
+    #runtime("cstrFirst")
 
   :/Data/String.at(index -> /Data/Primitive/Integer) -> /Data/Maybe[$T -> /Data/Char]
     # [at] is the character at [index], counting the first as 0, or [Nothing] where the string has
       no character there.
   :/Data/String/Text(chars).at(index)= /Data/String/Text(chars= dropChars(cs= chars, n= index)).first
+  :/Catln/CStr.at(index -> /Data/Primitive/Integer) -> /Data/Maybe[$T -> /Data/Char]
+    #runtime("cstrAt")
 
   > (fromChars(chars= ['h', 'i']) == "hi")
     >>> True
@@ -400,18 +426,26 @@ module(Data/String)
   :/Data/String.take(n -> /Data/Primitive/Integer) -> /Data/String
     # [take] is the first [n] characters, or the whole string where it is shorter.
   :/Data/String/Text(chars).take(n)= /Data/String/Text(chars= takeChars(cs= chars, n= n))
+  :/Catln/CStr.take(n -> /Data/Primitive/Integer) -> /Catln/CStr
+    #runtime("cstrTake")
 
   :/Data/String.drop(n -> /Data/Primitive/Integer) -> /Data/String
     # [drop] is the string without its first [n] characters.
   :/Data/String/Text(chars).drop(n)= /Data/String/Text(chars= dropChars(cs= chars, n= n))
+  :/Catln/CStr.drop(n -> /Data/Primitive/Integer) -> /Catln/CStr
+    #runtime("cstrDrop")
 
   :/Data/String.slice(start -> /Data/Primitive/Integer, end -> /Data/Primitive/Integer) -> /Data/String
     # [slice] is the characters from index [start] up to but not including index [end].
   :/Data/String/Text(chars).slice(start, end)= /Data/String/Text(chars= takeChars(cs= dropChars(cs= chars, n= start), n= end - start))
+  :/Catln/CStr.slice(start -> /Data/Primitive/Integer, end -> /Data/Primitive/Integer) -> /Catln/CStr
+    #runtime("cstrSlice")
 
   :/Data/String.reversed -> /Data/String
     # [reversed] is the string backwards.
   :/Data/String/Text(chars).reversed= /Data/String/Text(chars= reverseChars(cs= chars, acc= /Data/List/Nil))
+  :/Catln/CStr.reversed -> /Catln/CStr
+    #runtime("cstrReversed")
 
   > "hello".take(n= 2)
     >>> he
@@ -452,19 +486,27 @@ module(Data/String)
   :/Data/String.startsWith(prefix -> /Data/String) -> /Data/Primitive/Boolean
     # [startsWith] is whether the string begins with [prefix].
   :/Data/String/Text(chars@cs).startsWith(prefix= /Data/String/Text(chars@p))= charsStartWith(cs= cs, prefix= p)
+  :/Catln/CStr.startsWith(prefix -> /Catln/CStr) -> /Data/Primitive/Boolean
+    #runtime("cstrStartsWith")
 
   :/Data/String.endsWith(suffix -> /Data/String) -> /Data/Primitive/Boolean
     # [endsWith] is whether the string ends with [suffix].
   :/Data/String/Text(chars@cs).endsWith(suffix= /Data/String/Text(chars@s))= charsStartWith(cs= reverseChars(cs= cs, acc= /Data/List/Nil), prefix= reverseChars(cs= s, acc= /Data/List/Nil))
+  :/Catln/CStr.endsWith(suffix -> /Catln/CStr) -> /Data/Primitive/Boolean
+    #runtime("cstrEndsWith")
 
   :/Data/String.indexOf(sub -> /Data/String) -> /Data/Maybe[$T -> /Data/Primitive/Integer]
     # [indexOf] is the index at which [sub] first occurs in the string, or [Nothing] where it does
       not occur. The empty string occurs at 0.
   :/Data/String/Text(chars@cs).indexOf(sub= /Data/String/Text(chars@s))= indexOfChars(cs= cs, sub= s, i= 0)
+  :/Catln/CStr.indexOf(sub -> /Catln/CStr) -> /Data/Maybe[$T -> /Data/Primitive/Integer]
+    #runtime("cstrIndexOf")
 
   :/Data/String.contains(sub -> /Data/String) -> /Data/Primitive/Boolean
     # [contains] is whether [sub] occurs anywhere in the string.
   :/Data/String/Text(chars@cs).contains(sub= /Data/String/Text(chars@s))= indexOfChars(cs= cs, sub= s, i= 0) != /Data/Maybe/Nothing
+  :/Catln/CStr.contains(sub -> /Catln/CStr) -> /Data/Primitive/Boolean
+    #runtime("cstrContains")
 
   > "hello".startsWith(prefix= "he")
     >>> True
@@ -507,28 +549,40 @@ module(Data/String)
   :/Data/String.toUpper -> /Data/String
     # [toUpper] is the string with each lower case letter made upper case.
   :/Data/String/Text(chars).toUpper= /Data/String/Text(chars= upperChars(cs= chars))
+  :/Catln/CStr.toUpper -> /Catln/CStr
+    #runtime("cstrToUpper")
 
   :/Data/String.toLower -> /Data/String
     # [toLower] is the string with each upper case letter made lower case.
   :/Data/String/Text(chars).toLower= /Data/String/Text(chars= lowerChars(cs= chars))
+  :/Catln/CStr.toLower -> /Catln/CStr
+    #runtime("cstrToLower")
 
   :/Data/String.trimStart -> /Data/String
     # [trimStart] is the string without the white space it begins with.
   :/Data/String/Text(chars).trimStart= /Data/String/Text(chars= dropSpace(cs= chars))
+  :/Catln/CStr.trimStart -> /Catln/CStr
+    #runtime("cstrTrimStart")
 
   :/Data/String.trimEnd -> /Data/String
     # [trimEnd] is the string without the white space it ends with.
   :/Data/String/Text(chars).trimEnd= /Data/String/Text(chars= reverseChars(cs= dropSpace(cs= reverseChars(cs= chars, acc= /Data/List/Nil)), acc= /Data/List/Nil))
+  :/Catln/CStr.trimEnd -> /Catln/CStr
+    #runtime("cstrTrimEnd")
 
   :/Data/String.trim -> /Data/String
     # [trim] is the string without white space at either end.
   :/Data/String/Text(chars).trim= /Data/String/Text(chars= reverseChars(cs= dropSpace(cs= reverseChars(cs= dropSpace(cs= chars), acc= /Data/List/Nil)), acc= /Data/List/Nil))
+  :/Catln/CStr.trim -> /Catln/CStr
+    #runtime("cstrTrim")
 
   :/Data/String.replace(old -> /Data/String, new -> /Data/String) -> /Data/String
     # [replace] is the string with every occurrence of [old] replaced by [new], each found after
       the one before it. An empty [old] occurs nowhere, so it replaces nothing.
   :/Data/String/Text(chars@cs).replace(old= /Data/String/Text(chars= /Data/List/Nil), new)= /Data/String/Text(chars= cs)
   :/Data/String/Text(chars@cs).replace(old= /Data/String/Text(chars= /Data/List/Cons(head@oh, tail@ot)), new= /Data/String/Text(chars@n))= /Data/String/Text(chars= replaceChars(cs= cs, old= /Data/List/Cons(head= oh, tail= ot), new= n))
+  :/Catln/CStr.replace(old -> /Catln/CStr, new -> /Catln/CStr) -> /Catln/CStr
+    #runtime("cstrReplace")
 
   :/Data/String.repeat(n -> /Data/Primitive/Integer) -> /Data/String
     # [repeat] is [n] copies of the string joined end to end, and the empty string for no copies.
@@ -565,6 +619,8 @@ module(Data/String)
       occurs nowhere, so the string is its only piece.
   :/Data/String/Text(chars@cs).split(sep= /Data/String/Text(chars= /Data/List/Nil))= /Data/List/Cons(head= /Data/String/Text(chars= cs), tail= /Data/List/Nil)
   :/Data/String/Text(chars@cs).split(sep= /Data/String/Text(chars= /Data/List/Cons(head@sh, tail@st)))= splitChars(cs= cs, sep= /Data/List/Cons(head= sh, tail= st), cur= /Data/List/Nil)
+  :/Catln/CStr.split(sep -> /Catln/CStr) -> /Data/List/ConsList[$T -> /Catln/CStr]
+    #runtime("cstrSplit")
 
   linesOf(cs -> /Data/List/ConsList[$T -> /Data/Char], cur -> /Data/List/ConsList[$T -> /Data/Char]) -> /Data/List/ConsList[$T -> /Data/String]
     # [linesOf] cuts [cs] at each newline, where [cur] holds, backwards, the line being read.
@@ -590,10 +646,14 @@ module(Data/String)
     # [lines] is the lines of the string, cut at each newline. A newline ends the line before it,
       so a string ending in one has no empty line after it, and the empty string has no lines.
   :/Data/String/Text(chars).lines= linesOf(cs= chars, cur= /Data/List/Nil)
+  :/Catln/CStr.lines -> /Data/List/ConsList[$T -> /Catln/CStr]
+    #runtime("cstrLines")
 
   :/Data/String.words -> /Data/List/ConsList[$T -> /Data/String]
     # [words] is the words of the string: the runs of characters between white space.
   :/Data/String/Text(chars).words= wordsOf(cs= chars, cur= /Data/List/Nil)
+  :/Catln/CStr.words -> /Data/List/ConsList[$T -> /Catln/CStr]
+    #runtime("cstrWords")
 
   join(sep -> /Data/String, parts -> /Data/List/ConsList[$T -> /Data/String]) -> /Data/String
     # [join] is the strings of [parts] joined end to end with [sep] between each two.
@@ -601,8 +661,6 @@ module(Data/String)
   join(sep, parts= /Data/List/Cons(head, tail= /Data/List/Nil))= head
   join(sep, parts= /Data/List/Cons(head@first, tail= /Data/List/Cons(head, tail)))= first ++ sep ++ join(sep= sep, parts= /Data/List/Cons(head= head, tail= tail))
 
-  # A list of strings renders through @core/list.ct@, which this page cannot import, so the pieces
-  #   below are shown [join]ed with a bar between them.
   > join(sep= "|", parts= "a,b,,c".split(sep= ","))
     >>> a|b||c
   > join(sep= "|", parts= "a, b".split(sep= ", "))

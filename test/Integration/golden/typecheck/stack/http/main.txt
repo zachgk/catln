@@ -82,7 +82,10 @@ Prgm
                                 ) = /Http/HttpErr/InvalidUrl( Value /url -> ∀/Data/String )( Value /detail -> ∀/Data/String )
                             ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /operator++( Value /l -> TVArg /url = Value /url )
-                                ( Value /r -> /Data/String/Text.. = CStr
+                                ( Value /r ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = " is not a URL a request can be sent to: " }
                                 )
                             )( Value /r -> TVArg /detail = Value /detail )
@@ -94,11 +97,17 @@ Prgm
                             ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /operator++
                                 ( Value /l -> ∀/Data/String = /operator++
-                                    ( Value /l -> /Data/String/Text.. = CStr
+                                    ( Value /l ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = CStr
                                         { csValue = "the request to " }
                                     )( Value /r -> TVArg /url = Value /url )
                                 )
-                                ( Value /r -> /Data/String/Text.. = CStr
+                                ( Value /r ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = " could not be made: " }
                                 )
                             )( Value /r -> TVArg /detail = Value /detail )
@@ -113,28 +122,43 @@ Prgm
                                 ( Value /l -> ∀/Data/String = /operator++
                                     ( Value /l -> ∀/Data/String = /operator++
                                         ( Value /l -> ∀/Data/String = /operator++
-                                            ( Value /l -> /Data/String/Text.. = CStr
+                                            ( Value /l ->
+                                                ( /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                ) = CStr
                                                 { csValue = "the request to " }
                                             )( Value /r -> TVArg /url = Value /url )
                                         )
-                                        ( Value /r -> /Data/String/Text.. = CStr
+                                        ( Value /r ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                            ) = CStr
                                             { csValue = " answered with status " }
                                         )
                                     )
                                     ( Value /r -> ∀/Data/String = /Data/toString( Value /this -> TVArg /code = Value /code ) )
                                 )
-                                ( Value /r -> /Data/String/Text.. = CStr
+                                ( Value /r ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = ": " }
                                 )
                             )( Value /r -> TVArg /body = Value /body )
                         , /Data/msg
                             ( Value /this -> /Http/HttpErr/NotSent( /url=∀/Data/String ) = /Http/HttpErr/NotSent( Value /url -> ∀/Data/String ) ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /operator++
-                                ( Value /l -> /Data/String/Text.. = CStr
+                                ( Value /l ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = "the request to " }
                                 )( Value /r -> TVArg /url = Value /url )
                             )
-                            ( Value /r -> /Data/String/Text.. = CStr
+                            ( Value /r ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = " was not sent, as this run reaches no network" }
                             )
                         ]

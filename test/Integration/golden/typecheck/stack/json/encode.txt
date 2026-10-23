@@ -164,12 +164,18 @@ Prgm
                                 ( Value /entries -> ∀/Data/List/ConsList[ /T=∀/Data/Json ] )
                             ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /operator++
-                                ( Value /l -> /Data/String/Text.. = CStr
+                                ( Value /l ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = "[" }
                                 )
                                 ( Value /r -> ∀/Data/String = /Data/jsonEncodeEntries( Value /entries -> TVArg /entries = Value /entries ) )
                             )
-                            ( Value /r -> /Data/String/Text.. = CStr
+                            ( Value /r ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "]" }
                             )
                         , /Data/jsonEncode
@@ -178,12 +184,18 @@ Prgm
                                 ( Value /entries -> ∀/Data/List/ConsList[ /T=/Data/Json/Member.. ] )
                             ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /operator++
-                                ( Value /l -> /Data/String/Text.. = CStr
+                                ( Value /l ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = "{" }
                                 )
                                 ( Value /r -> ∀/Data/String = /Data/jsonEncodeMembers( Value /members -> TVArg /entries = Value /entries ) )
                             )
-                            ( Value /r -> /Data/String/Text.. = CStr
+                            ( Value /r ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "}" }
                             )
                         ]
@@ -413,7 +425,10 @@ Prgm
                             ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /operator++
                                 ( Value /l -> ∀/Data/String = /Data/jsonQuote( Value /s -> TVArg /key = Value /key ) )
-                                ( Value /r -> /Data/String/Text.. = CStr
+                                ( Value /r ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = ":" }
                                 )
                             )
@@ -482,7 +497,10 @@ Prgm
                             ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /operator++
                                 ( Value /l -> ∀/Data/String = /Data/jsonEncode( Value /value -> TVArg /head = Value /head ) )
-                                ( Value /r -> /Data/String/Text.. = CStr
+                                ( Value /r ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = "," }
                                 )
                             )
@@ -531,7 +549,10 @@ Prgm
                             ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /operator++
                                 ( Value /l -> ∀/Data/String = /Data/jsonEncodeMember( Value /member -> TVArg /head = Value /head ) )
-                                ( Value /r -> /Data/String/Text.. = CStr
+                                ( Value /r ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = "," }
                                 )
                             )

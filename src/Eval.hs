@@ -1025,6 +1025,7 @@ displayableVal :: Val -> Bool
 displayableVal IntVal{}        = True
 displayableVal FloatVal{}      = True
 displayableVal CharVal{}       = True
+displayableVal CStrVal{}       = True
 displayableVal (TupleVal _ as) = all displayableVal (H.elems as)
 displayableVal _               = False
 

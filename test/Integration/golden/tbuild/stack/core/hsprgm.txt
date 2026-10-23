@@ -1103,7 +1103,7 @@ Prgm
                 { eaaArg = Value /text ->
                     ( /Data/String/Text
                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
-                    ) = "They are reached by writing `import hsprgm()`. The standard library does not write that import and must not: these declarations reach `core/list.ct`, and a page every program compiles reaching it is the import cycle `core/result.ct` measures at seven hundred seconds. A program which wants to read programs asks for them and pays for them."
+                    ) = "They are reached by writing `import hsprgm()`. The standard library does not write that import: a program which wants to read programs asks for them and pays for them."
                 }
             )
         , /Catln/#md

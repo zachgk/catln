@@ -92,12 +92,18 @@ Prgm
                     , omiDefs =
                         [ /Data/msg
                             ( Value /this -> /Catln/ParseExprErr/Syntax( /message=∀/Data/String ) = /Catln/ParseExprErr/Syntax( Value /message -> ∀/Data/String ) ) -> ∀/Data/String = /operator++
-                            ( Value /l -> /Data/String/Text.. = CStr
+                            ( Value /l ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "the text is not a Catln expression: " }
                             )( Value /r -> TVArg /message = Value /message )
                         , /Data/msg
                             ( Value /this -> /Catln/ParseExprErr/Type( /message=∀/Data/String ) = /Catln/ParseExprErr/Type( Value /message -> ∀/Data/String ) ) -> ∀/Data/String = /operator++
-                            ( Value /l -> /Data/String/Text.. = CStr
+                            ( Value /l ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "the expression is not of the type asked for: " }
                             )( Value /r -> TVArg /message = Value /message )
                         , /Data/msg
@@ -105,7 +111,10 @@ Prgm
                             { csValue = "the expression's value is not of the type asked for" }
                         , /Data/msg
                             ( Value /this -> /Catln/ParseExprErr/Eval( /message=∀/Data/String ) = /Catln/ParseExprErr/Eval( Value /message -> ∀/Data/String ) ) -> ∀/Data/String = /operator++
-                            ( Value /l -> /Data/String/Text.. = CStr
+                            ( Value /l ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "the expression failed to evaluate: " }
                             )( Value /r -> TVArg /message = Value /message )
                         ]
@@ -137,7 +146,7 @@ Prgm
                             ,
                                 ( /operator++
                                     ( /r=∀/Data/String
-                                    , /l=/Data/String/Text..
+                                    , /l=( /Data/String/Text.. + /Catln/CStr )
                                     ) + /Data/toString( /this=/Data/Primitive/Integer ) + /Data/toStringBase
                                     ( /this=/Data/Primitive/Integer
                                     , /base=/Data/Primitive/Integer
@@ -164,12 +173,18 @@ Prgm
                             ) = /operator++
                             ( Value /l -> ∀/Data/String = /operator++
                                 ( Value /l -> ∀/Data/String = /operator++
-                                    ( Value /l -> /Data/String/Text.. = CStr
+                                    ( Value /l ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = CStr
                                         { csValue = "Point at " }
                                     )
                                     ( Value /r -> ∀/Data/String = /Data/toString( Value /this -> TVArg /x = Value /x ) )
                                 )
-                                ( Value /r -> /Data/String/Text.. = CStr
+                                ( Value /r ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = ", " }
                                 )
                             )

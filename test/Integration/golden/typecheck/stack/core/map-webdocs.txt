@@ -40,22 +40,34 @@ Prgm
                                                 ( Value /l -> ∀/Data/String = /operator++
                                                     ( Value /l -> ∀/Data/String = /operator++
                                                         ( Value /l -> ∀/Data/String = /Data/toString( Value /this -> TVArg /index = Value /index ) )
-                                                        ( Value /r -> /Data/String/Text.. = CStr
+                                                        ( Value /r ->
+                                                            ( /Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                            ) = CStr
                                                             { csValue = ":" }
                                                         )
                                                     )( Value /r -> TVArg /key = Value /key )
                                                 )
-                                                ( Value /r -> /Data/String/Text.. = CStr
+                                                ( Value /r ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = CStr
                                                     { csValue = "=" }
                                                 )
                                             )( Value /r -> TVArg /input = Value /input )
                                         )
-                                        ( Value /r -> /Data/String/Text.. = CStr
+                                        ( Value /r ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                            ) = CStr
                                             { csValue = "->" }
                                         )
                                     )( Value /r -> TVArg /output = Value /output )
                                 )
-                                ( Value /r -> /Data/String/Text.. = CStr
+                                ( Value /r ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = ";" }
                                 )
                             )
@@ -330,27 +342,42 @@ Prgm
                                                         ( Value /l -> ∀/Data/String = /operator++
                                                             ( Value /l -> ∀/Data/String = /operator++
                                                                 ( Value /l -> ∀/Data/String = /Data/toString( Value /this -> TVArg /index = Value /index ) )
-                                                                ( Value /r -> /Data/String/Text.. = CStr
+                                                                ( Value /r ->
+                                                                    ( /Data/String/Text
+                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                    ) = CStr
                                                                     { csValue = ":" }
                                                                 )
                                                             )( Value /r -> TVArg /key = Value /key )
                                                         )
-                                                        ( Value /r -> /Data/String/Text.. = CStr
+                                                        ( Value /r ->
+                                                            ( /Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                            ) = CStr
                                                             { csValue = ":" }
                                                         )
                                                     )( Value /r -> TVArg /acc = Value /acc )
                                                 )
-                                                ( Value /r -> /Data/String/Text.. = CStr
+                                                ( Value /r ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = CStr
                                                     { csValue = "+" }
                                                 )
                                             )( Value /r -> TVArg /input = Value /input )
                                         )
-                                        ( Value /r -> /Data/String/Text.. = CStr
+                                        ( Value /r ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                            ) = CStr
                                             { csValue = "=" }
                                         )
                                     )( Value /r -> TVArg /output = Value /output )
                                 )
-                                ( Value /r -> /Data/String/Text.. = CStr
+                                ( Value /r ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = ";" }
                                 )
                             )

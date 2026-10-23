@@ -84,6 +84,19 @@ classMemberLeaves typeEnv = go (10 :: Int)
       _ -> []
     go _ _ = []
 
+-- | The members of a class a class arrow is written from that are not within @t@ and reach it: what
+-- converts into a slot of type @t@ on the way in, as the tree build converts an argument toward the
+-- slot it is given in. A @\/Catln\/CStr@ is one for a @String\/Text@ slot, and a @String\/Text@ for a
+-- @\/Catln\/CStr@ slot.
+convertingMembers :: (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeEnv (ObjArrTypeGraph e m) -> Type -> [PartialType]
+convertingMembers typeEnv t =
+  [ l
+  | (cls, _) <- classArrowsOf typeEnv
+  , not (isBottomType (intersectTypes typeEnv cls t))
+  , l <- classMemberLeaves typeEnv cls
+  , not (isSubtypeOf typeEnv (singletonType l) t)
+  , reachesTo typeEnv H.empty (singletonType l) t ]
+
 -- | A declaration's input as what its definitions must take once the class arrows have converted
 -- what they convert.
 --

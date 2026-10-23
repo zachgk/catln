@@ -47,7 +47,7 @@ Prgm
                                                 ( /operator>=
                                                     ( EAppArg
                                                         { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                            ( /Data/String/length
+                                                            ( /length
                                                                 ( EAppArg
                                                                     { eaaArg = Value /this -> TVArg /h = ( Value /h ↦ TVArg /h ) }
                                                                 ) ↦ /Data/Primitive/Integer
@@ -65,7 +65,7 @@ Prgm
                                                 ( /operator<=
                                                     ( EAppArg
                                                         { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                            ( /Data/String/length
+                                                            ( /length
                                                                 ( EAppArg
                                                                     { eaaArg = Value /this -> TVArg /h = ( Value /h ↦ TVArg /h ) }
                                                                 ) ↦ /Data/Primitive/Integer
@@ -86,7 +86,7 @@ Prgm
                                     ( /operator==
                                         ( EAppArg
                                             { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                ( /Data/String/length
+                                                ( /length
                                                     ( EAppArg
                                                         { eaaArg = Value /this -> TVArg /m = ( Value /m ↦ TVArg /m ) }
                                                     ) ↦ /Data/Primitive/Integer
@@ -719,8 +719,10 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text.. =
-                                        ( "h" ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /r ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = "h"
                                     }
                                 ) ↦ ∀/Data/String
                             )
@@ -752,8 +754,10 @@ Prgm
                                                             }
                                                         )
                                                         ( EAppArg
-                                                            { eaaArg = Value /r -> /Data/String/Text.. =
-                                                                ( "h " ↦ /Data/String/Text.. )
+                                                            { eaaArg = Value /r ->
+                                                                ( /Data/String/Text
+                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                ) = "h "
                                                             }
                                                         ) ↦ ∀/Data/String
                                                     )
@@ -781,8 +785,10 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text.. =
-                                        ( "m" ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /r ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = "m"
                                     }
                                 ) ↦ ∀/Data/String
                             )
@@ -831,8 +837,10 @@ Prgm
                                                                         }
                                                                     )
                                                                     ( EAppArg
-                                                                        { eaaArg = Value /r -> /Data/String/Text.. =
-                                                                            ( "-" ↦ /Data/String/Text.. )
+                                                                        { eaaArg = Value /r ->
+                                                                            ( /Data/String/Text
+                                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                            ) = "-"
                                                                         }
                                                                     ) ↦ ∀/Data/String
                                                                 )
@@ -854,8 +862,10 @@ Prgm
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/String/Text.. =
-                                                    ( "-" ↦ /Data/String/Text.. )
+                                                { eaaArg = Value /r ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "-"
                                                 }
                                             ) ↦ ∀/Data/String
                                         )
@@ -901,8 +911,10 @@ Prgm
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/String/Text.. =
-                                                    ( ":" ↦ /Data/String/Text.. )
+                                                { eaaArg = Value /r ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = ":"
                                                 }
                                             ) ↦ ∀/Data/String
                                         )
@@ -944,8 +956,10 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text.. =
-                                        ( "m" ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /r ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = "m"
                                     }
                                 ) ↦ ∀/Data/String
                             )
@@ -984,8 +998,10 @@ Prgm
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/String/Text.. =
-                                                    ( " - " ↦ /Data/String/Text.. )
+                                                { eaaArg = Value /r ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = " - "
                                                 }
                                             ) ↦ ∀/Data/String
                                         )
@@ -1022,8 +1038,10 @@ Prgm
                             ( EAppArg { eaaArg = Value /clock -> ∀/Data/String } )
                             ( EAppArg { eaaArg = Value /bare -> ∀/Data/Primitive/Boolean } ) | /Data/String/contains
                             ( EAppArg
-                                { eaaArg = Value /sub -> /Data/String/Text.. =
-                                    ( ":" ↦ /Data/String/Text.. )
+                                { eaaArg = Value /sub ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = ":"
                                 }
                             )
                             ( EAppArg
@@ -1040,8 +1058,10 @@ Prgm
                                     { eaaArg = Value /parts -> ∀/Data/List/ConsList[ /T=∀/Data/String ] =
                                         ( /Data/String/split
                                             ( EAppArg
-                                                { eaaArg = Value /sep -> /Data/String/Text.. =
-                                                    ( ":" ↦ /Data/String/Text.. )
+                                                { eaaArg = Value /sep ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = ":"
                                                 }
                                             )
                                             ( EAppArg
@@ -1372,7 +1392,7 @@ Prgm
                                                 ( /operator==
                                                     ( EAppArg
                                                         { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                            ( /Data/String/length
+                                                            ( /length
                                                                 ( EAppArg
                                                                     { eaaArg = Value /this -> TVArg /s = ( Value /s ↦ TVArg /s ) }
                                                                 ) ↦ /Data/Primitive/Integer
@@ -1600,8 +1620,10 @@ Prgm
                         [ /Data/Time/clockOf
                             ( EAppArg { eaaArg = Value /t -> ∀/Data/String } ) | /Data/String/endsWith
                             ( EAppArg
-                                { eaaArg = Value /suffix -> /Data/String/Text.. =
-                                    ( "am" ↦ /Data/String/Text.. )
+                                { eaaArg = Value /suffix ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = "am"
                                 }
                             )
                             ( EAppArg
@@ -1628,7 +1650,7 @@ Prgm
                                                                             ( /operator-
                                                                                 ( EAppArg
                                                                                     { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                                                        ( /Data/String/length
+                                                                                        ( /length
                                                                                             ( EAppArg
                                                                                                 { eaaArg = Value /this -> TVArg /t = ( Value /t ↦ TVArg /t ) }
                                                                                             ) ↦ /Data/Primitive/Integer
@@ -1665,8 +1687,10 @@ Prgm
                         , /Data/Time/clockOf
                             ( EAppArg { eaaArg = Value /t -> ∀/Data/String } ) | /Data/String/endsWith
                             ( EAppArg
-                                { eaaArg = Value /suffix -> /Data/String/Text.. =
-                                    ( "pm" ↦ /Data/String/Text.. )
+                                { eaaArg = Value /suffix ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = "pm"
                                 }
                             )
                             ( EAppArg
@@ -1693,7 +1717,7 @@ Prgm
                                                                             ( /operator-
                                                                                 ( EAppArg
                                                                                     { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                                                        ( /Data/String/length
+                                                                                        ( /length
                                                                                             ( EAppArg
                                                                                                 { eaaArg = Value /this -> TVArg /t = ( Value /t ↦ TVArg /t ) }
                                                                                             ) ↦ /Data/Primitive/Integer
@@ -2223,7 +2247,7 @@ Prgm
                             ( EAppArg { eaaArg = Value /width -> /Data/Primitive/Integer } ) | /operator<
                             ( EAppArg
                                 { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                    ( /Data/String/length
+                                    ( /length
                                         ( EAppArg
                                             { eaaArg = Value /this -> ∀/Data/String =
                                                 ( /toString
@@ -2241,8 +2265,10 @@ Prgm
                             ) -> ∀/Data/String =
                             ( /operator++
                                 ( EAppArg
-                                    { eaaArg = Value /l -> /Data/String/Text.. =
-                                        ( "0" ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /l ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = "0"
                                     }
                                 )
                                 ( EAppArg
@@ -2939,8 +2965,10 @@ Prgm
                                     { eaaArg = Value /l -> ∀/Data/String =
                                         ( /operator++
                                             ( EAppArg
-                                                { eaaArg = Value /l -> /Data/String/Text.. =
-                                                    ( """ ↦ /Data/String/Text.. )
+                                                { eaaArg = Value /l ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = """
                                                 }
                                             )
                                             ( EAppArg
@@ -2950,8 +2978,10 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text.. =
-                                        ( "" is not a date written YYYY-MM-DD" ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /r ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = "" is not a date written YYYY-MM-DD"
                                     }
                                 ) ↦ ∀/Data/String
                             )
@@ -2973,8 +3003,10 @@ Prgm
                                                 { eaaArg = Value /l -> ∀/Data/String =
                                                     ( /operator++
                                                         ( EAppArg
-                                                            { eaaArg = Value /l -> /Data/String/Text.. =
-                                                                ( "the " ↦ /Data/String/Text.. )
+                                                            { eaaArg = Value /l ->
+                                                                ( /Data/String/Text
+                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                ) = "the "
                                                             }
                                                         )
                                                         ( EAppArg
@@ -2984,8 +3016,10 @@ Prgm
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/String/Text.. =
-                                                    ( " is not a number: " ↦ /Data/String/Text.. )
+                                                { eaaArg = Value /r ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = " is not a number: "
                                                 }
                                             ) ↦ ∀/Data/String
                                         )
@@ -3018,8 +3052,10 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text.. =
-                                        ( " is not a month from 1 to 12" ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /r ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = " is not a month from 1 to 12"
                                     }
                                 ) ↦ ∀/Data/String
                             )
@@ -3060,8 +3096,10 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text.. =
-                                        ( " is not a day that exists" ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /r ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = " is not a day that exists"
                                     }
                                 ) ↦ ∀/Data/String
                             )
@@ -3076,8 +3114,10 @@ Prgm
                                     { eaaArg = Value /l -> ∀/Data/String =
                                         ( /operator++
                                             ( EAppArg
-                                                { eaaArg = Value /l -> /Data/String/Text.. =
-                                                    ( """ ↦ /Data/String/Text.. )
+                                                { eaaArg = Value /l ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = """
                                                 }
                                             )
                                             ( EAppArg
@@ -3087,8 +3127,10 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text.. =
-                                        ( "" does not write an hour and minutes apart" ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /r ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = "" does not write an hour and minutes apart"
                                     }
                                 ) ↦ ∀/Data/String
                             )
@@ -3113,8 +3155,10 @@ Prgm
                                                             { eaaArg = Value /l -> ∀/Data/String =
                                                                 ( /operator++
                                                                     ( EAppArg
-                                                                        { eaaArg = Value /l -> /Data/String/Text.. =
-                                                                            ( """ ↦ /Data/String/Text.. )
+                                                                        { eaaArg = Value /l ->
+                                                                            ( /Data/String/Text
+                                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                            ) = """
                                                                         }
                                                                     )
                                                                     ( EAppArg
@@ -3124,8 +3168,10 @@ Prgm
                                                             }
                                                         )
                                                         ( EAppArg
-                                                            { eaaArg = Value /r -> /Data/String/Text.. =
-                                                                ( "" and "" ↦ /Data/String/Text.. )
+                                                            { eaaArg = Value /r ->
+                                                                ( /Data/String/Text
+                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                ) = "" and ""
                                                             }
                                                         ) ↦ ∀/Data/String
                                                     )
@@ -3138,8 +3184,10 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text.. =
-                                        ( "" are not an hour of one or two digits and minutes of two" ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /r ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = "" are not an hour of one or two digits and minutes of two"
                                     }
                                 ) ↦ ∀/Data/String
                             )
@@ -3161,8 +3209,10 @@ Prgm
                                                 { eaaArg = Value /l -> ∀/Data/String =
                                                     ( /operator++
                                                         ( EAppArg
-                                                            { eaaArg = Value /l -> /Data/String/Text.. =
-                                                                ( "the " ↦ /Data/String/Text.. )
+                                                            { eaaArg = Value /l ->
+                                                                ( /Data/String/Text
+                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                ) = "the "
                                                             }
                                                         )
                                                         ( EAppArg
@@ -3172,8 +3222,10 @@ Prgm
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/String/Text.. =
-                                                    ( " is not a number: " ↦ /Data/String/Text.. )
+                                                { eaaArg = Value /r ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = " is not a number: "
                                                 }
                                             ) ↦ ∀/Data/String
                                         )
@@ -3206,8 +3258,10 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text.. =
-                                        ( " is not a minute, 0 to 59" ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /r ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = " is not a minute, 0 to 59"
                                     }
                                 ) ↦ ∀/Data/String
                             )
@@ -3228,8 +3282,10 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text.. =
-                                        ( " is not an hour of a 24-hour clock, 0 to 23" ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /r ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = " is not an hour of a 24-hour clock, 0 to 23"
                                     }
                                 ) ↦ ∀/Data/String
                             )
@@ -3250,8 +3306,10 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text.. =
-                                        ( " is not an hour of a 12-hour clock, 1 to 12" ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /r ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = " is not an hour of a 12-hour clock, 1 to 12"
                                     }
                                 ) ↦ ∀/Data/String
                             )
@@ -3908,8 +3966,10 @@ Prgm
                             ( EAppArg { eaaArg = Value /clock -> ∀/Data/String } )
                             ( EAppArg { eaaArg = Value /bare -> ∀/Data/Primitive/Boolean } ) | /Data/String/contains
                             ( EAppArg
-                                { eaaArg = Value /sub -> /Data/String/Text.. =
-                                    ( "." ↦ /Data/String/Text.. )
+                                { eaaArg = Value /sub ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = "."
                                 }
                             )
                             ( EAppArg
@@ -3926,8 +3986,10 @@ Prgm
                                     { eaaArg = Value /parts -> ∀/Data/List/ConsList[ /T=∀/Data/String ] =
                                         ( /Data/String/split
                                             ( EAppArg
-                                                { eaaArg = Value /sep -> /Data/String/Text.. =
-                                                    ( "." ↦ /Data/String/Text.. )
+                                                { eaaArg = Value /sep ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "."
                                                 }
                                             )
                                             ( EAppArg
@@ -3954,7 +4016,7 @@ Prgm
                                                 ( /operator>=
                                                     ( EAppArg
                                                         { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                            ( /Data/String/length
+                                                            ( /length
                                                                 ( EAppArg
                                                                     { eaaArg = Value /this -> TVArg /clock = ( Value /clock ↦ TVArg /clock ) }
                                                                 ) ↦ /Data/Primitive/Integer
@@ -3975,7 +4037,7 @@ Prgm
                                     ( /operator<=
                                         ( EAppArg
                                             { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                ( /Data/String/length
+                                                ( /length
                                                     ( EAppArg
                                                         { eaaArg = Value /this -> TVArg /clock = ( Value /clock ↦ TVArg /clock ) }
                                                     ) ↦ /Data/Primitive/Integer
@@ -4011,7 +4073,7 @@ Prgm
                                                             ( /operator-
                                                                 ( EAppArg
                                                                     { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                                        ( /Data/String/length
+                                                                        ( /length
                                                                             ( EAppArg
                                                                                 { eaaArg = Value /this -> TVArg /clock = ( Value /clock ↦ TVArg /clock ) }
                                                                             ) ↦ /Data/Primitive/Integer
@@ -4043,7 +4105,7 @@ Prgm
                                                                     ( /operator-
                                                                         ( EAppArg
                                                                             { eaaArg = Value /l -> /Data/Primitive/Integer =
-                                                                                ( /Data/String/length
+                                                                                ( /length
                                                                                     ( EAppArg
                                                                                         { eaaArg = Value /this -> TVArg /clock = ( Value /clock ↦ TVArg /clock ) }
                                                                                     ) ↦ /Data/Primitive/Integer

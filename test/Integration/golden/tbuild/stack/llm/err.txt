@@ -82,8 +82,10 @@ Prgm
                                     { eaaArg = Value /l -> TVArg /variable = ( Value /variable ↦ TVArg /variable ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text.. =
-                                        ( " is not set, so there is no model to ask" ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /r ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = " is not set, so there is no model to ask"
                                     }
                                 ) ↦ ∀/Data/String
                             )
@@ -95,8 +97,10 @@ Prgm
                             ) -> ∀/Data/String =
                             ( /operator++
                                 ( EAppArg
-                                    { eaaArg = Value /l -> /Data/String/Text.. =
-                                        ( "the model could not be asked: " ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /l ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = "the model could not be asked: "
                                     }
                                 )
                                 ( EAppArg
@@ -117,8 +121,10 @@ Prgm
                             ) -> ∀/Data/String =
                             ( /operator++
                                 ( EAppArg
-                                    { eaaArg = Value /l -> /Data/String/Text.. =
-                                        ( "the model's response is " ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /l ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = "the model's response is "
                                     }
                                 )
                                 ( EAppArg
@@ -139,8 +145,10 @@ Prgm
                             ) -> ∀/Data/String =
                             ( /operator++
                                 ( EAppArg
-                                    { eaaArg = Value /l -> /Data/String/Text.. =
-                                        ( "the model's API answered with an error: " ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /l ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = "the model's API answered with an error: "
                                     }
                                 )
                                 ( EAppArg
@@ -165,8 +173,10 @@ Prgm
                                                 { eaaArg = Value /l -> ∀/Data/String =
                                                     ( /operator++
                                                         ( EAppArg
-                                                            { eaaArg = Value /l -> /Data/String/Text.. =
-                                                                ( "the model's response has no reply at " ↦ /Data/String/Text.. )
+                                                            { eaaArg = Value /l ->
+                                                                ( /Data/String/Text
+                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                ) = "the model's response has no reply at "
                                                             }
                                                         )
                                                         ( EAppArg
@@ -176,8 +186,10 @@ Prgm
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/String/Text.. =
-                                                    ( ": " ↦ /Data/String/Text.. )
+                                                { eaaArg = Value /r ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = ": "
                                                 }
                                             ) ↦ ∀/Data/String
                                         )
@@ -214,8 +226,10 @@ Prgm
                                                             { eaaArg = Value /l -> ∀/Data/String =
                                                                 ( /operator++
                                                                     ( EAppArg
-                                                                        { eaaArg = Value /l -> /Data/String/Text.. =
-                                                                            ( "the model's reply at " ↦ /Data/String/Text.. )
+                                                                        { eaaArg = Value /l ->
+                                                                            ( /Data/String/Text
+                                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                            ) = "the model's reply at "
                                                                         }
                                                                     )
                                                                     ( EAppArg
@@ -225,19 +239,24 @@ Prgm
                                                             }
                                                         )
                                                         ( EAppArg
-                                                            { eaaArg = Value /r -> /Data/String/Text.. =
-                                                                ( " is " ↦ /Data/String/Text.. )
+                                                            { eaaArg = Value /r ->
+                                                                ( /Data/String/Text
+                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                ) = " is "
                                                             }
                                                         ) ↦ ∀/Data/String
                                                     )
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/String/Text.. =
+                                                { eaaArg = Value /r ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) =
                                                     ( /Data/jsonKind
                                                         ( EAppArg
                                                             { eaaArg = Value /j -> TVArg /found = ( Value /found ↦ TVArg /found ) }
-                                                        ) ↦ /Data/String/Text..
+                                                        ) ↦ ( /Data/String/Text.. + /Catln/CStr )
                                                     )
                                                 }
                                             ) ↦ ∀/Data/String
@@ -245,8 +264,10 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text.. =
-                                        ( ", not text" ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /r ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = ", not text"
                                     }
                                 ) ↦ ∀/Data/String
                             )
@@ -268,8 +289,10 @@ Prgm
                                                 { eaaArg = Value /l -> ∀/Data/String =
                                                     ( /operator++
                                                         ( EAppArg
-                                                            { eaaArg = Value /l -> /Data/String/Text.. =
-                                                                ( "the model's reply is not a value of the type asked for: " ↦ /Data/String/Text.. )
+                                                            { eaaArg = Value /l ->
+                                                                ( /Data/String/Text
+                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                ) = "the model's reply is not a value of the type asked for: "
                                                             }
                                                         )
                                                         ( EAppArg
@@ -285,9 +308,11 @@ Prgm
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/String/Text.. =
-                                                    ( "
-                                                    The reply was: " ↦ /Data/String/Text.. )
+                                                { eaaArg = Value /r ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "
+                                                  The reply was: "
                                                 }
                                             ) ↦ ∀/Data/String
                                         )

@@ -116,8 +116,10 @@ Prgm
                                                 { eaaArg = Value /l -> TVArg /url = ( Value /url ↦ TVArg /url ) }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/String/Text.. =
-                                                    ( " is not a URL a request can be sent to: " ↦ /Data/String/Text.. )
+                                                { eaaArg = Value /r ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = " is not a URL a request can be sent to: "
                                                 }
                                             ) ↦ ∀/Data/String
                                         )
@@ -145,8 +147,10 @@ Prgm
                                                 { eaaArg = Value /l -> ∀/Data/String =
                                                     ( /operator++
                                                         ( EAppArg
-                                                            { eaaArg = Value /l -> /Data/String/Text.. =
-                                                                ( "the request to " ↦ /Data/String/Text.. )
+                                                            { eaaArg = Value /l ->
+                                                                ( /Data/String/Text
+                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                ) = "the request to "
                                                             }
                                                         )
                                                         ( EAppArg
@@ -156,8 +160,10 @@ Prgm
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/String/Text.. =
-                                                    ( " could not be made: " ↦ /Data/String/Text.. )
+                                                { eaaArg = Value /r ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = " could not be made: "
                                                 }
                                             ) ↦ ∀/Data/String
                                         )
@@ -193,8 +199,10 @@ Prgm
                                                                         { eaaArg = Value /l -> ∀/Data/String =
                                                                             ( /operator++
                                                                                 ( EAppArg
-                                                                                    { eaaArg = Value /l -> /Data/String/Text.. =
-                                                                                        ( "the request to " ↦ /Data/String/Text.. )
+                                                                                    { eaaArg = Value /l ->
+                                                                                        ( /Data/String/Text
+                                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                                        ) = "the request to "
                                                                                     }
                                                                                 )
                                                                                 ( EAppArg
@@ -204,8 +212,10 @@ Prgm
                                                                         }
                                                                     )
                                                                     ( EAppArg
-                                                                        { eaaArg = Value /r -> /Data/String/Text.. =
-                                                                            ( " answered with status " ↦ /Data/String/Text.. )
+                                                                        { eaaArg = Value /r ->
+                                                                            ( /Data/String/Text
+                                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                            ) = " answered with status "
                                                                         }
                                                                     ) ↦ ∀/Data/String
                                                                 )
@@ -224,8 +234,10 @@ Prgm
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/String/Text.. =
-                                                    ( ": " ↦ /Data/String/Text.. )
+                                                { eaaArg = Value /r ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = ": "
                                                 }
                                             ) ↦ ∀/Data/String
                                         )
@@ -246,8 +258,10 @@ Prgm
                                     { eaaArg = Value /l -> ∀/Data/String =
                                         ( /operator++
                                             ( EAppArg
-                                                { eaaArg = Value /l -> /Data/String/Text.. =
-                                                    ( "the request to " ↦ /Data/String/Text.. )
+                                                { eaaArg = Value /l ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "the request to "
                                                 }
                                             )
                                             ( EAppArg
@@ -257,8 +271,10 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text.. =
-                                        ( " was not sent, as this run reaches no network" ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /r ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = " was not sent, as this run reaches no network"
                                     }
                                 ) ↦ ∀/Data/String
                             )

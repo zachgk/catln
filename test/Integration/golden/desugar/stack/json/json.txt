@@ -177,10 +177,8 @@ Prgm
                 A [Json] is what a JSON file holds, read as a value: the six things JSON says, and nothing else.
                 It is declared here so that a program handed a `.json` file has a type to read it as, in the way
                 [/Data/FileOrDir] is the type a directory is read as.
-                It is not part of the standard library and must not become part of it. This page reaches
-                @core/list.ct@, and a page every program compiles reaching that is the import cycle
-                @core/result.ct@ measures at seven hundred seconds. A program which reads no JSON has no use for
-                the type, and the page a JSON file is read as writes the import itself.
+                It is not part of the standard library: a program which reads no JSON has no use for the type,
+                and the page a JSON file is read as writes the import itself.
                 The six arms are JSON's own six, so a document read into this and written back out again says
                 what it said. What JSON does not distinguish, this does not either: there is one [Json/Number]
                 rather than an integer and a float, because the format has one." }

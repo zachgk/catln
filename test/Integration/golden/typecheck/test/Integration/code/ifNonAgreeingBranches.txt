@@ -36,7 +36,7 @@ Prgm
                             ,
                                 ( /operator++
                                     ( /r=∀/Data/String
-                                    , /l=/Data/String/Text..
+                                    , /l=( /Data/String/Text.. + /Catln/CStr )
                                     ) + /greet.$c213d7
                                     ( /$c213d7-arg=( /Catln/Else + /Catln/Then )
                                     , /name=∀/Data/String
@@ -63,11 +63,14 @@ Prgm
                                 )
                             , /operator++
                                 ( /r=∀/Data/String
-                                , /l=/Data/String/Text..
+                                , /l=( /Data/String/Text.. + /Catln/CStr )
                                 )
                             , []
                             ) = /operator++
-                            ( Value /l -> /Data/String/Text.. = CStr
+                            ( Value /l ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "Dear " }
                             )( Value /r -> TVArg /name = Value /name )
                         , /greet.$c213d7( Value /name -> ∀/Data/String )( Value /$c213d7-arg -> /Catln/Else = Value /Catln/Else ) -> UnionType
@@ -78,11 +81,14 @@ Prgm
                                 )
                             , /operator++
                                 ( /r=∀/Data/String
-                                , /l=/Data/String/Text..
+                                , /l=( /Data/String/Text.. + /Catln/CStr )
                                 )
                             , []
                             ) = /operator++
-                            ( Value /l -> /Data/String/Text.. = CStr
+                            ( Value /l ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "Hi " }
                             )( Value /r -> TVArg /name = Value /name )
                         ]

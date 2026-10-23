@@ -522,36 +522,40 @@ Prgm
                                                 { eaaArg = Value /l -> ∀/Data/String =
                                                     ( /operator++
                                                         ( EAppArg
-                                                            { eaaArg = Value /l -> /Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) =
+                                                            { eaaArg = Value /l -> ∀/Data/String =
                                                                 ( /operator++
                                                                     ( EAppArg
-                                                                        { eaaArg = Value /l -> /Data/String/Text
-                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) =
+                                                                        { eaaArg = Value /l -> ∀/Data/String =
                                                                             ( /operator++
                                                                                 ( EAppArg
-                                                                                    { eaaArg = Value /l -> /Data/String/Text.. =
-                                                                                        ( "'" ↦ /Data/String/Text.. )
+                                                                                    { eaaArg = Value /l ->
+                                                                                        ( /Data/String/Text
+                                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                                        ) = "'"
                                                                                     }
                                                                                 )
                                                                                 ( EAppArg
-                                                                                    { eaaArg = Value /r -> /Data/String/Text
-                                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) =
+                                                                                    { eaaArg = Value /r ->
+                                                                                        ( /Data/String/Text
+                                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                                        ) =
                                                                                         ( /Data/toString
                                                                                             ( EAppArg
                                                                                                 { eaaArg = Value /this -> TVArg /c = ( Value /c ↦ TVArg /c ) }
-                                                                                            ) ↦ /Data/String/Text..
+                                                                                            ) ↦ ( /Data/String/Text.. + /Catln/CStr )
                                                                                         )
                                                                                     }
-                                                                                ) ↦ /Data/String/Text..
+                                                                                ) ↦ ∀/Data/String
                                                                             )
                                                                         }
                                                                     )
                                                                     ( EAppArg
-                                                                        { eaaArg = Value /r -> /Data/String/Text.. =
-                                                                            ( "' at " ↦ /Data/String/Text.. )
+                                                                        { eaaArg = Value /r ->
+                                                                            ( /Data/String/Text
+                                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                            ) = "' at "
                                                                         }
-                                                                    ) ↦ /Data/String/Text..
+                                                                    ) ↦ ∀/Data/String
                                                                 )
                                                             }
                                                         )
@@ -568,8 +572,10 @@ Prgm
                                                 }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /r -> /Data/String/Text.. =
-                                                    ( " is not a digit of base " ↦ /Data/String/Text.. )
+                                                { eaaArg = Value /r ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = " is not a digit of base "
                                                 }
                                             ) ↦ ∀/Data/String
                                         )
@@ -602,8 +608,10 @@ Prgm
                                     }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /r -> /Data/String/Text.. =
-                                        ( " is not a base from 2 to 36" ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /r ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = " is not a base from 2 to 36"
                                     }
                                 ) ↦ ∀/Data/String
                             )

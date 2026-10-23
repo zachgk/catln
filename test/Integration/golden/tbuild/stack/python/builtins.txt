@@ -72,8 +72,10 @@ Prgm
                                     { eaaArg = Value /l -> ∀/Data/String =
                                         ( /operator++
                                             ( EAppArg
-                                                { eaaArg = Value /l -> /Data/String/Text.. =
-                                                    ( "-" ↦ /Data/String/Text.. )
+                                                { eaaArg = Value /l ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "-"
                                                 }
                                             )
                                             ( EAppArg
@@ -214,8 +216,10 @@ Prgm
                                     { eaaArg = Value /n -> TVArg /this = ( Value /this ↦ TVArg /this ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /prefix -> /Data/String/Text.. =
-                                        ( "0x" ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /prefix ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = "0x"
                                     }
                                 )
                                 ( EAppArg
@@ -256,8 +260,10 @@ Prgm
                                     { eaaArg = Value /n -> TVArg /this = ( Value /this ↦ TVArg /this ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /prefix -> /Data/String/Text.. =
-                                        ( "0o" ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /prefix ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = "0o"
                                     }
                                 )
                                 ( EAppArg
@@ -371,8 +377,10 @@ Prgm
                                     { eaaArg = Value /n -> TVArg /this = ( Value /this ↦ TVArg /this ) }
                                 )
                                 ( EAppArg
-                                    { eaaArg = Value /prefix -> /Data/String/Text.. =
-                                        ( "0b" ↦ /Data/String/Text.. )
+                                    { eaaArg = Value /prefix ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = "0b"
                                     }
                                 )
                                 ( EAppArg

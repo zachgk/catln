@@ -166,7 +166,10 @@ Prgm
                             [ /T=/Data/JsonParsed..
                             , /E=/Data/JsonStuck..
                             ] = /Data/jsonUnexpected( Value /cs -> TVArg /rest = Value /rest )
-                            ( Value /expected -> /Data/String/Text.. = CStr
+                            ( Value /expected ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "a digit of the exponent" }
                             )
                         , /Data/jsonScaled( Value /x -> /Data/Primitive/Float )( Value /negative -> /Data/Primitive/True = Value /Data/Primitive/True )
@@ -346,7 +349,10 @@ Prgm
                             [ /T=/Data/JsonParsed..
                             , /E=/Data/JsonStuck..
                             ] = /Data/jsonUnexpected( Value /cs -> TVArg /rest = Value /rest )
-                            ( Value /expected -> /Data/String/Text.. = CStr
+                            ( Value /expected ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "a number" }
                             )
                         ]
@@ -539,11 +545,17 @@ Prgm
                             ] = /Data/jsonUnexpected( Value /cs -> /Data/List/Nil = Value /Data/List/Nil )
                             ( Value /expected -> ∀/Data/String = /operator++
                                 ( Value /l -> ∀/Data/String = /operator++
-                                    ( Value /l -> /Data/String/Text.. = CStr
+                                    ( Value /l ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = CStr
                                         { csValue = "'" }
                                     )( Value /r -> TVArg /literal = Value /literal )
                                 )
-                                ( Value /r -> /Data/String/Text.. = CStr
+                                ( Value /r ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = "'" }
                                 )
                             )
@@ -586,11 +598,17 @@ Prgm
                             )
                             ( Value /expected -> ∀/Data/String = /operator++
                                 ( Value /l -> ∀/Data/String = /operator++
-                                    ( Value /l -> /Data/String/Text.. = CStr
+                                    ( Value /l ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = CStr
                                         { csValue = "'" }
                                     )( Value /r -> TVArg /literal = Value /literal )
                                 )
-                                ( Value /r -> /Data/String/Text.. = CStr
+                                ( Value /r ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = "'" }
                                 )
                             )
@@ -959,8 +977,12 @@ Prgm
                             [ /T=/Data/JsonChars..
                             , /E=/Data/JsonStuck..
                             ] = /Data/jsonCharsStuck
-                            ( Value /problem -> /Data/JsonProblem/UnexpectedEnd( /expected=/Data/String/Text.. ) = /Data/JsonProblem/UnexpectedEnd
-                                ( Value /expected -> /Data/String/Text.. = CStr
+                            ( Value /problem -> /Data/JsonProblem/UnexpectedEnd
+                                ( /expected=( /Data/String/Text.. + /Catln/CStr ) ) = /Data/JsonProblem/UnexpectedEnd
+                                ( Value /expected ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = "a closing quote" }
                                 )
                             )( Value /cs -> /Data/List/Nil = Value /Data/List/Nil )
@@ -1095,7 +1117,10 @@ Prgm
                             [ /T=/Data/JsonParsed..
                             , /E=/Data/JsonStuck..
                             ] = /Data/jsonUnexpected( Value /cs -> /Data/List/Nil = Value /Data/List/Nil )
-                            ( Value /expected -> /Data/String/Text.. = CStr
+                            ( Value /expected ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "a value" }
                             )
                         , /Data/jsonParseValue
@@ -1111,7 +1136,10 @@ Prgm
                             [ /T=/Data/JsonParsed..
                             , /E=/Data/JsonStuck..
                             ] = /Data/jsonExpect
-                            ( Value /literal -> /Data/String/Text.. = CStr
+                            ( Value /literal ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "null" }
                             )
                             ( Value /word -> /Data/List/Cons
@@ -1160,7 +1188,10 @@ Prgm
                             [ /T=/Data/JsonParsed..
                             , /E=/Data/JsonStuck..
                             ] = /Data/jsonExpect
-                            ( Value /literal -> /Data/String/Text.. = CStr
+                            ( Value /literal ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "true" }
                             )
                             ( Value /word -> /Data/List/Cons
@@ -1210,7 +1241,10 @@ Prgm
                             [ /T=/Data/JsonParsed..
                             , /E=/Data/JsonStuck..
                             ] = /Data/jsonExpect
-                            ( Value /literal -> /Data/String/Text.. = CStr
+                            ( Value /literal ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "false" }
                             )
                             ( Value /word -> /Data/List/Cons
@@ -1377,7 +1411,10 @@ Prgm
                                 , /tail=∀/Data/List/ConsList[ /T=$_/T ]
                                 ) = /Data/List/Cons( Value /head -> TVArg /head = Value /head )( Value /tail -> TVArg /tail = Value /tail )
                             )
-                            ( Value /expected -> /Data/String/Text.. = CStr
+                            ( Value /expected ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "a value" }
                             )
                         ]
@@ -1669,7 +1706,10 @@ Prgm
                             [ /T=/Data/JsonEntries..
                             , /E=/Data/JsonStuck..
                             ] = /Data/jsonEntriesUnexpected( Value /cs -> TVArg /cs = Value /cs )
-                            ( Value /expected -> /Data/String/Text.. = CStr
+                            ( Value /expected ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "',' or ']'" }
                             )
                         ]
@@ -1712,7 +1752,10 @@ Prgm
                             [ /T=/Data/JsonMembers..
                             , /E=/Data/JsonStuck..
                             ] = /Data/jsonMembersUnexpected( Value /cs -> TVArg /cs = Value /cs )
-                            ( Value /expected -> /Data/String/Text.. = CStr
+                            ( Value /expected ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "':'" }
                             )
                         ]
@@ -1755,8 +1798,10 @@ Prgm
                             [ /T=/Data/JsonMembers..
                             , /E=/Data/JsonStuck..
                             ] = /Data/jsonMemberColon
-                            ( Value /key -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/String/Text( Value /chars -> TVArg /chars = Value /chars )
+                            ( Value /key ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                ) = /Data/String/Text( Value /chars -> TVArg /chars = Value /chars )
                             )
                             ( Value /cs -> ∀/Data/List/ConsList[ /T=/Data/Char ] = /Data/jsonSkipWs( Value /cs -> TVArg /rest = Value /rest ) )
                         ]
@@ -2062,7 +2107,7 @@ Prgm
                             [ /E=/Data/JsonParseErr
                                 ( /at=/Data/Primitive/Integer
                                 , /problem=/Data/JsonProblem/Unexpected
-                                    ( /expected=/Data/String/Text..
+                                    ( /expected=( /Data/String/Text.. + /Catln/CStr )
                                     , /c=/Data/Char
                                     )
                                 )
@@ -2070,7 +2115,7 @@ Prgm
                             ( /err=/Data/JsonParseErr
                                 ( /at=/Data/Primitive/Integer
                                 , /problem=/Data/JsonProblem/Unexpected
-                                    ( /expected=/Data/String/Text..
+                                    ( /expected=( /Data/String/Text.. + /Catln/CStr )
                                     , /c=/Data/Char
                                     )
                                 )
@@ -2078,15 +2123,18 @@ Prgm
                             ( Value /err -> /Data/JsonParseErr
                                 ( /at=/Data/Primitive/Integer
                                 , /problem=/Data/JsonProblem/Unexpected
-                                    ( /expected=/Data/String/Text..
+                                    ( /expected=( /Data/String/Text.. + /Catln/CStr )
                                     , /c=/Data/Char
                                     )
                                 ) = /Data/JsonParseErr
                                 ( Value /problem -> /Data/JsonProblem/Unexpected
-                                    ( /expected=/Data/String/Text..
+                                    ( /expected=( /Data/String/Text.. + /Catln/CStr )
                                     , /c=/Data/Char
                                     ) = /Data/JsonProblem/Unexpected( Value /c -> TVArg /head = Value /head )
-                                    ( Value /expected -> /Data/String/Text.. = CStr
+                                    ( Value /expected ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = CStr
                                         { csValue = "the end of the text" }
                                     )
                                 )
@@ -2326,7 +2374,10 @@ Prgm
                             [ /T=/Data/JsonMembers..
                             , /E=/Data/JsonStuck..
                             ] = /Data/jsonMembersUnexpected( Value /cs -> TVArg /cs = Value /cs )
-                            ( Value /expected -> /Data/String/Text.. = CStr
+                            ( Value /expected ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "',' or '}'" }
                             )
                         ]
@@ -2359,8 +2410,12 @@ Prgm
                             [ /T=/Data/JsonChars..
                             , /E=/Data/JsonStuck..
                             ] = /Data/jsonCharsStuck
-                            ( Value /problem -> /Data/JsonProblem/UnexpectedEnd( /expected=/Data/String/Text.. ) = /Data/JsonProblem/UnexpectedEnd
-                                ( Value /expected -> /Data/String/Text.. = CStr
+                            ( Value /problem -> /Data/JsonProblem/UnexpectedEnd
+                                ( /expected=( /Data/String/Text.. + /Catln/CStr ) ) = /Data/JsonProblem/UnexpectedEnd
+                                ( Value /expected ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = "an escape" }
                                 )
                             )( Value /cs -> /Data/List/Nil = Value /Data/List/Nil )
@@ -2931,7 +2986,10 @@ Prgm
                             ( Value /r -> /Data/Result/Ok[ /T=∀/Data/Json ]( /value=∀/Data/Json ) = /Data/Result/Ok( Value /value -> ∀/Data/Json ) ) -> ∀/Data/String = /Data/jsonEncode( Value /value -> TVArg /value = Value /value )
                         , /Data/jsonAccessText
                             ( Value /r -> /Data/Result/Fail[ /E=∀/Data/JsonAccessErr ]( /err=∀/Data/JsonAccessErr ) = /Data/Result/Fail( Value /err -> ∀/Data/JsonAccessErr ) ) -> ∀/Data/String = /operator++
-                            ( Value /l -> /Data/String/Text.. = CStr
+                            ( Value /l ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "error: " }
                             )
                             ( Value /r -> ∀/Data/String = /msg( Value /this -> TVArg /err = Value /err ) )
@@ -3002,7 +3060,7 @@ Prgm
                                 [ /E=/Data/JsonParseErr
                                     ( /at=/Data/Primitive/Integer
                                     , /problem=/Data/JsonProblem/Unexpected
-                                        ( /expected=/Data/String/Text..
+                                        ( /expected=( /Data/String/Text.. + /Catln/CStr )
                                         , /c=/Data/Char
                                         )
                                     )
@@ -3010,7 +3068,7 @@ Prgm
                                 ( /err=/Data/JsonParseErr
                                     ( /at=/Data/Primitive/Integer
                                     , /problem=/Data/JsonProblem/Unexpected
-                                        ( /expected=/Data/String/Text..
+                                        ( /expected=( /Data/String/Text.. + /Catln/CStr )
                                         , /c=/Data/Char
                                         )
                                     )
@@ -3253,12 +3311,18 @@ Prgm
                             ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /operator++
                                 ( Value /l -> ∀/Data/String = /operator++
-                                    ( Value /l -> /Data/String/Text.. = CStr
+                                    ( Value /l ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = CStr
                                         { csValue = "not JSON: " }
                                     )
                                     ( Value /r -> ∀/Data/String = /Data/jsonProblemText( Value /problem -> TVArg /problem = Value /problem ) )
                                 )
-                                ( Value /r -> /Data/String/Text.. = CStr
+                                ( Value /r ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = ", at character " }
                                 )
                             )
@@ -3272,27 +3336,46 @@ Prgm
                             ( Value /l -> ∀/Data/String = /operator++
                                 ( Value /l -> ∀/Data/String = /operator++
                                     ( Value /l -> ∀/Data/String = /operator++
-                                        ( Value /l -> /Data/String/Text.. = CStr
+                                        ( Value /l ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                            ) = CStr
                                             { csValue = "there is no member "" }
                                         )( Value /r -> TVArg /key = Value /key )
                                     )
-                                    ( Value /r -> /Data/String/Text.. = CStr
+                                    ( Value /r ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = CStr
                                         { csValue = "" of " }
                                     )
                                 )
-                                ( Value /r -> /Data/String/Text.. = /Data/jsonKind( Value /j -> TVArg /found = Value /found ) )
+                                ( Value /r ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = /Data/jsonKind( Value /j -> TVArg /found = Value /found )
+                                )
                             )
-                            ( Value /r -> /Data/String/Text.. = CStr
+                            ( Value /r ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = ", which is not an object" }
                             )
                         , /Data/msg
                             ( Value /this -> /Data/JsonAccessErr/NoMember( /key=∀/Data/String ) = /Data/JsonAccessErr/NoMember( Value /key -> ∀/Data/String ) ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /operator++
-                                ( Value /l -> /Data/String/Text.. = CStr
+                                ( Value /l ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = "the object has no member "" }
                                 )( Value /r -> TVArg /key = Value /key )
                             )
-                            ( Value /r -> /Data/String/Text.. = CStr
+                            ( Value /r ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = """ }
                             )
                         , /Data/msg
@@ -3304,18 +3387,31 @@ Prgm
                             ( Value /l -> ∀/Data/String = /operator++
                                 ( Value /l -> ∀/Data/String = /operator++
                                     ( Value /l -> ∀/Data/String = /operator++
-                                        ( Value /l -> /Data/String/Text.. = CStr
+                                        ( Value /l ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                            ) = CStr
                                             { csValue = "there is no entry " }
                                         )
                                         ( Value /r -> ∀/Data/String = /Data/toString( Value /this -> TVArg /i = Value /i ) )
                                     )
-                                    ( Value /r -> /Data/String/Text.. = CStr
+                                    ( Value /r ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = CStr
                                         { csValue = " of " }
                                     )
                                 )
-                                ( Value /r -> /Data/String/Text.. = /Data/jsonKind( Value /j -> TVArg /found = Value /found ) )
+                                ( Value /r ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = /Data/jsonKind( Value /j -> TVArg /found = Value /found )
+                                )
                             )
-                            ( Value /r -> /Data/String/Text.. = CStr
+                            ( Value /r ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = ", which is not an array" }
                             )
                         , /Data/msg
@@ -3326,12 +3422,18 @@ Prgm
                             ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /operator++
                                 ( Value /l -> ∀/Data/String = /operator++
-                                    ( Value /l -> /Data/String/Text.. = CStr
+                                    ( Value /l ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = CStr
                                         { csValue = "there is no entry " }
                                     )
                                     ( Value /r -> ∀/Data/String = /Data/toString( Value /this -> TVArg /i = Value /i ) )
                                 )
-                                ( Value /r -> /Data/String/Text.. = CStr
+                                ( Value /r ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = " of an array of " }
                                 )
                             )
@@ -3844,7 +3946,10 @@ Prgm
                             [ /T=/Data/JsonParsed..
                             , /E=/Data/JsonStuck..
                             ] = /Data/jsonUnexpected( Value /cs -> TVArg /rest = Value /rest )
-                            ( Value /expected -> /Data/String/Text.. = CStr
+                            ( Value /expected ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "a digit" }
                             )
                         , /Data/jsonNumberFrac( Value /n -> /Data/Primitive/Integer.. )
@@ -4005,7 +4110,10 @@ Prgm
                             [ /T=/Data/JsonMembers..
                             , /E=/Data/JsonStuck..
                             ] = /Data/jsonMembersUnexpected( Value /cs -> TVArg /cs = Value /cs )
-                            ( Value /expected -> /Data/String/Text.. = CStr
+                            ( Value /expected ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "a quoted key" }
                             )
                         ]
@@ -4056,7 +4164,10 @@ Prgm
                             [ /T=/Data/JsonParsed..
                             , /E=/Data/JsonStuck..
                             ] = /Data/jsonUnexpected( Value /cs -> TVArg /rest = Value /rest )
-                            ( Value /expected -> /Data/String/Text.. = CStr
+                            ( Value /expected ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "a digit" }
                             )
                         , /Data/jsonNumberInt
@@ -4185,11 +4296,17 @@ Prgm
                         [ /Data/jsonProblemText
                             ( Value /problem -> /Data/JsonProblem/UnexpectedEnd( /expected=∀/Data/String ) = /Data/JsonProblem/UnexpectedEnd( Value /expected -> ∀/Data/String ) ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /operator++
-                                ( Value /l -> /Data/String/Text.. = CStr
+                                ( Value /l ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = "the text ends where " }
                                 )( Value /r -> TVArg /expected = Value /expected )
                             )
-                            ( Value /r -> /Data/String/Text.. = CStr
+                            ( Value /r ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = " was expected" }
                             )
                         , /Data/jsonProblemText
@@ -4199,40 +4316,53 @@ Prgm
                                 ) = /Data/JsonProblem/Unexpected( Value /c -> /Data/Char )( Value /expected -> ∀/Data/String )
                             ) -> ∀/Data/String = /operator++
                             ( Value /l -> ∀/Data/String = /operator++
-                                ( Value /l -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /operator++
-                                    ( Value /l -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /operator++
-                                        ( Value /l -> /Data/String/Text.. = CStr
+                                ( Value /l -> ∀/Data/String = /operator++
+                                    ( Value /l -> ∀/Data/String = /operator++
+                                        ( Value /l ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                            ) = CStr
                                             { csValue = "'" }
                                         )
-                                        ( Value /r -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/toString( Value /this -> TVArg /c = Value /c )
+                                        ( Value /r ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                            ) = /Data/toString( Value /this -> TVArg /c = Value /c )
                                         )
                                     )
-                                    ( Value /r -> /Data/String/Text.. = CStr
+                                    ( Value /r ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = CStr
                                         { csValue = "' is where " }
                                     )
                                 )( Value /r -> TVArg /expected = Value /expected )
                             )
-                            ( Value /r -> /Data/String/Text.. = CStr
+                            ( Value /r ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = " was expected" }
                             )
                         , /Data/jsonProblemText
-                            ( Value /problem -> /Data/JsonProblem/BadEscape( /c=/Data/Char ) = /Data/JsonProblem/BadEscape( Value /c -> /Data/Char ) ) ->
-                            ( /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
-                            ) = /operator++
-                            ( Value /l -> /Data/String/Text
-                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /operator++
-                                ( Value /l -> /Data/String/Text.. = CStr
+                            ( Value /problem -> /Data/JsonProblem/BadEscape( /c=/Data/Char ) = /Data/JsonProblem/BadEscape( Value /c -> /Data/Char ) ) -> ∀/Data/String = /operator++
+                            ( Value /l -> ∀/Data/String = /operator++
+                                ( Value /l ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
                                     { csValue = "'\" }
                                 )
-                                ( Value /r -> /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = /Data/toString( Value /this -> TVArg /c = Value /c )
+                                ( Value /r ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = /Data/toString( Value /this -> TVArg /c = Value /c )
                                 )
                             )
-                            ( Value /r -> /Data/String/Text.. = CStr
+                            ( Value /r ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "' is not an escape" }
                             )
                         , /Data/jsonProblemText( Value /problem -> /Data/JsonProblem/BadUnicodeEscape = Value /Data/JsonProblem/BadUnicodeEscape ) -> ( /Data/String/Text.. + /Catln/CStr ) = CStr

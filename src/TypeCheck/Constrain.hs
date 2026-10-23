@@ -27,7 +27,8 @@ import qualified Data.Zip                   as Z
 import           Control.Monad.State.Strict
 import           CtConstants                (macroThisKey)
 import           Semantics                  (ObjArrTypeGraph (..),
-                                             classArrowsOf, classMemberLeaves,
+                                             classMemberLeaves,
+                                             convertingMembers,
                                              memberAsDeclared, stampQueryToken)
 import           Semantics.Prgm             (Meta (..), ObjArr (..),
                                              ObjectBasis (ArgObj),
@@ -35,7 +36,7 @@ import           Semantics.Prgm             (Meta (..), ObjArr (..),
                                              exprAppliedArgs, exprVarArgs,
                                              getExprMeta, inExprSingleton,
                                              oaObjExpr, pattern ObjectMap)
-import           Semantics.TypeGraph        (ReachesEnv (..), reachesTo,
+import           Semantics.TypeGraph        (ReachesEnv (..),
                                              typeGuaranteedWithin)
 import           Semantics.Types
 import           Text.Printf
@@ -191,13 +192,7 @@ updateSchemeProp env@FEnv{feTypeEnv} (lambdaArgs, defArgs) vaenv super@SType{sty
     keepConverting was narrowed = unionAllTypes feTypeEnv (narrowed : [ keep (memberAsDeclared feTypeEnv l) | l <- converting narrowed ])
       where keep m | isSubtypeOf feTypeEnv m was = m
                    | otherwise                    = intersectTypes feTypeEnv was m
-    converting narrowed =
-      [ l
-      | (cls, _) <- classArrowsOf feTypeEnv
-      , not (isBottomType (intersectTypes feTypeEnv cls narrowed))
-      , l <- classMemberLeaves feTypeEnv cls
-      , not (isSubtypeOf feTypeEnv (singletonType l) narrowed)
-      , reachesTo feTypeEnv H.empty (singletonType l) narrowed ]
+    converting = convertingMembers feTypeEnv
 
 -- | The arguments of the bodies a constraint is inside, as (the lambdas', the definitions'): each
 -- enclosing object with a body that takes parameters binds its own — a lambda a call is given
@@ -327,12 +322,14 @@ refuteByDeclaredClass FEnv{feTypeEnv=typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph
         , members@(_:_) <- classMemberLeaves typeEnv cls
         -> all (\m -> isBottomType (intersectTypes typeEnv actual (singletonType m))) members
       _ -> False
-    declaredParam name = case [ argT
+    -- Read from the declaration's argument as it is written (@length(this -> ∀List)@), which a
+    -- declaration has whether or not it is typechecked yet: a page solved together with the one
+    -- declaring the reading has the declaration only as written, its object not yet typed.
+    declaredParam name = case [ getMetaType argM
                               | item <- maybe [] pure (H.lookup name tg)
                               , oa <- omiDecls item ++ omiRuntimeDecls item
-                              , UnionType Nothing objLeafs _ <- [getMetaType (getExprMeta (oaObjExpr oa))]
-                              , l <- splitUnionType objLeafs
-                              , Just argT <- [H.lookup argKey (ptArgs l)] ] of
+                              , ObjArr{oaObj=Just argObj, oaArr=Just (_, argM)} <- exprAppliedArgs (oaObjExpr oa)
+                              , inExprSingleton argObj == argKey ] of
       [] -> Nothing
       ts -> Just (unionAllTypes typeEnv ts)
 refuteByDeclaredClass _ _ t = t

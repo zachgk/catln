@@ -261,7 +261,7 @@ runCallIn env dest input = do
 -- @prgm@ itself when the whole program's tests are asked for.
 deriveOverlapTests :: EPrgm -> EPrgm -> [TestDesc]
 deriveOverlapTests (Prgm (ObjectMap ownOm) _ _) prgm@(Prgm (ObjectMap om) _ _) =
-  [ mkOverlapTest omi oaA oaB dom
+  [ mkOverlapTest omi oaA oaB dom viaConversion
   | (name, _) <- H.toList ownOm
   , Just omi <- [H.lookup name om]
   -- Ordered by where the arms were written, so which of a pair is @oaA@ — and so which page the
@@ -272,7 +272,7 @@ deriveOverlapTests (Prgm (ObjectMap ownOm) _ _) prgm@(Prgm (ObjectMap om) _ _) =
   , omiQuant omi == QuantUnique
   , let parts = sortOn (getMetaPos . getExprMeta . oaObjExpr) $ filter evaluable (omiDefs omi ++ omiRuntimeDecls omi)
   , (oaA, oaB) <- pairs parts
-  , let dom = intersectTypes runEnv (clauseDom oaA) (clauseDom oaB)
+  , let (dom, viaConversion) = overlapDom oaA oaB
   , not (isBottomType dom)
   , isJust (maybeGetSingleton dom)
   -- Only overlapping definitions that can actually agree are testable: their DECLARED result types
@@ -311,6 +311,24 @@ deriveOverlapTests (Prgm (ObjectMap ownOm) _ _) prgm@(Prgm (ObjectMap om) _ _) =
     -- it may pick without evaluating a condition first.
     conditionFree oa = null (exprWhereConds (oaObjExpr oa))
     clauseDom oa = getExprType (oaObjExpr oa)
+    -- Where two clauses meet: their domains' intersection, or, where they are disjoint, where one
+    -- clause meets the other read through the conversions on the way in. Two arms of a function over
+    -- different representations of a value (a @\/Catln\/CStr@ arm beside a @String\/Text@ arm) take
+    -- no input in common, but each is a call's arm for the other's inputs too, which the tree build
+    -- converts to reach it, so the two are to agree there. The input is generated in the other
+    -- clause's domain, and each clause is called on it as a call would be ('runCallIn'), converting
+    -- it where that clause needs.
+    overlapDom oaA oaB = case intersectTypes runEnv (clauseDom oaA) (clauseDom oaB) of
+      direct | not (isBottomType direct) -> (direct, False)
+      _ -> case intersectTypes runEnv (throughConversions (clauseDom oaA)) (clauseDom oaB) of
+        viaA | not (isBottomType viaA) -> (viaA, True)
+        _ -> (intersectTypes runEnv (clauseDom oaA) (throughConversions (clauseDom oaB)), True)
+    -- A clause's domain with each argument widened by what converts into it ('convertingMembers').
+    throughConversions (UnionType Nothing leafs consts) = UnionType Nothing (joinUnionType (map widenLeaf (splitUnionType leafs))) consts
+      where
+        widenLeaf p@PartialType{ptArgs} = p{ptArgs = fmap widen ptArgs}
+        widen t = unionAllTypes runEnv (t : [ memberAsDeclared runEnv l | l <- convertingMembers runEnv t ])
+    throughConversions t = t
     -- The clause's declared result (codomain) type: what the function is declared to return for the
     -- clause's input ('declaredReturns', the clause answering for itself where nothing declares the
     -- function), read over each object the clause accepts. It is NOT the body's type, which is the
@@ -332,7 +350,7 @@ deriveOverlapTests (Prgm (ObjectMap ownOm) _ _) prgm@(Prgm (ObjectMap om) _ _) =
       where
         dests oas = [dest | d@ObjArr{oaArr=Just _} <- oas, dest <- arrowDestType typeEnv H.empty src d]
 
-    mkOverlapTest omi oaA oaB dom = TestDesc testName (nameStr (oaObjPath oaA)) (oaTestId oaA) TestOverlapAgreement (PropCheck (checkPropWithTimeout False prop))
+    mkOverlapTest omi oaA oaB dom viaConversion = TestDesc testName (nameStr (oaObjPath oaA)) (oaTestId oaA) TestOverlapAgreement (PropCheck (checkPropWithTimeout False prop))
       where
         -- The function's declared return type (predicates cleared) is the destination to build each
         -- call against. It is narrower than a clause's inferred result, so the call's own type is not
@@ -350,7 +368,7 @@ deriveOverlapTests (Prgm (ObjectMap ownOm) _ _) prgm@(Prgm (ObjectMap om) _ _) =
         retDest = clearUnionTypePreds $ case declaredReturns omi [oaA, oaB] partial of
           (t:_) -> t
           []    -> intType
-        testName = printf "%s :: overlap-agreement" (nameStr (oaObjPath oaA))
+        testName = printf "%s :: %s" (nameStr (oaObjPath oaA)) (if viaConversion then "representation-agreement" else "overlap-agreement" :: String)
         partial = getSingleton dom
         groups = map (map (nameStr . exprPath . fst)) (exprNonLinearArgGroups (oaObjExpr oaA) ++ exprNonLinearArgGroups (oaObjExpr oaB))
         repOf n = case filter (n `elem`) groups of

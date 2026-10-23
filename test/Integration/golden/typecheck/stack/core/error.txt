@@ -60,7 +60,10 @@ Prgm
                             ( Value /this -> /Data/Result/Ok[ /T=∀/Data/ToString ]( /value=∀/Data/ToString ) = /Data/Result/Ok[ /T : ∀/Data/ToString ]( Value /value -> ∀/Data/ToString ) ) -> ∀/Data/String = /toString( Value /this -> TVArg /value = Value /value )
                         , /Data/toString
                             ( Value /this -> /Data/Result/Fail[ /E=∀/Data/Err ]( /err=∀/Data/Err ) = /Data/Result/Fail[ /E : ∀/Data/Err ]( Value /err -> ∀/Data/Err ) ) -> ∀/Data/String = /operator++
-                            ( Value /l -> /Data/String/Text.. = CStr
+                            ( Value /l ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
                                 { csValue = "error: " }
                             )
                             ( Value /r -> ∀/Data/String = /msg( Value /this -> TVArg /err = Value /err ) )
