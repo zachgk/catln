@@ -68,34 +68,28 @@ Prgm
                             ) = /Catln/Doc/Show/Debugger
                             ( Value /run -> ∀/Data/String = /Catln/Doc/dshow.debugger( Value /fun -> TVArg /fun = Value /fun )( Value /annot -> /s = Value /s )
                                 ( Value /instruments -> /Data/List/Cons
-                                    [ /T=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    ]
-                                    ( /head=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ( /head=( /Data/String/Text.. + /Catln/CStr )
                                     , /tail=/Data/List/Cons
-                                        [ /T=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                        ]
-                                        ( /head=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        [ /T=( /Data/String/Text.. + /Catln/CStr ) ]
+                                        ( /head=( /Data/String/Text.. + /Catln/CStr )
                                         , /tail=/Data/List/Nil
                                         )
                                     ) = /Data/List/Cons
-                                    ( Value /head -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    ( Value /head ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = CStr
                                         { csValue = "treebug" }
                                     )
                                     ( Value /tail -> /Data/List/Cons
-                                        [ /T=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                        ]
-                                        ( /head=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        [ /T=( /Data/String/Text.. + /Catln/CStr ) ]
+                                        ( /head=( /Data/String/Text.. + /Catln/CStr )
                                         , /tail=/Data/List/Nil
                                         ) = /Data/List/Cons
-                                        ( Value /head -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                        ( Value /head ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                            ) = CStr
                                             { csValue = "debug" }
                                         )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                                     )
@@ -108,34 +102,28 @@ Prgm
                             ) = /Catln/Doc/Show/Debugger
                             ( Value /run -> ∀/Data/String = /Catln/Doc/dshow.debugExpr( Value /expr -> TVArg /expr = Value /expr )( Value /annot -> /s = Value /s )
                                 ( Value /instruments -> /Data/List/Cons
-                                    [ /T=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                    ]
-                                    ( /head=/Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                    ( /head=( /Data/String/Text.. + /Catln/CStr )
                                     , /tail=/Data/List/Cons
-                                        [ /T=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                        ]
-                                        ( /head=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        [ /T=( /Data/String/Text.. + /Catln/CStr ) ]
+                                        ( /head=( /Data/String/Text.. + /Catln/CStr )
                                         , /tail=/Data/List/Nil
                                         )
                                     ) = /Data/List/Cons
-                                    ( Value /head -> /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                    ( Value /head ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = CStr
                                         { csValue = "treebug" }
                                     )
                                     ( Value /tail -> /Data/List/Cons
-                                        [ /T=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                        ]
-                                        ( /head=/Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                        [ /T=( /Data/String/Text.. + /Catln/CStr ) ]
+                                        ( /head=( /Data/String/Text.. + /Catln/CStr )
                                         , /tail=/Data/List/Nil
                                         ) = /Data/List/Cons
-                                        ( Value /head -> /Data/String/Text
-                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                                        ( Value /head ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                            ) = CStr
                                             { csValue = "debug" }
                                         )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
                                     )

@@ -180,37 +180,31 @@ Prgm
                                         ( EAppArg { eaaArg = Value /annot -> /s = Value /s } )
                                         ( EAppArg
                                             { eaaArg = Value /instruments -> /Data/List/Cons
-                                                [ /T=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                ]
-                                                ( /head=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                ( /head=( /Data/String/Text.. + /Catln/CStr )
                                                 , /tail=/Data/List/Cons
-                                                    [ /T=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                    ]
-                                                    ( /head=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    [ /T=( /Data/String/Text.. + /Catln/CStr ) ]
+                                                    ( /head=( /Data/String/Text.. + /Catln/CStr )
                                                     , /tail=/Data/List/Nil
                                                     )
                                                 ) = /Data/List/Cons
                                                 ( EAppArg
-                                                    { eaaArg = Value /head -> /Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "treebug"
+                                                    { eaaArg = Value /head ->
+                                                        ( /Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                        ) = "treebug"
                                                     }
                                                 )
                                                 ( EAppArg
                                                     { eaaArg = Value /tail -> /Data/List/Cons
-                                                        [ /T=/Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                        ]
-                                                        ( /head=/Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        [ /T=( /Data/String/Text.. + /Catln/CStr ) ]
+                                                        ( /head=( /Data/String/Text.. + /Catln/CStr )
                                                         , /tail=/Data/List/Nil
                                                         ) = /Data/List/Cons
                                                         ( EAppArg
-                                                            { eaaArg = Value /head -> /Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "debug"
+                                                            { eaaArg = Value /head ->
+                                                                ( /Data/String/Text
+                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                ) = "debug"
                                                             }
                                                         )
                                                         ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
@@ -242,37 +236,31 @@ Prgm
                                         ( EAppArg { eaaArg = Value /annot -> /s = Value /s } )
                                         ( EAppArg
                                             { eaaArg = Value /instruments -> /Data/List/Cons
-                                                [ /T=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                ]
-                                                ( /head=/Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                ( /head=( /Data/String/Text.. + /Catln/CStr )
                                                 , /tail=/Data/List/Cons
-                                                    [ /T=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                    ]
-                                                    ( /head=/Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                    [ /T=( /Data/String/Text.. + /Catln/CStr ) ]
+                                                    ( /head=( /Data/String/Text.. + /Catln/CStr )
                                                     , /tail=/Data/List/Nil
                                                     )
                                                 ) = /Data/List/Cons
                                                 ( EAppArg
-                                                    { eaaArg = Value /head -> /Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "treebug"
+                                                    { eaaArg = Value /head ->
+                                                        ( /Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                        ) = "treebug"
                                                     }
                                                 )
                                                 ( EAppArg
                                                     { eaaArg = Value /tail -> /Data/List/Cons
-                                                        [ /T=/Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
-                                                        ]
-                                                        ( /head=/Data/String/Text
-                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] )
+                                                        [ /T=( /Data/String/Text.. + /Catln/CStr ) ]
+                                                        ( /head=( /Data/String/Text.. + /Catln/CStr )
                                                         , /tail=/Data/List/Nil
                                                         ) = /Data/List/Cons
                                                         ( EAppArg
-                                                            { eaaArg = Value /head -> /Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = "debug"
+                                                            { eaaArg = Value /head ->
+                                                                ( /Data/String/Text
+                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                ) = "debug"
                                                             }
                                                         )
                                                         ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )

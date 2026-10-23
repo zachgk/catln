@@ -460,8 +460,10 @@ Prgm
                 { csValue = "data(Point(x -> Integer, y -> Integer))" }
             )
         , /Catln/#md
-            ( Value /text -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "## Asking whether a value is of a type
                 [/Catln/isOf] asks of a value what [parseExpr] asks of its text's value." }
             )
@@ -472,20 +474,26 @@ Prgm
                 )
                 ( Value /type -> ∀/Catln/Type = /Catln/typeOf[ /T : /Data/Primitive/Integer ] )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "True" }
             )
         , /Catln/#print
             ( Value /p -> ∀/Data/Primitive/Boolean = /Catln/isOf
-                ( Value /value -> /Data/String/Text
-                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+                ( Value /value ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = CStr
                     { csValue = "a" }
                 )
                 ( Value /type -> ∀/Catln/Type = /Catln/typeOf[ /T : /Data/Primitive/Integer ] )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "False" }
             )
         , /Catln/#print
@@ -503,8 +511,10 @@ Prgm
                 )
                 ( Value /type -> ∀/Catln/Type = /Catln/typeOf[ /T : /Catln/ReflectExample/Point.. ] )
             )
-            ( Value /result -> /Data/String/Text
-                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) = CStr
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "True" }
             )
         ]
