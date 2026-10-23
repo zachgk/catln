@@ -29,10 +29,12 @@ import           CtConstants                (macroThisKey)
 import           Semantics                  (ObjArrTypeGraph (..),
                                              classMemberLeaves,
                                              convertingMembers,
-                                             memberAsDeclared, stampQueryToken)
-import           Semantics.Prgm             (Meta (..), ObjArr (..),
+                                             memberAsDeclared,
+                                             setDeclsVersionName,
+                                             stampQueryToken)
+import           Semantics.Prgm             (Expr, Meta (..), ObjArr (..),
                                              ObjectBasis (ArgObj),
-                                             ObjectMapItem (..),
+                                             ObjectMap (..), ObjectMapItem (..),
                                              exprAppliedArgs, exprVarArgs,
                                              getExprMeta, inExprSingleton,
                                              oaObjExpr, pattern ObjectMap)
@@ -943,14 +945,20 @@ runConstraintsIdx limit cons = do
       -- The input-arrow name set is a pure function of the reaches graph: reuse it within an
       -- unchanged env, recompute otherwise (same policy as the universe key).
       let inputArrowNames = if envUnchanged then feInputArrowNames env else typeGraphInputEmbeddedNames reachesTypeEnv
+      -- The versions of the live items ('ReuseScope'): an item as it was in the previous epoch
+      -- keeps its version, and one new or changed is given the next. A reach query asked again
+      -- under the new token is then handed the answer it gave before wherever the items it read
+      -- are all as they were ('Semantics.objArrGraphQuery').
+      let (vVersions, versionNext) = versionLiveItems (feReachesVPart env) (feVVersions env) (feVersionNext env) reachesVPart
       -- The reach-query memo's identity: an unchanged graph KEEPS the previous epoch's env
       -- value with its existing token (the memo stays warm across quiet epochs); a changed
       -- graph is stamped with a fresh process-unique token, which also retires the previous
       -- generation's entries ('objArrGraphQuery' resets on a new token).
       let reachesTypeEnv' = if envUnchanged
             then feReachesTypeEnv env
-            else stampQueryToken reachesTypeEnv
+            else (stampQueryToken reachesTypeEnv){teReuse = Just (ReuseScope (feReuseScope env) vVersions)}
       modify $ \e -> e{feReachesTypeEnv = reachesTypeEnv', feReachesVPart = reachesVPart,
+                       feVVersions = vVersions, feVersionNext = versionNext,
                        feUniverseKey = u,
                        feInputArrowNames = inputArrowNames,
                        feEnvStamp = if envUnchanged then feEnvStamp e else feEnvStamp e + 1}
@@ -979,6 +987,21 @@ runConstraintsIdx limit cons = do
         -- The index paired with each constraint is its 'feConMemo' key and rides along, so
         -- reversing the running order leaves the skip-memo keys untouched.
         runConstraintsIdx (limit - 1) (reverse cons')
+
+-- | The version each item of the live part of the reaches graph is at, from the previous epoch's
+-- live part and versions: an item equal to the one the previous epoch held under its name keeps
+-- that version, and any other takes the next one. The declarations kept under no name ('omDecls')
+-- are versioned as one item, under 'setDeclsVersionName'. Gives the next version still unused.
+versionLiveItems :: ObjectMap Expr () -> H.HashMap TypeName Int -> Int -> ObjectMap Expr () -> (H.HashMap TypeName Int, Int)
+versionLiveItems (ObjectMapWith prevItems prevDecls) prevVersions next0 (ObjectMapWith items decls) =
+  H.foldlWithKey' versionItem (declsVersion, next1) items
+  where
+    (declsVersion, next1) = case H.lookup setDeclsVersionName prevVersions of
+      Just v | prevDecls == decls -> (H.singleton setDeclsVersionName v, next0)
+      _                           -> (H.singleton setDeclsVersionName next0, next0 + 1)
+    versionItem (versions, next) name item = case (H.lookup name prevItems, H.lookup name prevVersions) of
+      (Just prevItem, Just v) | prevItem == item -> (H.insert name v versions, next)
+      _                                          -> (H.insert name next versions, next + 1)
 
 -- | The 'ArrowTo' constraints that hold a value to a declaration: an output argument's slot (10, 15)
 -- and a definition's result (32).

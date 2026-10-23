@@ -27,6 +27,7 @@ import qualified Data.HashSet               as S
 import           Data.List                  (transpose)
 import           Data.Maybe                 (mapMaybe)
 import           MapMeta
+import           Semantics                  (unsafeFreshQueryToken)
 import           Semantics.Prgm
 import           Semantics.Types
 import           TypeCheck.Common
@@ -163,7 +164,11 @@ typecheckPrgmsSt pprgms typechecked = do
           let tPrec = foldr (H.unionWith min) H.empty [p | (_, p, _, _) <- cPieces]
           let tGraph = mconcat [g | (_, _, g, _) <- cPieces]
           let tCleared = mconcat [c | (_, _, _, c) <- cPieces]
-          modify $ \e -> e{feVTypeGraph = mempty, feTTypeGraph = tGraph <> setDeclGraph, feTTypeGraphCleared = tCleared <> mapMetaObjectMap clearMetaDat setDeclGraph}
+          -- Everything of the reaches graph but the fragment's own items is fixed for the
+          -- fragment's solve, so its reaches envs are one 'ReuseScope', and a new one: answers
+          -- read from another fragment's graph are not answers in this one.
+          modify $ \e -> e{feVTypeGraph = mempty, feTTypeGraph = tGraph <> setDeclGraph, feTTypeGraphCleared = tCleared <> mapMetaObjectMap clearMetaDat setDeclGraph,
+                           feReuseScope = unsafeFreshQueryToken tCleared, feVVersions = H.empty}
           (vprgms', cons) <- fromPrgmsFragment frag (tRec, tPrec)
           converged <- runConstraints (fragmentEpochLimit frag) cons
           when converged $ verifyGuaranteedResults cons

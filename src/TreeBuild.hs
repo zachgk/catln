@@ -1002,7 +1002,7 @@ withArgArrows env@TBEnv{tbTypeEnv} lams = case lams of
   _    -> let arrows = [ ObjArr (Just obj) ArgObj Nothing [] (Just (Nothing, arrM)) | ObjArr{oaObj=Just obj, oaArr=Just (_, arrM)} <- lams ]
               objMap = objectMapFromList arrows
               merged0 = mkTypeEnv (Prgm objMap (classGraphFromObjs objMap) []) <> tbTypeEnv
-          in env{tbTypeEnv = withLocalArrowsOf (ObjArrTypeGraph objMap) tbTypeEnv merged0}
+          in env{tbTypeEnv = withLocalArrowsOf Nothing (ObjArrTypeGraph objMap) tbTypeEnv merged0}
 
 -- | The lambdas given along a call's application chain (@f(a)(fn(v)= body)@): each argument whose
 -- object is applied to parameters and which has a body.

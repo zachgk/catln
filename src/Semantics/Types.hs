@@ -28,7 +28,7 @@ module Semantics.Types where
 
 import           Control.Applicative   ((<|>))
 import           Control.Concurrent    (ThreadId, myThreadId)
-import           Control.Exception     (bracket_, evaluate)
+import           Control.Exception     (bracket_, evaluate, onException)
 import           Control.Monad         (foldM, guard, when)
 import           CtConstants
 import           Data.Aeson
@@ -899,6 +899,16 @@ data TypeEnv tg = TypeEnv {
   -- reads itself again at every level, so the reading stops where the fuel does and the
   -- definition's own result is taken there, as it always was before any reading again.
   teRederiveFuel      :: Int,
+  -- | Where this env's graph is one of a series whose other members differ from it only in some
+  -- items, which and at what version ('ReuseScope'): the reach query then hands back an answer
+  -- worked out in another env of the series, when every item the answer read is still at the
+  -- version it was read at ('Semantics.objArrGraphQuery').
+  teReuse             :: Maybe ReuseScope,
+  -- | What the local arrows this env was merged with are ('Semantics.withLocalArrowsOf'), as an id
+  -- standing for exactly them within its 'ReuseScope' ('Semantics.internLocalArrows'): they are
+  -- no item of the scope, so an answer read in the env is handed only to an env merged with the
+  -- same. 'Nothing' for an env merged with arrows nothing named.
+  teLocalKey          :: Maybe Int,
   -- | Global views of 'teClassGraph' and 'teNames' for the symbolic satisfiability engine
   -- (see the section "Symbolic class-predicate satisfiability"), built strictly at
   -- construction via 'mkSatCache'. Any construction or update that changes 'teClassGraph'
@@ -907,12 +917,23 @@ data TypeEnv tg = TypeEnv {
                           }
   deriving (Show)
 
+-- | A series of envs whose graphs agree except in some items: the envs a type check reads its
+-- program through, one per epoch, as the program's own items narrow and every other item stays as
+-- it is. 'rsScope' names the series, and stands for everything about its envs that does not
+-- change along it (the items it does not version, the graph's names, the class graph), and
+-- 'rsVersions' holds the version each item that can change is at in this env. Two envs of one
+-- series holding an item at one version hold the same item.
+data ReuseScope = ReuseScope {
+  rsScope    :: !Int,
+  rsVersions :: !(H.HashMap TypeName Int)
+  } deriving (Eq, Show)
+
 defaultTypeEnvDebug :: Bool
 defaultTypeEnvDebug = False
 
 
 emptyTypeEnv' :: TypeEnv EmptyTypeGraph
-emptyTypeEnv' = TypeEnv mempty EmptyTypeGraph S.empty H.empty False defaultTypeEnvDebug False False False Nothing Nothing S.empty defaultRederiveFuel (mkSatCache mempty S.empty)
+emptyTypeEnv' = TypeEnv mempty EmptyTypeGraph S.empty H.empty False defaultTypeEnvDebug False False False Nothing Nothing S.empty defaultRederiveFuel Nothing Nothing (mkSatCache mempty S.empty)
 
 -- | The levels a definition's body may be read again for a call ('teRederiveFuel').
 defaultRederiveFuel :: Int
@@ -1164,10 +1185,19 @@ instance Monoid ClassGraph where
 
 instance (Semigroup tg) => Semigroup (TypeEnv tg) where
   -- A merged env is a DIFFERENT value: it never carries a query-cache token.
-  (TypeEnv cg1 tg1 n1 b1 d1 dc1 pe1 ap1 is1 _ _ ln1 rf1 _) <> (TypeEnv cg2 tg2 n2 b2 d2 dc2 pe2 ap2 is2 _ _ ln2 rf2 _) = TypeEnv cg' (tg1 <> tg2) n' (H.unionWith (++) b1 b2) (d1 || d2) (dc1 || dc2) (pe1 || pe2) (ap1 || ap2) (is1 || is2) Nothing Nothing (S.union ln1 ln2) (min rf1 rf2) (mkSatCache cg' n')
+  -- It reads the items of a side that is one of a series ('ReuseScope') as that side holds them, so
+  -- its reads of them are noted as that side's are. What it was merged with is no item of the
+  -- series, and only the merge that names it ('Semantics.withLocalArrowsOf', 'teLocalKey') lets an
+  -- answer read in it be handed to another env.
+  (TypeEnv cg1 tg1 n1 b1 d1 dc1 pe1 ap1 is1 _ _ ln1 rf1 r1 _ _) <> (TypeEnv cg2 tg2 n2 b2 d2 dc2 pe2 ap2 is2 _ _ ln2 rf2 r2 _ _) = TypeEnv cg' (tg1 <> tg2) n' (H.unionWith (++) b1 b2) (d1 || d2) (dc1 || dc2) (pe1 || pe2) (ap1 || ap2) (is1 || is2) Nothing Nothing (S.union ln1 ln2) (min rf1 rf2) reuse Nothing (mkSatCache cg' n')
     where
       cg' = cg1 <> cg2
       n' = S.union n1 n2
+      reuse = case (r1, r2) of
+        (Nothing, r)              -> r
+        (r, Nothing)              -> r
+        (Just a, Just b) | a == b -> Just a
+        _                         -> Nothing
 
 
 -- | The separator between the distinct docs a merged class node holds.
@@ -2809,7 +2839,7 @@ expandClassPartialWithinNames typeEnv vaenv allowedNames = expandClassPartialAux
 type ExpandClassMemoKey = (Int, (Bool, Bool, Bool), Maybe (S.HashSet TypeName), PartialType, [(VarKey, Type)])
 
 {-# NOINLINE expandClassMemoRef #-}
-expandClassMemoRef :: IORef [(Int, H.HashMap ExpandClassMemoKey Type)]
+expandClassMemoRef :: IORef [(Int, H.HashMap ExpandClassMemoKey (Type, ReadDeps))]
 expandClassMemoRef = unsafePerformIO (newIORef [])
 
 expandClassPartialAux :: (TypeGraph tg) => Maybe (S.HashSet TypeName) -> TypeEnv tg -> TypeVarArgEnv -> PartialType -> Type
@@ -2820,13 +2850,17 @@ expandClassPartialAux mAllowed typeEnv vaenv pp = case teQueryCacheKey typeEnv o
     let key = (tok, (teDisableCompact typeEnv, tePrgmEnv typeEnv, teArgModeProjection typeEnv), mAllowed, pp, L.sortOn fst (H.toList vaenv))
     gens <- readIORef expandClassMemoRef
     case lookup tok gens >>= H.lookup key of
-      Just r -> return r
+      Just (r, deps) -> noteReadDeps deps >> return r
       Nothing -> do
-        r <- evaluate (expandClassPartialAuxRaw mAllowed typeEnv vaenv pp)
+        -- Forced through, so every read it makes is made here ('withReadFrame').
+        (r, deps) <- memoReading typeEnv $ do
+          let r = expandClassPartialAuxRaw mAllowed typeEnv vaenv pp
+          _ <- evaluate (forceType r)
+          return r
         atomicModifyIORef' expandClassMemoRef $ \gens2 ->
           let mTok = fromMaybe H.empty (lookup tok gens2)
               rest = filter ((/= tok) . fst) gens2
-          in ((tok, H.insert key r mTok) : take 2 rest, ())
+          in ((tok, H.insert key (r, deps) mTok) : take 2 rest, ())
         return r
 
 -- | A class's member record read at one instantiation of the class, or 'Nothing' where that
@@ -4447,7 +4481,7 @@ type SatMemoKey = (Int, (Bool, Bool, Bool, Bool, Bool), [(VarKey, Type)], SatUse
 -- guard would have, had the path carried the stack. Without the marker such a cycle would
 -- re-derive the same goals without end while the hypothesis depth stays fixed.
 {-# NOINLINE satMemoRef #-}
-satMemoRef :: IORef [(Int, H.HashMap SatMemoKey Bool)]
+satMemoRef :: IORef [(Int, H.HashMap SatMemoKey (Bool, ReadDeps))]
 satMemoRef = unsafePerformIO (newIORef [])
 
 -- | The goals a derivation is in the middle of, kept apart for each thread deriving.
@@ -4487,6 +4521,68 @@ inFlightOn ref k reentered derive = do
       (atomicModifyIORef' ref $ \m -> (M.update (\s -> let s' = S.delete k s in if S.null s' then Nothing else Just s') thread m, ()))
       derive
 
+-- | The items of a graph an answer was read from that can change while the graph's other answers
+-- are reused, each at the version it was read at ('ReuseScope'). An answer is the same answer
+-- again in another env of its scope where each of these is still at the version it was read at.
+type ReadDeps = H.HashMap TypeName Int
+
+-- | Each thread's stack of answers being worked out, innermost first, with the 'ReadDeps' each has
+-- made so far. An answer's reads are its own and those of every answer it asked for on the way,
+-- so a frame's reads join its parent's when it closes.
+{-# NOINLINE readFramesRef #-}
+readFramesRef :: IORef (M.Map ThreadId [ReadDeps])
+readFramesRef = unsafePerformIO (newIORef M.empty)
+
+-- | Works out an answer in a frame of its own, and gives the reads it made beside it. The action
+-- must force the answer through everything that can read the graph, or the reads still to come
+-- would be made in whatever frame forces them later.
+withReadFrame :: IO a -> IO (a, ReadDeps)
+withReadFrame act = do
+  thread <- myThreadId
+  atomicModifyIORef' readFramesRef $ \m -> (M.insertWith (++) thread [H.empty] m, ())
+  r <- act `onException` atomicModifyIORef' readFramesRef (\m -> (M.update popFrame thread m, ()))
+  deps <- atomicModifyIORef' readFramesRef $ \m -> case M.lookup thread m of
+    Just (d:parents) -> (M.update (const (joinParent d parents)) thread m, d)
+    _                -> (m, H.empty)
+  return (r, deps)
+  where
+    popFrame (_:parents@(_:_)) = Just parents
+    popFrame _                 = Nothing
+    joinParent d (p:ps) = Just (H.union p d : ps)
+    joinParent _ []     = Nothing
+
+-- | Adds reads to the answer this thread is working out, if it is working one out: those of a
+-- remembered answer it is handed instead of working it out again.
+noteReadDeps :: ReadDeps -> IO ()
+noteReadDeps deps
+  | H.null deps = return ()
+  | otherwise = do
+      thread <- myThreadId
+      atomicModifyIORef' readFramesRef $ \m -> (M.adjust addTop thread m, ())
+  where
+    addTop (d:parents) = H.union d deps : parents
+    addTop []          = []
+
+-- | A value read out of an env's graph under a name, noted as a read of that name where the name's
+-- item can change within the env's 'ReuseScope'. The read is noted when the value is demanded.
+{-# NOINLINE noteGraphRead #-}
+noteGraphRead :: TypeEnv tg -> TypeName -> a -> a
+noteGraphRead TypeEnv{teReuse=Just ReuseScope{rsVersions}} name x
+  | Just v <- H.lookup name rsVersions = unsafePerformIO (noteReadDeps (H.singleton name v) >> return x)
+noteGraphRead _ _ x = x
+
+-- | A value read out of the whole of an env's graph, noted as a read of every item that can change.
+{-# NOINLINE noteWholeGraphRead #-}
+noteWholeGraphRead :: TypeEnv tg -> a -> a
+noteWholeGraphRead TypeEnv{teReuse=Just ReuseScope{rsVersions}} x = unsafePerformIO (noteReadDeps rsVersions >> return x)
+noteWholeGraphRead _ x = x
+
+-- | Works out a remembered answer, with the reads it made beside it where the env is one whose
+-- answers can be reused (a 'ReuseScope'); elsewhere nothing reads that is ever checked.
+memoReading :: TypeEnv tg -> IO a -> IO (a, ReadDeps)
+memoReading TypeEnv{teReuse=Nothing} act = (, H.empty) <$> act
+memoReading _ act                        = withReadFrame act
+
 -- | The keys whose decision is currently BEING computed, on each thread's evaluation stack
 -- ('InFlight'). Never capped: its size is bounded by the recursion depth, and dropping a marker
 -- mid-derivation would silently re-open the very cycle the marker refutes.
@@ -4522,15 +4618,15 @@ satGoal typeEnv vaenv satUse hyps goal = case teQueryCacheKey typeEnv of
     -- table to the recent envs' distinct decisions.
     gens0 <- readIORef satMemoRef
     case lookup tok gens0 >>= H.lookup key of
-      Just r -> return r
+      Just (r, deps) -> noteReadDeps deps >> return r
       Nothing -> do
         -- An in-flight re-entry is a cyclic derivation, which has no finite witness.
         inFlightOn satInFlightRef key (noteCycleCut False) $ do
-          r <- evaluate (satGoalRaw typeEnv vaenv satUse hyps goal)
+          (r, deps) <- memoReading typeEnv $ evaluate (satGoalRaw typeEnv vaenv satUse hyps goal)
           atomicModifyIORef' satMemoRef $ \gens2 ->
             let mTok = fromMaybe H.empty (lookup tok gens2)
                 rest = filter ((/= tok) . fst) gens2
-            in ((tok, H.insert key r mTok) : take 2 rest, ())
+            in ((tok, H.insert key (r, deps) mTok) : take 2 rest, ())
           return r
 
 satGoalRaw :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> SatUse -> SatHyps -> SatGoal -> Bool
@@ -5563,7 +5659,7 @@ constantInType _ _ _ _ = False
 type SubtypeMemoKey = (Int, (Bool, Bool, Bool), [(VarKey, Type)], Type, Type)
 
 {-# NOINLINE subtypeMemoRef #-}
-subtypeMemoRef :: IORef [(Int, H.HashMap SubtypeMemoKey Bool)]
+subtypeMemoRef :: IORef [(Int, H.HashMap SubtypeMemoKey (Bool, ReadDeps))]
 subtypeMemoRef = unsafePerformIO (newIORef [])
 
 -- | Checks if one type contains another type. In set terminology, it is equivalent to subset or equal to ⊆.
@@ -5580,16 +5676,16 @@ isSubtypeOfWithEnv typeEnv vaenv t1 t2 = case teQueryCacheKey typeEnv of
     let key = (tok, (teDisableCompact typeEnv, tePrgmEnv typeEnv, teArgModeProjection typeEnv), vaenvList, t1, t2)
     gens <- readIORef subtypeMemoRef
     case lookup tok gens >>= H.lookup key of
-      Just r -> return r
+      Just (r, deps) -> noteReadDeps deps >> return r
       Nothing -> do
         cutsBefore <- readIORef cycleCutCountRef
-        r <- evaluate (isSubtypeOfWithEnvRaw typeEnv vaenv t1 t2)
+        (r, deps) <- memoReading typeEnv $ evaluate (isSubtypeOfWithEnvRaw typeEnv vaenv t1 t2)
         cutsAfter <- readIORef cycleCutCountRef
         when (cutsAfter == cutsBefore) $
           atomicModifyIORef' subtypeMemoRef $ \gens2 ->
             let mTok = fromMaybe H.empty (lookup tok gens2)
                 rest = filter ((/= tok) . fst) gens2
-            in ((tok, H.insert key r mTok) : take 2 rest, ())
+            in ((tok, H.insert key (r, deps) mTok) : take 2 rest, ())
         return r
 
 isSubtypeOfWithEnvRaw :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type -> Bool
@@ -6772,15 +6868,18 @@ predExprHoldsOn typeEnv vaenv leaf e
     let key = (tok, (teDisableCompact typeEnv, tePrgmEnv typeEnv, teArgModeProjection typeEnv), keyLeaf, e)
     gens <- readIORef predDecideMemoRef
     case lookup tok gens >>= H.lookup key of
-      Just r -> return r
+      Just (r, deps) -> noteReadDeps deps >> return r
       Nothing -> do
-        r <- evaluate decide
+        (r, deps) <- memoReading typeEnv $ do
+          r <- evaluate decide
+          _ <- evaluate (maybe () (`seq` ()) r)
+          return r
         -- More generations than the query memos keep: the per-epoch tokens rotate past the
         -- page's static env, whose decisions are asked throughout, and the maps are small.
         atomicModifyIORef' predDecideMemoRef $ \gens2 ->
           let mTok = fromMaybe H.empty (lookup tok gens2)
               rest = filter ((/= tok) . fst) gens2
-          in ((tok, H.insert key r mTok) : take 7 rest, ())
+          in ((tok, H.insert key (r, deps) mTok) : take 7 rest, ())
         return r
   where
     bare = leaf{ptPreds=PredsNone}
@@ -6795,7 +6894,7 @@ predExprHoldsOn typeEnv vaenv leaf e
 type PredDecideMemoKey = (Int, (Bool, Bool, Bool), Maybe PartialType, PartialType)
 
 {-# NOINLINE predDecideMemoRef #-}
-predDecideMemoRef :: IORef [(Int, H.HashMap PredDecideMemoKey (Maybe Bool))]
+predDecideMemoRef :: IORef [(Int, H.HashMap PredDecideMemoKey (Maybe Bool, ReadDeps))]
 predDecideMemoRef = unsafePerformIO (newIORef [])
 
 -- | Drops a leaf whose value predicate is decided FALSE on it: @S(n=Z)|$this.isZ == True@ holds no

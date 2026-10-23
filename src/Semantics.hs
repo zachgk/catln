@@ -22,7 +22,7 @@ import           CtConstants         (builtinAnnotNames, contextValStr,
                                       errPageSuffix, macroThisKey,
                                       pattern ContextInStr)
 import           Data.Graph          (graphFromEdges)
-import           Data.Hashable       (hash)
+import           Data.Hashable       (Hashable (..), hash)
 import qualified Data.HashSet        as S
 import           Data.IORef          (IORef, atomicModifyIORef', newIORef,
                                       readIORef)
@@ -42,6 +42,21 @@ import           Text.Printf
 
 newtype ObjArrTypeGraph e m = ObjArrTypeGraph (ObjectMap e m)
   deriving (Eq, Show)
+
+-- | The item an env's graph holds under a name, read as the env's reads are noted
+-- ('noteGraphRead'). Every reading of one item of an 'ObjArrTypeGraph' goes through here.
+graphItemOf :: TypeEnv (ObjArrTypeGraph e m) -> TypeName -> Maybe (ObjectMapItem e m)
+graphItemOf typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} name = noteGraphRead typeEnv name (H.lookup name tg)
+
+-- | 'graphItemOf', reading a name the graph does not hold as an item with nothing in it.
+graphItemOrEmpty :: TypeEnv (ObjArrTypeGraph e m) -> TypeName -> ObjectMapItem e m
+graphItemOrEmpty typeEnv name = fromMaybe mempty (graphItemOf typeEnv name)
+
+-- | The name the declarations written from a set of objects ('omDecls') are versioned under in a
+-- 'ReuseScope', as they are kept under no name of their own. No program name is spelled this way.
+setDeclsVersionName :: TypeName
+setDeclsVersionName = mkName "\0omDecls"
+
 instance Semigroup (ObjArrTypeGraph e m) where
   (ObjArrTypeGraph a) <> (ObjArrTypeGraph b) = ObjArrTypeGraph (a <> b)
 
@@ -60,7 +75,7 @@ instance Semigroup (ObjArrTypeGraph e m) where
 classArrowsOf :: (MetaDat m, Show m) => TypeEnv (ObjArrTypeGraph Expr m) -> [(Type, Type)]
 classArrowsOf typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph om} =
   [ (cls, asMembers cls (getMetaType m))
-  | ObjArr{oaObj=Just obj, oaArr=Just (_, m)} <- omDecls om
+  | ObjArr{oaObj=Just obj, oaArr=Just (_, m)} <- noteGraphRead typeEnv setDeclsVersionName (omDecls om)
   , Just (cls, []) <- [setDeclParts obj] ]
   where
     asMembers cls res = case [ memberAsDeclared typeEnv l | l <- classMemberLeaves typeEnv cls, isSubtypeOf typeEnv (singletonType l) res ] of
@@ -162,8 +177,31 @@ type QueryMemoKey = (Int, (Bool, Bool, Bool, Bool), PartialType, [(VarKey, Type)
 -- thrashed them away, while keep-all accumulated large-vaenv keys without bound. A new
 -- (fourth) token evicts the least-recently-used generation.
 {-# NOINLINE queryMemoRef #-}
-queryMemoRef :: IORef [(Int, H.HashMap QueryMemoKey [(String, Type, Type)])]
+queryMemoRef :: IORef [(Int, H.HashMap QueryMemoKey ([(String, Type, Type)], ReadDeps))]
 queryMemoRef = unsafePerformIO (newIORef [])
+
+-- | A query asked again in another env of a 'ReuseScope': the same question in every part of the
+-- env the scope does not version — the behavior flags, the fuel a body may still be read again
+-- with, the local arrows merged in ('teLocalKey') — about the same partial in the same var env.
+type QueryReuseKey = ((Bool, Bool, Bool, Bool), Int, Maybe Int, PartialType, [(VarKey, Type)])
+
+-- | THE REACH QUERIES OF A SCOPE. Each epoch of a solve reads the program through a new env, and so
+-- under a new token, and each constraint with local arrows through yet another; under a new token
+-- every query was worked out again. Measured over core, 82% of the queries worked out again gave
+-- the answer an earlier env of the epoch's scope had already given to the same question, since an
+-- epoch changes few of the items there are, and a query reads few of them. So each answer is kept
+-- with the versions of the items it read ('ReadDeps'), and an env of the same scope holding each of
+-- them at the same version is handed it.
+--
+-- An env with local arrows merged in hands on and is handed answers only where the merge named its
+-- arrows ('teLocalKey'), as they are no item of the scope. Its reads are noted all the same: an
+-- answer worked out in it is part of the answers that are kept.
+--
+-- One scope at a time: a new scope (the next fragment of a solve) starts the table again, as none
+-- of the answers of another is an answer in it.
+{-# NOINLINE queryReuseRef #-}
+queryReuseRef :: IORef (Int, H.HashMap QueryReuseKey ([(String, Type, Type)], ReadDeps))
+queryReuseRef = unsafePerformIO (newIORef (0, H.empty))
 
 {-# NOINLINE queryTokenRef #-}
 queryTokenRef :: IORef Int
@@ -190,11 +228,49 @@ stampQueryToken env = env{teQueryCacheKey = Just tok, teDecisionKey = Just tok}
 -- different value, so it is minted its own query token, but it reads the base's graph with the
 -- local arrows beside it, so a decision keys on the base's identity unless it names one of them
 -- ('teLocalNames').
-withLocalArrowsOf :: ObjArrTypeGraph e m -> TypeEnv tg -> TypeEnv tg -> TypeEnv tg
-withLocalArrowsOf (ObjArrTypeGraph (ObjectMap local)) base merged =
+--
+-- The arrows are named by @localKey@, an id standing for exactly them in the base's 'ReuseScope'
+-- ('internLocalArrows'), or 'Nothing' where the caller has none to give.
+withLocalArrowsOf :: Maybe Int -> ObjArrTypeGraph e m -> TypeEnv tg -> TypeEnv tg -> TypeEnv tg
+withLocalArrowsOf localKey (ObjArrTypeGraph (ObjectMap local)) base merged =
   merged{ teQueryCacheKey = Just (unsafeFreshQueryToken (teTypeGraph merged))
         , teDecisionKey = teDecisionKey base
-        , teLocalNames = S.union (H.keysSet local) (teLocalNames base) }
+        , teLocalNames = S.union (H.keysSet local) (teLocalNames base)
+        , teLocalKey = localKey }
+
+-- | The local arrows an env may be merged with, as what they are made from: a constraint's own
+-- arrows ('TypeCheck.TypeUtils.localArrowTypeEnv'), or the lambdas a body read again is given
+-- ('typeGraphWithArgArrows'), each beside the arrows the env merged into already holds.
+data LocalArrows
+  = LocalArrowObjs [ObjArr Expr ()] (Maybe Int)
+  | LocalLambdas [(Type, Type)] (Maybe Int)
+  deriving (Eq)
+
+instance Hashable LocalArrows where
+  hashWithSalt s (LocalArrowObjs objs k) = s `hashWithSalt` (0 :: Int) `hashWithSalt` objs `hashWithSalt` k
+  hashWithSalt s (LocalLambdas lams k)   = s `hashWithSalt` (1 :: Int) `hashWithSalt` lams `hashWithSalt` k
+
+-- | The ids 'internLocalArrows' has handed out in one 'ReuseScope', and the next.
+{-# NOINLINE localArrowsRef #-}
+localArrowsRef :: IORef (Int, Int, H.HashMap LocalArrows Int)
+localArrowsRef = unsafePerformIO (newIORef (0, 0, H.empty))
+
+-- | An id standing for exactly these local arrows in the scope of the env they are merged into: two
+-- merges are handed one id when they merge the same arrows, so a query asked in either is the same
+-- question ('teLocalKey'). 'Nothing' outside a 'ReuseScope'. One scope at a time, as the answers
+-- are kept ('queryReuseRef').
+{-# NOINLINE internLocalArrows #-}
+internLocalArrows :: TypeEnv tg -> LocalArrows -> Maybe Int
+internLocalArrows TypeEnv{teReuse=Nothing} _ = Nothing
+-- The arrows are hashed through before the table is touched: reading them can ask the graph, and so
+-- intern other arrows, and a table read while its own update is still being worked out is a loop.
+internLocalArrows TypeEnv{teReuse=Just ReuseScope{rsScope}} arrows = unsafePerformIO $ do
+  _ <- evaluate (hash arrows)
+  atomicModifyIORef' localArrowsRef $ \(scope, next, table) ->
+    let (next', table') = if scope == rsScope then (next, table) else (0, H.empty)
+    in case H.lookup arrows table' of
+         Just i  -> ((rsScope, next', table'), Just i)
+         Nothing -> ((rsScope, next' + 1, H.insert arrows next' table'), Just next')
 
 -- | The query keys whose answers are being computed right now, by hash. See the re-entrancy note
 -- in 'objArrGraphQuery'.
@@ -210,8 +286,10 @@ objArrGraphQuery :: (ExprClass e, MetaDat m, Show m, Show (e m)) => Bool -> Type
 objArrGraphQuery prune typeEnv vaenv partial = case teQueryCacheKey typeEnv of
   Nothing -> objArrGraphQueryRaw prune typeEnv vaenv partial
   Just _ | teInSatDecision typeEnv -> objArrGraphQueryRaw prune typeEnv vaenv partial
-  Just tok -> unsafePerformIO $ do
-    let key = (tok, (prune, teDisableCompact typeEnv, tePrgmEnv typeEnv, teArgModeProjection typeEnv), partial, sortOn fst (H.toList vaenv))
+  Just tok -> objArrGraphQueryMemo prune typeEnv vaenv partial tok
+
+objArrGraphQueryMemo :: (ExprClass e, MetaDat m, Show m, Show (e m)) => Bool -> TypeEnv (ObjArrTypeGraph e m) -> TypeVarArgEnv -> PartialType -> Int -> [(String, Type, Type)]
+objArrGraphQueryMemo prune typeEnv vaenv partial tok = unsafePerformIO $ do
     -- RE-ENTRANCY. A query's own work can ask the graph about the SAME key again — resolving a
     -- raw applied leaf reaches for what its arrows produce, which is another query. Handing such
     -- a query the memo's entry would hand it the very thunk it is already inside, which GHC ends
@@ -228,32 +306,66 @@ objArrGraphQuery prune typeEnv vaenv partial = case teQueryCacheKey typeEnv of
       else do
         gens <- readIORef queryMemoRef
         case lookup tok gens >>= H.lookup key of
-          Just r -> return r
+          Just (r, deps) -> noteReadDeps deps >> return r
           Nothing -> do
-            -- Computed HERE, inside the mark, rather than published as a thunk to be forced later.
-            -- The window to guard is while the answer is being worked out, and a thunk's forcing
-            -- happens wherever it is demanded — outside any bracket this function could hold, and
-            -- in a nested 'unsafePerformIO' that GHC is free to float or duplicate (this module
-            -- already fights full-laziness for 'unsafeFreshQueryToken'). Forcing it here makes the
-            -- mark's extent exactly the computation's, and publishes a value rather than a thunk —
-            -- a half-evaluated one would leave the same hazard one level down. 'forceType' goes
-            -- through the structure only, which is all of it that can ask the graph anything.
-            r <- bracket_
-                   (atomicModifyIORef' queryInProgressRef (\s -> (S.insert (hash key) s, ())))
-                   (atomicModifyIORef' queryInProgressRef (\s -> (S.delete (hash key) s, ())))
-                   (do let res = objArrGraphQueryRaw prune typeEnv vaenv partial
-                       _ <- evaluate (forceQueryResult res)
-                       return res)
-            atomicModifyIORef' queryMemoRef $ \gens2 ->
-              let mTok = fromMaybe H.empty (lookup tok gens2)
-                  rest = filter ((/= tok) . fst) gens2
-              in ((tok, H.insert key r mTok) : take 2 rest, ())
+            reused <- reusedAnswer
+            answer@(r, deps) <- maybe compute return reused
+            noteReadDeps deps
+            remember answer
             return r
+    where
+      -- Computed HERE, inside the mark, rather than published as a thunk to be forced later.
+      -- The window to guard is while the answer is being worked out, and a thunk's forcing
+      -- happens wherever it is demanded — outside any bracket this function could hold, and
+      -- in a nested 'unsafePerformIO' that GHC is free to float or duplicate (this module
+      -- already fights full-laziness for 'unsafeFreshQueryToken'). Forcing it here makes the
+      -- mark's extent exactly the computation's, and publishes a value rather than a thunk —
+      -- a half-evaluated one would leave the same hazard one level down. 'forceType' goes
+      -- through the structure only, which is all of it that can ask the graph anything.
+      compute = bracket_
+        (atomicModifyIORef' queryInProgressRef (\s -> (S.insert (hash key) s, ())))
+        (atomicModifyIORef' queryInProgressRef (\s -> (S.delete (hash key) s, ())))
+        (memoReading typeEnv $ do
+            let res = objArrGraphQueryRaw prune typeEnv vaenv partial
+            _ <- evaluate (forceQueryResult res)
+            return res)
+      flags = (prune, teDisableCompact typeEnv, tePrgmEnv typeEnv, teArgModeProjection typeEnv)
+      vaenvList = sortOn fst (H.toList vaenv)
+      key = (tok, flags, partial, vaenvList)
+      reuseKey = (flags, teRederiveFuel typeEnv, teLocalKey typeEnv, partial, vaenvList)
+      reuseScope = case teReuse typeEnv of
+        Just scope | S.null (teLocalNames typeEnv) || isJust (teLocalKey typeEnv) -> Just scope
+        _ -> Nothing
+      -- An answer an earlier env of this env's scope gave, if every item it read is still at the
+      -- version it read.
+      reusedAnswer = case reuseScope of
+        Nothing -> return Nothing
+        Just ReuseScope{rsScope, rsVersions} -> do
+          -- Hashed through before the table is read or updated: the local arrows it names are
+          -- interned when first read ('internLocalArrows'), which can ask the graph.
+          _ <- evaluate (hash reuseKey)
+          (scope, table) <- readIORef queryReuseRef
+          return $ case H.lookup reuseKey table of
+            Just answer@(_, deps)
+              | scope == rsScope
+              , all (\(n, v) -> H.lookup n rsVersions == Just v) (H.toList deps) -> Just answer
+            _ -> Nothing
+      remember answer = do
+        atomicModifyIORef' queryMemoRef $ \gens2 ->
+          let mTok = fromMaybe H.empty (lookup tok gens2)
+              rest = filter ((/= tok) . fst) gens2
+          in ((tok, H.insert key answer mTok) : take 2 rest, ())
+        case reuseScope of
+          Nothing -> return ()
+          Just ReuseScope{rsScope} -> atomicModifyIORef' queryReuseRef $ \(scope, table) ->
+            if scope == rsScope
+              then ((scope, H.insert reuseKey answer table), ())
+              else ((rsScope, H.singleton reuseKey answer), ())
 
 -- | Shared body of 'typeGraphQueryWithReason' (@prune=True@) and
 -- 'typeGraphQueryAllWithReason' (@prune=False@ — every accepting arrow contributes).
 objArrGraphQueryRaw :: (ExprClass e, MetaDat m, Show m, Show (e m)) => Bool -> TypeEnv (ObjArrTypeGraph e m) -> TypeVarArgEnv -> PartialType -> [(String, Type, Type)]
-objArrGraphQueryRaw prune typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} vaenv partial@PartialType{ptName} = concatMap tryTArrow $ promises $ mapMaybe withSrc $ universeObjectMapItem item
+objArrGraphQueryRaw prune typeEnv vaenv partial@PartialType{ptName} = concatMap tryTArrow $ promises $ mapMaybe withSrc $ universeObjectMapItem item
     where
       -- Each arrow with what it accepts OF THIS SOURCE, met once. Whether the arrow triggers, the
       -- cover the pruning checks, and what the arrow is sent all read the same meet.
@@ -261,7 +373,7 @@ objArrGraphQueryRaw prune typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap
         src | isBottomType src -> Nothing
             | otherwise -> Just (oa, src)
       withSrc _ = Nothing
-      item = H.lookupDefault mempty ptName tg
+      item = graphItemOrEmpty typeEnv ptName
       -- A refinement declaration is not an arrow a term is rewritten through: it is a further
       -- promise about the result of the arrows that are. Offered as one, it became an alternative
       -- beside the arms it refines, and the reach union then read the call as any of their results
@@ -356,8 +468,8 @@ oaInputTemplates ObjArr{oaArr=Nothing} = []
 instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGraph e m) where
   typeGraphQueryWithReason = objArrGraphQuery True
   typeGraphQueryAllWithReason = objArrGraphQuery False
-  typeGraphDeclaredVarBindings typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} vaenv partial@PartialType{ptName=pName} =
-    case [ oa | oa@ObjArr{oaArr=Just{}} <- maybe [] omiDecls (H.lookup pName tg)
+  typeGraphDeclaredVarBindings typeEnv vaenv partial@PartialType{ptName=pName} =
+    case [ oa | oa@ObjArr{oaArr=Just{}} <- maybe [] omiDecls (graphItemOf typeEnv pName)
               , not $ isBottomType $ intersectTypesEnv typeEnv vaenv (singletonType partial) (getMetaType $ getExprMeta $ oaObjExpr oa) ] of
       [decl] -> case exprVarArgsWithSrc typeEnv (oaObjExpr decl) partial of
         [binds] -> H.fromList [ (v, abType b) | (v@TVVar{}, b) <- H.toList binds ]
@@ -376,10 +488,10 @@ instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGr
       unshadowed = baseOm{omItems = H.mapWithKey (\n item -> if H.member n lamTg then item{omiDecls = notArg (omiDecls item), omiDefs = notArg (omiDefs item)} else item) baseTg}
       notArg = filter ((/= ArgObj) . oaBasis)
       base = typeEnv{teTypeGraph = ObjArrTypeGraph unshadowed}
-      merged = withLocalArrowsOf (ObjArrTypeGraph objMap) base (mkTypeEnv (Prgm objMap (classGraphFromObjs objMap) []) <> base)
-  typeGraphDeclaredArgResults TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} name =
+      merged = withLocalArrowsOf (internLocalArrows typeEnv (LocalLambdas arrows (teLocalKey typeEnv))) (ObjArrTypeGraph objMap) base (mkTypeEnv (Prgm objMap (classGraphFromObjs objMap) []) <> base)
+  typeGraphDeclaredArgResults typeEnv name =
     [ (inExprSingleton aObj, getMetaType aM)
-    | decl <- maybe [] omiDecls (H.lookup (makeAbsoluteName name) tg)
+    | decl <- maybe [] omiDecls (graphItemOf typeEnv (makeAbsoluteName name))
     , ObjArr{oaObj=Just aObj, oaArr=Just (_, aM)} <- exprAppliedArgs (oaObjExpr decl)
     , not (null (exprAppliedArgs aObj)) ]
   -- The predicate is evaluated on the shape the way the derived refinement tests evaluate it on a
@@ -442,7 +554,7 @@ instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGr
             [k] -> Just k
             _   -> Nothing
 
-  typeGraphData TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} name = concatMap dataPartials $ flatObjectMapItem $ H.lookupDefault mempty name tg
+  typeGraphData typeEnv name = concatMap dataPartials $ flatObjectMapItem $ graphItemOrEmpty typeEnv name
     where
       -- Data definitions have no arrow (oaArr=Nothing); their object expression carries the
       -- declared type with linked ptVars/ptArgs. A declared VALUE of the type — a note's
@@ -462,11 +574,11 @@ instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGr
   -- no-information, the monotone-safe direction. A relatively-spelled name (a call's
   -- @/operator++@ against a module-keyed @/Data/…/operator++@ objMap entry) matches by
   -- 'relativeNameFilter', the same fallback 'typeGraphArgKeys' uses.
-  typeGraphArrowTemplates TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} name = case H.lookup name tg of
+  typeGraphArrowTemplates typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} name = case graphItemOf typeEnv name of
     Just item -> itemTemplates item
     Nothing -> case relativeNameFilter name (H.keys tg) of
       []    -> []
-      names -> concatMap (itemTemplates . (tg H.!)) names
+      names -> concatMap (itemTemplates . graphItemOrEmpty typeEnv) names
     where
       itemTemplates = concatMap oaInputTemplates . flatObjectMapItem
 
@@ -474,8 +586,8 @@ instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGr
   -- context call (@ContextIn(value= println(msg -> \/Catln\/CStr), ctx= ..)@), so the arguments it
   -- takes are spelled one level further in, on the call in its @value@. They are its inputs as much
   -- as a plain function's own arguments are.
-  typeGraphInputEmbeddedNames TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} =
-    S.unions [ S.unions (map leafNameSet (inputSlots tmpl))
+  typeGraphInputEmbeddedNames typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} =
+    noteWholeGraphRead typeEnv $ S.unions [ S.unions (map leafNameSet (inputSlots tmpl))
              | item <- H.elems tg
              , oa <- flatObjectMapItem item
              , tmpl <- oaInputTemplates oa ]
@@ -498,25 +610,25 @@ instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGr
   -- admits arguments beyond the ones it lists, so it bounds none of them: the name is open
   -- ('Nothing'). Read as its listed keys alone, every @Context..@ was closed to @Context(value)@
   -- exactly, and a context holding any state was outside its own type.
-  typeGraphArgKeys TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} name = case H.lookup name tg of
+  typeGraphArgKeys typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} name = case graphItemOf typeEnv name of
     Just item | itemOpen item -> Nothing
               | otherwise     -> Just $ itemArgKeys item
     Nothing   -> case relativeNameFilter name (H.keys tg) of
       []    -> Nothing
-      names | any (itemOpen . (tg H.!)) names -> Nothing
-            | otherwise -> Just $ concatMap (itemArgKeys . (tg H.!)) names
+      names | any (itemOpen . graphItemOrEmpty typeEnv) names -> Nothing
+            | otherwise -> Just $ concatMap (itemArgKeys . graphItemOrEmpty typeEnv) names
     where
       itemArgKeys item = [ S.fromList [inExprSingleton (oaObjExpr a) | a <- exprAppliedArgs (oaObjExpr oa)]
                          | oa <- flatObjectMapItem item ]
       itemOpen item = any (exprSpreadsArgs . oaObjExpr) (flatObjectMapItem item)
 
-  typeGraphNameOpen TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} name = case H.lookup name tg of
+  typeGraphNameOpen typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} name = case graphItemOf typeEnv name of
     Just item -> itemOpen item
-    Nothing   -> any (itemOpen . (tg H.!)) (relativeNameFilter name (H.keys tg))
+    Nothing   -> any (itemOpen . graphItemOrEmpty typeEnv) (relativeNameFilter name (H.keys tg))
     where
       itemOpen item = any (exprSpreadsArgs . oaObjExpr) (flatObjectMapItem item)
 
-  typeGraphDeclaredResult typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} vaenv partial@PartialType{ptName=pName} =
+  typeGraphDeclaredResult typeEnv vaenv partial@PartialType{ptName=pName} =
     foldl' (intersectTypesEnv typeEnv vaenv) unrefined (coveringRefinementResults typeEnv vaenv item partial)
     where
       -- What the declarations alone promise. Every refinement covering the call then narrows it
@@ -534,7 +646,7 @@ instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGr
                       , armDest <- arrowDestType typeEnv vaenv partial oa ] of
                    []       -> PTopType
                    defDests -> unionAllTypes typeEnv (defDests ++ concatMap declResultOfRawLeaves defDests)
-      item = H.lookupDefault mempty pName tg
+      item = graphItemOrEmpty typeEnv pName
       declDests = [ dest
                   | oa@ObjArr{oaArr=Just{}} <- omiDecls item
                   , not $ isBottomType $ intersectTypesEnv typeEnv vaenv (singletonType partial) (getMetaType $ getExprMeta $ oaObjExpr oa)
@@ -543,7 +655,7 @@ instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGr
       -- recursion into undeclared ones, keeping this bounded).
       declResultOfRawLeaves (UnionType Nothing ls _) =
         [ d | l <- splitUnionType ls, null (typeGraphData typeEnv (ptName l))
-            , oa@ObjArr{oaArr=Just{}} <- omiDecls (H.lookupDefault mempty (ptName l) tg)
+            , oa@ObjArr{oaArr=Just{}} <- omiDecls (graphItemOrEmpty typeEnv (ptName l))
             , not $ isBottomType $ intersectTypesEnv typeEnv vaenv (singletonType l) (getMetaType $ getExprMeta $ oaObjExpr oa)
             , d <- arrowDestType typeEnv vaenv l oa ]
       declResultOfRawLeaves _ = []
@@ -610,7 +722,7 @@ mkTypeEnv :: (ExprClass e, Show m, Show (e m), MetaDat m) => Prgm e m -> TypeEnv
 -- an env that lives for a whole phase — the evaluator's, consulted at every dispatch — remembered
 -- nothing, and a value predicate on a leaf it compared was evaluated through the graph at every
 -- comparison.
-mkTypeEnv (Prgm objMap classGraph _) = stampQueryToken $ TypeEnv classGraph (ObjArrTypeGraph objMap) typeNames boundArgKeys False defaultTypeEnvDebug False False False Nothing Nothing S.empty defaultRederiveFuel (mkSatCache classGraph typeNames)
+mkTypeEnv (Prgm objMap classGraph _) = stampQueryToken $ TypeEnv classGraph (ObjArrTypeGraph objMap) typeNames boundArgKeys False defaultTypeEnvDebug False False False Nothing Nothing S.empty defaultRederiveFuel Nothing Nothing (mkSatCache classGraph typeNames)
   where
     -- Every name an argument pattern binds, with the arg keys that pattern gives it, recursing
     -- through the patterns written inside its arguments. Read by 'declaredArgKeys' for a name

@@ -459,7 +459,10 @@ mkReachesEnv env con@(Constraint _ _ stypeVaenv _) = do
 -- — the same token-per-immutable-env-value rule as the per-epoch mint in 'runConstraintsIdx'.
 withLocalArrows :: Maybe FEnvTypeEnv -> FEnvTypeEnv -> FEnvTypeEnv
 withLocalArrows Nothing base = base
-withLocalArrows (Just argTypeEnv) base = withLocalArrowsOf (teTypeGraph argTypeEnv) base (argTypeEnv <> base)
+withLocalArrows (Just argTypeEnv) base = withLocalArrowsOf localKey (teTypeGraph argTypeEnv) base (argTypeEnv <> base)
+  where
+    ObjArrTypeGraph argOm = teTypeGraph argTypeEnv
+    localKey = internLocalArrows base (LocalArrowObjs (flatObjectMap argOm) (teLocalKey base))
 
 -- | The arrows a constraint adds to its environment: the enclosing definition's arguments (an
 -- Obj/Arrow pair per argument, local to the definition) and the call's own lambdas. 'Nothing'
