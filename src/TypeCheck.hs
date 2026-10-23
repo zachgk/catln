@@ -94,10 +94,13 @@ typecheckPrgmsSt pprgms typechecked = do
   -- Statement annotations are consumer-only and solve last, against the full dependency set.
   let pageObjMap = mconcat (map prgmObjMap pprgms)
   let depObjMap = prgmObjMap (mconcat typechecked)
-  let sccFragments = fragmentPrgms (itemSccGroups pageObjMap) pprgms ++ annotFragmentPrgms pprgms
+  -- A class named by an item names its members too ('classMemberRefs'), for the page's classes and
+  -- the ones it imports.
+  let classMembers = classMemberRefs (prgmCg (mconcat pprgms) <> prgmCg (mconcat typechecked))
+  let sccFragments = fragmentPrgms (itemSccGroups classMembers pageObjMap) pprgms ++ annotFragmentPrgms pprgms
   let fragments = if null sccFragments then [pprgms] else sccFragments
   let allKeys = objMapKeys pageObjMap ++ objMapKeys depObjMap
-  let edgeMap = resolveRefEdges allKeys (H.unionWith (++) (itemRawRefs pageObjMap) (itemRawRefsShallow depObjMap))
+  let edgeMap = resolveRefEdges allKeys (withClassMembers classMembers <$> H.unionWith (++) (itemRawRefs pageObjMap) (itemRawRefsShallow depObjMap))
   let depPieces0 = H.mapWithKey depPieceOf (unObjectMap depObjMap)
   -- The declarations written from a set of objects ('omDecls', @(_ -> String) -> String\/Text..@)
   -- are kept under no item, so they enter every fragment whole rather than as a piece of its

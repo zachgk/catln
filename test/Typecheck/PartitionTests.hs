@@ -55,7 +55,7 @@ fixtureMap = objectMapFromList
 
 testFixtureGroups :: TestTree
 testFixtureGroups = testCase "fixture groups: data prelude, SCC pair, dependency order" $ do
-  let groups = itemSccGroups fixtureMap
+  let groups = itemSccGroups H.empty fixtureMap
   let keyOf = mkName
   -- Coverage: every item key in exactly one group.
   let flat = concat groups
@@ -70,7 +70,7 @@ testFixtureGroups = testCase "fixture groups: data prelude, SCC pair, dependency
   let groupIdx n = head [i | (i, g) <- zip [(0 :: Int)..] groups, keyOf n `elem` g]
   assertBool "insert before sorted" $ groupIdx "/T/insert" < groupIdx "/T/sorted"
   -- Determinism.
-  itemSccGroups fixtureMap @?= groups
+  itemSccGroups H.empty fixtureMap @?= groups
 
 testMetaTypeEdges :: TestTree
 testMetaTypeEdges = testCase "spelled result types create edges" $ do
@@ -83,7 +83,7 @@ propGroupsPartitionKeys = property $ do
   prgmsNodes <- forAll genPrgms
   let prgms = map fst3 prgmsNodes
   let omap = mconcat $ map prgmObjMap prgms
-  let groups = itemSccGroups omap
+  let groups = itemSccGroups H.empty omap
   sortOn nameStr (concat groups) === sortOn nameStr (objectMapKeys omap)
 
 -- | Fragmenting keeps the source-program list shape and moves every item into
@@ -93,7 +93,7 @@ propFragmentsCoverItems = property $ do
   prgmsNodes <- forAll genPrgms
   let prgms = map fst3 prgmsNodes
   let omap = mconcat $ map prgmObjMap prgms
-  let groups = itemSccGroups omap
+  let groups = itemSccGroups H.empty omap
   let fragments = fragmentPrgms groups prgms
   map length fragments === map (const (length prgms)) groups
   let fragKeys = concatMap (concatMap (objectMapKeys . prgmObjMap)) fragments

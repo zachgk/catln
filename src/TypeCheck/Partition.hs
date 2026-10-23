@@ -36,7 +36,7 @@ import           MapMeta              (mapMetaObjArrM)
 import qualified MapMeta
 import           Semantics.Prgm
 import           Semantics.Types
-import           Utils                (snd3)
+import           Utils                (graphToNodes, snd3)
 
 -- | Names referenced anywhere inside a spelled type: positive and negative
 -- leaf names, predicate class\/rel\/expr partial names, and (recursively) the
@@ -61,6 +61,28 @@ typeRefNames (UnionType mtop pos _) = concatMap partialNames (splitUnionType pos
     predNames (PredClass p) = partialNames p
     predNames (PredRel p)   = partialNames p
     predNames PredConstEq{} = []
+
+-- | Each class of a class graph to the names its members are spelled with. A class is no item of
+-- the object map, so a reference to one resolves to nothing by name; but what is reached through
+-- it is its members. Where a member is a function (@every(constOne, isa= [Univariate])@), a value
+-- known only as the class is applied (@f(x= x, params= params)@ with @f -> Univariate@) through the
+-- member's own arrows, which the solve of the item applying it must hold. A data member is in every
+-- solve already ('dataItemKeys'), so naming it adds nothing.
+classMemberRefs :: ClassGraph -> H.HashMap Name [Name]
+classMemberRefs (ClassGraph cg) = H.fromListWith (++)
+  [ (pcnName k, concatMap typeRefNames cgcExtends) | (CGClass{cgcExtends}, k@PClassName{}, _) <- graphToNodes cg ]
+
+-- | References with the members of each class among them added, and those of each class among the
+-- members, as a class may be a member of another.
+withClassMembers :: H.HashMap Name [Name] -> [Name] -> [Name]
+withClassMembers members refs
+  | H.null members = refs
+  | otherwise      = S.toList (go S.empty refs)
+  where
+    go seen [] = seen
+    go seen (r:rest)
+      | S.member r seen = go seen rest
+      | otherwise = go (S.insert r seen) (H.lookupDefault [] r members ++ rest)
 
 -- | 'Value' names referenced by an expression, descending into applied
 -- arguments' sub-objects and bodies.
@@ -124,8 +146,8 @@ definedNameItems (ObjectMap omap) = H.fromList $
 -- callers are exactly the ones in that definition ('nestedParentOf'), so what they pass and what
 -- they need of it are part of its typing ('TypeCheck.Encode.nestedCallerConstraints'). The parent
 -- already refers to it, so an edge back to the parent puts both in one group.
-itemSccGroups :: (MetaDat m, Show m) => ObjectMap Expr m -> [[Name]]
-itemSccGroups (ObjectMap omap) = [dataKeys | not (null dataKeys)] ++ sccGroups
+itemSccGroups :: (MetaDat m, Show m) => H.HashMap Name [Name] -> ObjectMap Expr m -> [[Name]]
+itemSccGroups classMembers (ObjectMap omap) = [dataKeys | not (null dataKeys)] ++ sccGroups
   where
     keys = sortOn nameStr $ H.keys omap
     isDataItem = isDataObjectMapItem
@@ -134,7 +156,7 @@ itemSccGroups (ObjectMap omap) = [dataKeys | not (null dataKeys)] ++ sccGroups
     funcNames = definedNameItems (objectMapItems (H.filterWithKey (\k _ -> S.member k funcKeySet) omap))
     itemEdges k = sortOn nameStr $ filter (/= k) $ filter (`S.member` funcKeySet) $ nub $ maybeToList (nestedParentOf funcNames k) ++ concatMap resolveRef refs
       where
-        refs = nub $ concatMap objArrRefNames $ flatObjectMapItem $ H.lookupDefault (error "itemSccGroups: missing key") k omap
+        refs = withClassMembers classMembers $ nub $ concatMap objArrRefNames $ flatObjectMapItem $ H.lookupDefault (error "itemSccGroups: missing key") k omap
         -- A relative reference resolves to EVERY matching item (the
         -- conservative choice for an ambiguous name).
         resolveRef r = relativeNameFilter r keys
