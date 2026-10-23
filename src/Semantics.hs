@@ -253,8 +253,14 @@ objArrGraphQuery prune typeEnv vaenv partial = case teQueryCacheKey typeEnv of
 -- | Shared body of 'typeGraphQueryWithReason' (@prune=True@) and
 -- 'typeGraphQueryAllWithReason' (@prune=False@ — every accepting arrow contributes).
 objArrGraphQueryRaw :: (ExprClass e, MetaDat m, Show m, Show (e m)) => Bool -> TypeEnv (ObjArrTypeGraph e m) -> TypeVarArgEnv -> PartialType -> [(String, Type, Type)]
-objArrGraphQueryRaw prune typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} vaenv partial@PartialType{ptName} = concatMap tryTArrow $ promises $ universeObjectMapItem item
+objArrGraphQueryRaw prune typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} vaenv partial@PartialType{ptName} = concatMap tryTArrow $ promises $ mapMaybe withSrc $ universeObjectMapItem item
     where
+      -- Each arrow with what it accepts OF THIS SOURCE, met once. Whether the arrow triggers, the
+      -- cover the pruning checks, and what the arrow is sent all read the same meet.
+      withSrc oa@ObjArr{oaArr=Just{}} = case intersectTypesEnv typeEnv vaenv (singletonType partial) (arrowObjType oa) of
+        src | isBottomType src -> Nothing
+            | otherwise -> Just (oa, src)
+      withSrc _ = Nothing
       item = H.lookupDefault mempty ptName tg
       -- A refinement declaration is not an arrow a term is rewritten through: it is a further
       -- promise about the result of the arrows that are. Offered as one, it became an alternative
@@ -270,7 +276,7 @@ objArrGraphQueryRaw prune typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap
       -- declaration or primitive has nothing but its promises to say what it returns, so there the
       -- refinements are what is known.
       promises | prune     = mostSpecificPromises
-               | otherwise = filter accepts
+               | otherwise = id
       -- Each declaration/definition is a PROMISE: given an input of one type, an output of a certain
       -- type can be produced. Among the promises the source triggers, keep only the MOST HELPFUL — an
       -- arrow whose object (input type) is a strict SUPERTYPE of another triggered arrow's object is
@@ -292,14 +298,13 @@ objArrGraphQueryRaw prune typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap
       -- 'completeTreeSet' in "TreeBuild" with opposite polarity: dispatch must ERROR when coverage
       -- fails, while a reach query instead DECLINES TO PRUNE (keeping every triggered promise is the
       -- sound fallback for an upper bound).
-      mostSpecificPromises arrows
+      mostSpecificPromises triggered
         | length kept == length triggered || covered = kept
         | otherwise = triggered
         where
-          triggered = filter accepts arrows
-          kept = filter (\oa -> not (any (`strictlyDominates` oa) triggered)) triggered
-          -- What each kept promise accepts OF THIS SOURCE (the same intersect 'tryTArrow' performs).
-          keptSrcs = [intersectTypesEnv typeEnv vaenv (singletonType partial) (arrowObjType oa) | oa <- kept]
+          kept = filter (\(oa, _) -> not (any ((`strictlyDominates` oa) . fst) triggered)) triggered
+          -- What each kept promise accepts OF THIS SOURCE.
+          keptSrcs = map snd kept
           covered = materializedCovers || symbolicCovers
           materializedCovers = isSubtypeOfWithEnv typeEnv vaenv (singletonType partial) (unionAllTypesWithEnv typeEnv vaenv keptSrcs)
           -- The engine sees joint covers a leafwise subtype check cannot (e.g. Nil and Cons arms
@@ -311,23 +316,16 @@ objArrGraphQueryRaw prune typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap
             _ -> False
           unionLeafs (UnionType Nothing leafs []) = Just (splitUnionType leafs)
           unionLeafs _                            = Nothing
-      accepts oa@ObjArr{oaArr=Just{}} = not $ isBottomType $ intersectTypesEnv typeEnv vaenv (singletonType partial) (arrowObjType oa)
-      accepts _ = False
       arrowObjType oa = getMetaType $ getExprMeta $ oaObjExpr oa
       -- @a@ strictly dominates @b@ when a's object is a strict subtype of b's (a is more specific).
       strictlyDominates a b = let oa' = arrowObjType a; ob = arrowObjType b
                               in oa' /= ob && isSubtypeOfWithEnv typeEnv vaenv oa' ob
 
-      tryTArrow :: (ExprClass e, MetaDat m, Show m, Show (e m)) => ObjArr e m -> [(String, Type, Type)]
-      tryTArrow oa@ObjArr{oaArr=Just{}} = do
-        -- It is possible to send part of a partial through the arrow, so must compute the valid part
-        -- If none of it is valid, then there is Nothing
-        case intersectTypesEnv typeEnv vaenv (singletonType partial) (getMetaType $ getExprMeta $ oaObjExpr oa) of
-          potentialSrc@(UnionType Nothing potSrcLeafs []) -> if not (isBottomType potentialSrc)
-            then map (printf "using %s" (show oa), potentialSrc,) $ joinPartialDestTypes [map (refinedDest oa potentialSrcPartial) (arrowDestType typeEnv vaenv potentialSrcPartial oa) | potentialSrcPartial <- splitUnionType potSrcLeafs]
-            else []
-          _ -> error "Unexpected non-union in TryTArrow"
-      tryTArrow ObjArr{oaArr=Nothing} = []
+      -- Part of a partial can be sent through the arrow: what it accepts of the source ('withSrc').
+      tryTArrow :: (ExprClass e, MetaDat m, Show m, Show (e m)) => (ObjArr e m, Type) -> [(String, Type, Type)]
+      tryTArrow (oa, potentialSrc@(UnionType Nothing potSrcLeafs [])) =
+        map (printf "using %s" (show oa), potentialSrc,) $ joinPartialDestTypes [map (refinedDest oa potentialSrcPartial) (arrowDestType typeEnv vaenv potentialSrcPartial oa) | potentialSrcPartial <- splitUnionType potSrcLeafs]
+      tryTArrow _ = error "Unexpected non-union in TryTArrow"
 
       refinedDest oa src dest = case oaArr oa of
         Just (Nothing, _) -> foldl' (intersectTypesEnv typeEnv vaenv) dest (coveringRefinementResults typeEnv vaenv item src)
