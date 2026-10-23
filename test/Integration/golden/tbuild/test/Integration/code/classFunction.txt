@@ -1,0 +1,271 @@
+Prgm
+    { prgmObjMap = ObjectMapWith
+        { omItems = fromList
+            [
+                ( "/checkOne"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /checkOne -> UnionType
+                            ( Just
+                                ( PredClass /YN
+                                , fromList []
+                                , []
+                                )
+                            ,
+                                ( /two( /a=/In ) + /app
+                                    ( /a=/In
+                                    , /f=/one
+                                    ) + /one( /a=/In )
+                                )
+                            , []
+                            ) =
+                            ( /app
+                                ( EAppArg { eaaArg = Value /f -> /one = Value /one } )
+                                ( EAppArg { eaaArg = Value /a -> /In = Value /In } ) ↦ UnionType
+                                ( Just
+                                    ( PredClass /YN
+                                    , fromList []
+                                    , []
+                                    )
+                                ,
+                                    ( /two( /a=/In ) + /one( /a=/In ) )
+                                , []
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/two"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /two
+                            ( EAppArg { eaaArg = Value /a -> /In } ) -> /No
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /two
+                            ( EAppArg { eaaArg = Value /a -> /In } ) -> /No = Value /No
+                        ]
+                    }
+                )
+            ,
+                ( "/No"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Value /No
+                        , Value /No
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/#noCore"
+                , ObjectMapItem
+                    { omiDecls = [ Value /#noCore ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/pick"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /pick
+                            ( EAppArg { eaaArg = Value /b -> ∀/YN } ) -> ∀/F
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /pick
+                            ( EAppArg { eaaArg = Value /b -> /Yes = Value /Yes } ) -> /one = Value /one
+                        , /pick
+                            ( EAppArg { eaaArg = Value /b -> /No = Value /No } ) -> /two = Value /two
+                        ]
+                    }
+                )
+            ,
+                ( "/app"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /app
+                            ( EAppArg { eaaArg = Value /f -> ∀/F } )
+                            ( EAppArg { eaaArg = Value /a -> /In } ) -> ∀/YN
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /app
+                            ( EAppArg { eaaArg = Value /f -> ∀/F } )
+                            ( EAppArg { eaaArg = Value /a -> /In } ) -> ( /No + /Yes ) =
+                            ( ( ( Value /f ↦ TVArg /f ) )
+                                ( EAppArg
+                                    { eaaArg = Value /a -> TVArg /a = ( Value /a ↦ TVArg /a ) }
+                                ) ↦ ( /No + /Yes )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Yes"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Value /Yes
+                        , Value /Yes
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/checkPick"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /checkPick
+                            ( EAppArg { eaaArg = Value /b -> ∀/YN } ) -> ∀/YN
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /checkPick
+                            ( EAppArg { eaaArg = Value /b -> ∀/YN } ) -> ∀/YN =
+                            ( /app
+                                ( EAppArg
+                                    { eaaArg = Value /f -> ∀/F =
+                                        ( /pick
+                                            ( EAppArg
+                                                { eaaArg = Value /b -> TVArg /b = ( Value /b ↦ TVArg /b ) }
+                                            ) ↦ ∀/F
+                                        )
+                                    }
+                                )
+                                ( EAppArg { eaaArg = Value /a -> /In = Value /In } ) ↦ ∀/YN
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/checkTwo"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /checkTwo -> UnionType
+                            ( Just
+                                ( PredClass /YN
+                                , fromList []
+                                , []
+                                )
+                            ,
+                                ( /two( /a=/In ) + /app
+                                    ( /a=/In
+                                    , /f=/two
+                                    ) + /one( /a=/In )
+                                )
+                            , []
+                            ) =
+                            ( /app
+                                ( EAppArg { eaaArg = Value /f -> /two = Value /two } )
+                                ( EAppArg { eaaArg = Value /a -> /In = Value /In } ) ↦ UnionType
+                                ( Just
+                                    ( PredClass /YN
+                                    , fromList []
+                                    , []
+                                    )
+                                ,
+                                    ( /two( /a=/In ) + /one( /a=/In ) )
+                                , []
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/one"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /one
+                            ( EAppArg { eaaArg = Value /a -> /In } ) -> /Yes
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /one
+                            ( EAppArg { eaaArg = Value /a -> /In } ) -> /Yes = Value /Yes
+                        ]
+                    }
+                )
+            ,
+                ( "/In"
+                , ObjectMapItem
+                    { omiDecls = [ Value /In ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        , omDecls =
+            [
+                ( Hole ∀/F HoleActive { haName = Nothing } )
+                ( EAppArg { eaaArg = Value a -> /In } ) -> ∀/YN
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /F
+            , cgcExtends =
+                [ /one
+                , /two
+                ]
+            , cgcDoc = Just ""
+            }
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /YN
+            , cgcExtends =
+                [ /Yes
+                , /No
+                ]
+            , cgcDoc = Just ""
+            }
+        ]
+    , prgmAnnots =
+        [ Value /#noCore
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Catln/CStr = "A class of functions.
+                A function's name alone is the function before anything is given to it, so `every(one, isa=
+                [/F])` makes that value a member of [F]. `(_ -> F)(a -> In) -> YN` says what every member gives
+                once it is given an `a`, as `(_ -> S) -> T..` says what every member converts to. So a value known
+                only as an [F] can be applied: [app] gives [f] its `a`, and the call is the member's own.
+                [checkOne] and [checkTwo] apply each member through [app], and [checkPick] one only known to be an
+                [F] until it is computed. Written without the core library, so that when a compiler change breaks
+                it there are a few lines to read rather than a standard library. `classFunctionRun.ct` runs the
+                same shapes." }
+            )
+        ]
+    }

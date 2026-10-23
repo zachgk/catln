@@ -54,6 +54,10 @@ data TypeCheckError
   -- | A member of a class with no arrow to what an arrow written from the class says every member
   -- converts to: the set the arrow is written from, its result, the member and where it is written.
   | UnfulfilledClassArrow Type Type PartialType CodeRange
+  -- | A member of a class that does not give what a declaration applying arguments to every member
+  -- (@(_ -> Univariate)(x -> Float) -> Float@) says it does: the class, the arguments, the result,
+  -- the member given the arguments, and where the declaration is written.
+  | UnfulfilledClassSignature Type [(ArgName, Type)] Type PartialType CodeRange
   | RefineOutsideDeclaration TypeName Type Type Type CodeRange
   | ProofWithoutRefine TypeName CodeRange
   | ExistOnNonDeclaration TypeName CodeRange
@@ -349,6 +353,7 @@ instance Show TypeCheckError where
       args' = intercalate ", " $ map showArg $ H.toList args
   show (DefinitionOutsideDeclaration name defType declType diff loc) = printf "Definition Outside Declaration for %s:\n\tDefinition input type: %s\n\tDeclaration input type: %s\n\tUndeclared part: %s\n\tLocation: %s" (nameStr name) (show defType) (show declType) (show diff) (maybe "Unknown" showCodeRange loc)
   show (UnfulfilledDeclaration name declType defType diff loc) = printf "Unfulfilled Declaration for %s:\n\tDeclaration input type: %s\n\tDefinition input type: %s\n\tUndefined part: %s\n\tLocation: %s" (nameStr name) (show declType) (show defType) (show diff) (maybe "Unknown" showCodeRange loc)
+  show (UnfulfilledClassSignature set args res member loc) = printf "Unfulfilled Class Signature for %s:\n\tEvery member of %s given %s gives: %s\n\tMember that does not: %s\n\tLocation: %s" (show set) (show set) (intercalate ", " [ printf "%s -> %s" (show k) (show t) | (k, t) <- args ] :: String) (show res) (show member) (maybe "Unknown" showCodeRange loc)
   show (UnfulfilledClassArrow set res member loc) = printf "Unfulfilled Class Arrow for %s:\n\tEvery member of %s converts to: %s\n\tMember without an arrow to it: %s\n\tLocation: %s" (show set) (show set) (show res) (show member) (maybe "Unknown" showCodeRange loc)
   show (RefineOutsideDeclaration name refineType declType diff loc) = printf "Refine Outside Declaration for %s:\n\tRefine input type: %s\n\tDeclaration input type: %s\n\tUndeclared part: %s\n\tLocation: %s" (nameStr name) (show refineType) (show declType) (show diff) (maybe "Unknown" showCodeRange loc)
   show (ProofWithoutRefine name loc) = printf "#proof on %s, which is not a #refine declaration: only a refinement claims something to prove\n\tLocation: %s" (nameStr name) (maybe "Unknown" showCodeRange loc)
@@ -367,6 +372,9 @@ instance CNoteTC TypeCheckError where
     Just pos -> Just $ Meta PTopType (Just pos) nil ()
     Nothing  -> Nothing
   metaCNote (UnfulfilledClassArrow _ _ _ loc) = case loc of
+    Just pos -> Just $ Meta PTopType (Just pos) nil ()
+    Nothing  -> Nothing
+  metaCNote (UnfulfilledClassSignature _ _ _ _ loc) = case loc of
     Just pos -> Just $ Meta PTopType (Just pos) nil ()
     Nothing  -> Nothing
   metaCNote (RefineOutsideDeclaration _ _ _ _ loc) = case loc of

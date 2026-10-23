@@ -1023,6 +1023,17 @@ oaPrecedenceName oa
   | nameStr (oaObjPath oa) == ContextInStr = mkName (ContextInStr ++ nameStr (oaDefinedName oa))
   | otherwise = makeAbsoluteName (oaObjPath oa)
 
+-- | What an object written from a set of objects ('omDecls') is written as: the set, as the type of
+-- the hole standing for its values, and the arguments applied to each of them, by name and type.
+-- @(_ -> String)@ has none, and is a declaration of what each value converts to. @(_ ->
+-- Univariate)(x -> Float)@ has @x@, and is a declaration of what each value gives once it is applied.
+setDeclParts :: (MetaDat m, Show m) => Expr m -> Maybe (Type, [(ArgName, Type)])
+setDeclParts (HoleExpr m _) = Just (getMetaType m, [])
+setDeclParts (TupleApply _ (_, b) (EAppArg ObjArr{oaObj=Just argObj, oaArr=Just (_, argM)})) = do
+  (set, args) <- setDeclParts b
+  return (set, args ++ [(inExprSingleton argObj, getMetaType argM)])
+setDeclParts _ = Nothing
+
 singletonObjectMap :: (ExprClass e, MetaDat m, Show (e m), Show m) => ObjArr e m -> ObjectMap e m
 singletonObjectMap oa@ObjArr{oaObj=Just obj} | isNothing (maybeExprPath obj) = ObjectMapWith H.empty [oa] -- written from a set of objects ('omDecls')
 singletonObjectMap oa = objectMapItems $ H.singleton (makeAbsoluteName $ oaObjPath oa) omi

@@ -1,0 +1,46 @@
+annot(#noCore)
+
+#noCore
+# A class of functions.
+  A function's name alone is the function before anything is given to it, so `every(one, isa=
+  [/F])` makes that value a member of [F]. `(_ -> F)(a -> In) -> YN` says what every member gives
+  once it is given an `a`, as `(_ -> S) -> T..` says what every member converts to. So a value known
+  only as an [F] can be applied: [app] gives [f] its `a`, and the call is the member's own.
+  [checkOne] and [checkTwo] apply each member through [app], and [checkPick] one only known to be an
+  [F] until it is computed. Written without the core library, so that when a compiler change breaks
+  it there are a few lines to read rather than a standard library. `classFunctionRun.ct` runs the
+  same shapes.
+data(Yes)
+data(No)
+
+class(YN, [Yes, No])
+
+data(In)
+
+class(F)
+
+(_ -> F)(a -> In) -> YN
+
+every(one, isa= [/F])
+
+one(a -> In) -> Yes
+one(a)= Yes
+
+every(two, isa= [/F])
+
+two(a -> In) -> No
+two(a)= No
+
+app(f -> F, a -> In) -> YN
+app(f, a)= f(a= a)
+
+checkOne= app(f= one, a= In)
+
+checkTwo= app(f= two, a= In)
+
+pick(b -> YN) -> F
+pick(b= Yes)= one
+pick(b= No)= two
+
+checkPick(b -> YN) -> YN
+checkPick(b)= app(f= pick(b= b), a= In)

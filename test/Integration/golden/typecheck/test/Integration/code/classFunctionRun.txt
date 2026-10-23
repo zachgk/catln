@@ -1,0 +1,111 @@
+Prgm
+    { prgmObjMap = ObjectMapWith
+        { omItems = fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value -> /main = Value /main )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=()
+                            , /ctx=( /io=/Catln/IO )
+                            ) = /Context
+                            ( Value /value -> () = Value / )
+                            ( Value /ctx -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/double"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /double( Value /n -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /double( Value /n -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator*( Value /l -> TVArg /n = Value /n )
+                            ( Value /r -> /Data/Primitive/Integer = CInt
+                                { ciValue = 2 }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/pick"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /pick( Value /b -> ∀/Data/Primitive/Boolean ) -> ∀/Adjuster ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /pick( Value /b -> /Data/Primitive/True = Value /Data/Primitive/True ) -> /inc = Value /inc
+                        , /pick( Value /b -> /Data/Primitive/False = Value /Data/Primitive/False ) -> /double = Value /double
+                        ]
+                    }
+                )
+            ,
+                ( "/applyAdjuster"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /applyAdjuster( Value /f -> ∀/Adjuster )( Value /n -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /applyAdjuster( Value /f -> ∀/Adjuster )( Value /n -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /f( Value /n -> TVArg /n = Value /n ) ]
+                    }
+                )
+            ,
+                ( "/inc"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /inc( Value /n -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /inc( Value /n -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /n = Value /n )
+                            ( Value /r -> /Data/Primitive/Integer = CInt
+                                { ciValue = 1 }
+                            )
+                        ]
+                    }
+                )
+            ]
+        , omDecls =
+            [
+                ( Hole ∀/Adjuster HoleActive { haName = Nothing } )( Value n -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Adjuster
+            , cgcExtends =
+                [ /inc
+                , /double
+                ]
+            , cgcDoc = Just ""
+            }
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
+                { csValue = "`classFunction.ct` run, rather than only built.
+                A member of a class of functions is the function's name alone, and is applied as [applyAdjuster] applies
+                [f]: through the member's own arrows, chosen by which member [f] is when it runs. The members answer
+                differently, so an application that reached the wrong member, or none, fails an assert." }
+            )
+        ]
+    }

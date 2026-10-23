@@ -175,16 +175,23 @@ desDecl statementEnv decl subStatements = do
 -- | The object of a declaration written from every value of a type: @(_ -> String)@, the anonymous
 -- tuple of one unnamed argument, read as the argument it holds — a hole whose type is the type
 -- written. Anything else is not one.
+--
+-- The values may be given arguments, @(_ -> Univariate)(x -> Float)@: each value of the type with
+-- @x@ applied to it. That is the declaration of what applying them gives, so a type whose members
+-- are functions (@every(linear, isa= [Univariate])@) says once what each of them is called with.
 setDeclObject :: PExpr -> Maybe PExpr
 setDeclObject (RawTupleApply _ (_, RawValue _ n) [(False, RawObjArr{roaObj=Just (RawHoleExpr _ h), roaArr=Just (Nothing, Just setExpr)})])
   | nameStr n == anonStr = Just $ RawHoleExpr (exprToTypeMeta H.empty setExpr) h
+setDeclObject (RawTupleApply m (bm, base) args)
+  | Just base' <- setDeclObject base = Just $ RawTupleApply m (bm, base') args
 setDeclObject _ = Nothing
 
 -- | Whether an object is what 'setDeclObject' reads one as: a hole, standing for the values of its
--- type.
+-- type, with any arguments applied to them.
 isSetDeclObject :: PExpr -> Bool
-isSetDeclObject RawHoleExpr{} = True
-isSetDeclObject _             = False
+isSetDeclObject RawHoleExpr{}              = True
+isSetDeclObject (RawTupleApply _ (_, b) _) = isSetDeclObject b
+isSetDeclObject _                          = False
 
 -- | Desugars statements that inherit a path from a main statement
 desInheritingSubstatements :: StatementEnv -> NPath -> [PStatementTree] -> CRes DesPrgm

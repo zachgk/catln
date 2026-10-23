@@ -457,9 +457,14 @@ verifyClassArrows (ClassGraph pageCg) deps solved = do
   let addedMembers = S.fromList [ ptName m | (CGClass{cgcExtends}, PClassName{}, _) <- graphToNodes pageCg, t <- cgcExtends, UnionType _ ls _ <- [t], m <- splitUnionType ls ]
   let classArrows = omDecls . prgmObjMap . mconcat
   let checked = [ (oa, const True) | oa <- classArrows solved ] ++ [ (oa, (`S.member` addedMembers) . ptName) | oa <- classArrows deps ]
-  forM_ checked $ \(oa, reported) ->
-    forM_ (filter reported $ classArrowUnfollowed env items oa) $ \memberType ->
-      lift $ TypeCheckResult [UnfulfilledClassArrow (getMetaType $ getExprMeta $ oaObjExpr oa) (classArrowResult oa) memberType (getMetaPos $ getExprMeta $ oaObjExpr oa)] ()
+  forM_ checked $ \(oa, reported) -> case setDeclParts (oaObjExpr oa) of
+    Just (set, []) ->
+      forM_ (filter reported $ classArrowUnfollowed env items oa) $ \memberType ->
+        lift $ TypeCheckResult [UnfulfilledClassArrow set (classArrowResult oa) memberType (getMetaPos $ getExprMeta $ oaObjExpr oa)] ()
+    Just (set, args) ->
+      forM_ (filter (reported . fst) $ classSignatureUnfollowed env items set args (classArrowResult oa)) $ \(_, applied) ->
+        lift $ TypeCheckResult [UnfulfilledClassSignature set args (classArrowResult oa) applied (getMetaPos $ getExprMeta $ oaObjExpr oa)] ()
+    Nothing -> return ()
 
 -- | What an arrow written from a class says every member of the class converts to.
 classArrowResult :: ObjArr Expr TypedMetaDat -> Type
@@ -489,6 +494,28 @@ classArrowUnfollowed typeEnv items oa = filter (not . follows) (classMemberLeave
                                   , not (isBottomType (intersectTypes typeEnv (getMetaType am) res)) ] of
       []     -> False
       arrows -> isSubtypeOf typeEnv (singletonType p) (unionAllTypes typeEnv (map inputType arrows))
+
+-- | The members of a class a declaration applying arguments to every member (@(_ ->
+-- Univariate)(x -> Float) -> Float@) does not hold of, each beside itself given the arguments.
+--
+-- The declaration says each member, given the arguments, gives the result. A member is a value, and
+-- given the arguments it is a call (@linear@ given @x@ and @params@ is @linear(x, params)@), which
+-- holds it when the member's own arrows take every value of the call and each of the arrows taking
+-- it answers within the result. A member that is the call's result already, a value no arrow
+-- rewrites, holds it by being within the result.
+classSignatureUnfollowed :: FEnvTypeEnv -> H.HashMap TypeName (ObjectMapItem Expr TypedMetaDat) -> Type -> [(ArgName, Type)] -> Type -> [(PartialType, PartialType)]
+classSignatureUnfollowed typeEnv items set args res = [ (p, applied p) | p <- classMemberLeaves typeEnv set, not (follows (applied p)) ]
+  where
+    applied p@PartialType{ptArgs} = p{ptArgs = H.union (H.fromList args) ptArgs}
+    inputType = getMetaType . getExprMeta . oaObjExpr
+    follows p = isSubtypeOf typeEnv (singletonType p) res || coveredByArrows p
+    coveredByArrows p = case [ a
+                             | item <- maybe [] pure (H.lookup (ptName p) items)
+                             , a <- omiDefs item ++ omiRuntimeDecls item
+                             , not (isBottomType (intersectTypes typeEnv (inputType a) (singletonType p))) ] of
+      []     -> False
+      arrows -> isSubtypeOf typeEnv (singletonType p) (unionAllTypes typeEnv (map inputType arrows))
+                && all (\a -> isSubtypeOf typeEnv (classArrowResult a) res) arrows
 
 -- | The environment a solve's declarations and definitions are checked in: its type graph is the
 -- solved objects of this solve and of the earlier solves it depends on.

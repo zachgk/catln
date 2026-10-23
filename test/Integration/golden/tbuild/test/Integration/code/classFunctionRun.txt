@@ -1,0 +1,158 @@
+Prgm
+    { prgmObjMap = ObjectMapWith
+        { omItems = fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg
+                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ).. = /
+                                    ( EAppArg { eaaArg = Value /io -> /Catln/IO } )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )
+                                }
+                            ) -> /Context
+                            ( /value=()
+                            , /ctx=( /io=/Catln/IO )
+                            ) = /Context
+                            ( EAppArg
+                                { eaaArg = Value /value -> () = Value / }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ) = /
+                                    ( EAppArg
+                                        { eaaArg = Value /io -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                    )
+                                }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/double"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /double
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /double
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
+                            ( /operator*
+                                ( EAppArg
+                                    { eaaArg = Value /l -> TVArg /n = ( Value /n ↦ TVArg /n ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> /Data/Primitive/Integer = 2 }
+                                ) ↦ /Data/Primitive/Integer
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/pick"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /pick
+                            ( EAppArg { eaaArg = Value /b -> ∀/Data/Primitive/Boolean } ) -> ∀/Adjuster
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /pick
+                            ( EAppArg { eaaArg = Value /b -> /Data/Primitive/True = Value /Data/Primitive/True } ) -> /inc = Value /inc
+                        , /pick
+                            ( EAppArg { eaaArg = Value /b -> /Data/Primitive/False = Value /Data/Primitive/False } ) -> /double = Value /double
+                        ]
+                    }
+                )
+            ,
+                ( "/applyAdjuster"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /applyAdjuster
+                            ( EAppArg { eaaArg = Value /f -> ∀/Adjuster } )
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /applyAdjuster
+                            ( EAppArg { eaaArg = Value /f -> ∀/Adjuster } )
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
+                            ( ( ( Value /f ↦ TVArg /f ) )
+                                ( EAppArg
+                                    { eaaArg = Value /n -> TVArg /n = ( Value /n ↦ TVArg /n ) }
+                                ) ↦ /Data/Primitive/Integer
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/inc"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /inc
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /inc
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer =
+                            ( /operator+
+                                ( EAppArg
+                                    { eaaArg = Value /l -> TVArg /n = ( Value /n ↦ TVArg /n ) }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                ) ↦ /Data/Primitive/Integer
+                            )
+                        ]
+                    }
+                )
+            ]
+        , omDecls =
+            [
+                ( Hole ∀/Adjuster HoleActive { haName = Nothing } )
+                ( EAppArg { eaaArg = Value n -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /Adjuster
+            , cgcExtends =
+                [ /inc
+                , /double
+                ]
+            , cgcDoc = Just ""
+            }
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "`classFunction.ct` run, rather than only built.
+                  A member of a class of functions is the function's name alone, and is applied as [applyAdjuster] applies
+                  [f]: through the member's own arrows, chosen by which member [f] is when it runs. The members answer
+                  differently, so an application that reached the wrong member, or none, fails an assert."
+                }
+            )
+        ]
+    }

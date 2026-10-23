@@ -1,0 +1,207 @@
+Prgm
+    { prgmObjMap = ObjectMapWith
+        { omItems = fromList
+            [
+                ( "/checkOne"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /checkOne -> UnionType
+                            ( Just
+                                ( PredClass /YN
+                                , fromList []
+                                , []
+                                )
+                            ,
+                                ( /two( /a=/In ) + /app
+                                    ( /a=/In
+                                    , /f=/one
+                                    ) + /one( /a=/In )
+                                )
+                            , []
+                            ) = /app( Value /f -> /one = Value /one )( Value /a -> /In = Value /In )
+                        ]
+                    }
+                )
+            ,
+                ( "/two"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /two( Value /a -> /In ) -> /No ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /two( Value /a -> /In ) -> /No = Value /No ]
+                    }
+                )
+            ,
+                ( "/No"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Value /No
+                        , Value /No
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/#noCore"
+                , ObjectMapItem
+                    { omiDecls = [ Value /#noCore ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/pick"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /pick( Value /b -> ∀/YN ) -> ∀/F ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /pick( Value /b -> /Yes = Value /Yes ) -> /one = Value /one
+                        , /pick( Value /b -> /No = Value /No ) -> /two = Value /two
+                        ]
+                    }
+                )
+            ,
+                ( "/app"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /app( Value /f -> ∀/F )( Value /a -> /In ) -> ∀/YN ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /app( Value /f -> ∀/F )( Value /a -> /In ) -> ( /No + /Yes ) = /f( Value /a -> TVArg /a = Value /a ) ]
+                    }
+                )
+            ,
+                ( "/Yes"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Value /Yes
+                        , Value /Yes
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/checkPick"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /checkPick( Value /b -> ∀/YN ) -> ∀/YN ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /checkPick( Value /b -> ∀/YN ) -> ∀/YN = /app
+                            ( Value /f -> ∀/F = /pick( Value /b -> TVArg /b = Value /b ) )( Value /a -> /In = Value /In )
+                        ]
+                    }
+                )
+            ,
+                ( "/checkTwo"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /checkTwo -> UnionType
+                            ( Just
+                                ( PredClass /YN
+                                , fromList []
+                                , []
+                                )
+                            ,
+                                ( /two( /a=/In ) + /app
+                                    ( /a=/In
+                                    , /f=/two
+                                    ) + /one( /a=/In )
+                                )
+                            , []
+                            ) = /app( Value /f -> /two = Value /two )( Value /a -> /In = Value /In )
+                        ]
+                    }
+                )
+            ,
+                ( "/one"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /one( Value /a -> /In ) -> /Yes ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /one( Value /a -> /In ) -> /Yes = Value /Yes ]
+                    }
+                )
+            ,
+                ( "/In"
+                , ObjectMapItem
+                    { omiDecls = [ Value /In ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        , omDecls =
+            [
+                ( Hole ∀/F HoleActive { haName = Nothing } )( Value a -> /In ) -> ∀/YN
+            ]
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = False
+            , cgcPartial = /F
+            , cgcExtends =
+                [ /one
+                , /two
+                ]
+            , cgcDoc = Just ""
+            }
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /YN
+            , cgcExtends =
+                [ /Yes
+                , /No
+                ]
+            , cgcDoc = Just ""
+            }
+        ]
+    , prgmAnnots =
+        [ Value /#noCore
+        , /Catln/#md
+            ( Value /text -> /Catln/CStr = CStr
+                { csValue = "A class of functions.
+                A function's name alone is the function before anything is given to it, so `every(one, isa=
+                [/F])` makes that value a member of [F]. `(_ -> F)(a -> In) -> YN` says what every member gives
+                once it is given an `a`, as `(_ -> S) -> T..` says what every member converts to. So a value known
+                only as an [F] can be applied: [app] gives [f] its `a`, and the call is the member's own.
+                [checkOne] and [checkTwo] apply each member through [app], and [checkPick] one only known to be an
+                [F] until it is computed. Written without the core library, so that when a compiler change breaks
+                it there are a few lines to read rather than a standard library. `classFunctionRun.ct` runs the
+                same shapes." }
+            )
+        ]
+    }

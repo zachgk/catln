@@ -54,11 +54,14 @@ instance Semigroup (ObjArrTypeGraph e m) where
 -- completes from its declared fields, which is the spelling everything reading the class's members
 -- reads. The two denote the same values, but as written the first leaves the field open, and the set
 -- algebra reads it as wider.
-classArrowsOf :: (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeEnv (ObjArrTypeGraph e m) -> [(Type, Type)]
+--
+-- A declaration applying arguments to the members (@(_ -> Univariate)(x -> Float) -> Float@) is not
+-- one: it converts nothing, and is read by 'classSignaturesOf'.
+classArrowsOf :: (MetaDat m, Show m) => TypeEnv (ObjArrTypeGraph Expr m) -> [(Type, Type)]
 classArrowsOf typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph om} =
   [ (cls, asMembers cls (getMetaType m))
   | ObjArr{oaObj=Just obj, oaArr=Just (_, m)} <- omDecls om
-  , let cls = getMetaType (getExprMeta obj) ]
+  , Just (cls, []) <- [setDeclParts obj] ]
   where
     asMembers cls res = case [ memberAsDeclared typeEnv l | l <- classMemberLeaves typeEnv cls, isSubtypeOf typeEnv (singletonType l) res ] of
       []      -> res
@@ -88,7 +91,7 @@ classMemberLeaves typeEnv = go (10 :: Int)
 -- converts into a slot of type @t@ on the way in, as the tree build converts an argument toward the
 -- slot it is given in. A @\/Catln\/CStr@ is one for a @String\/Text@ slot, and a @String\/Text@ for a
 -- @\/Catln\/CStr@ slot.
-convertingMembers :: (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeEnv (ObjArrTypeGraph e m) -> Type -> [PartialType]
+convertingMembers :: (MetaDat m, Show m) => TypeEnv (ObjArrTypeGraph Expr m) -> Type -> [PartialType]
 convertingMembers typeEnv t =
   [ l
   | (cls, _) <- classArrowsOf typeEnv

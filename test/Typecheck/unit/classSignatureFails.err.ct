@@ -1,0 +1,26 @@
+annot(#noCore)
+
+# A member of a class of functions that does not give what the class says every member gives: [bad],
+  given its `a`, answers an [Other], where every member of [F] is said to give a [YN].
+#noCore
+data(Yes)
+data(No)
+
+class(YN, [Yes, No])
+
+data(In)
+data(Other)
+
+class(F)
+
+(_ -> F)(a -> In) -> YN
+
+every(good, isa= [/F])
+
+good(a -> In) -> Yes
+good(a)= Yes
+
+every(bad, isa= [/F])
+
+bad(a -> In) -> Other
+bad(a)= Other

@@ -425,6 +425,27 @@ assertPageErrorSays mk page needle = do
   case res of
     CRes _ _  -> assertFailure "the page is written to fail, and it type-checked"
     CErr notes -> assertBool ("the error says " ++ show needle ++ ":\n" ++ prettyCNotes notes) (needle `isInfixOf` prettyCNotes notes)
+-- | A declaration applying arguments to every member of a class (@(_ -> F)(a -> In) -> YN@) is held
+-- to each member: the member given the arguments is a call of it, which its own arrows must answer
+-- within the result. Fixtures: unit/classSignatureFails.err.ct, and the members that keep it in
+-- Integration/code/classFunction.ct.
+testClassSignature :: MkService -> TestTree
+testClassSignature mk = testCase "a member of a class of functions gives what the class says" $ do
+  let page = "test/Typecheck/unit/classSignatureFails.err.ct"
+  assertPageErrorSays mk page "Unfulfilled Class Signature"
+  assertPageErrorSays mk page "Member that does not: /bad(/a=/In)"
+  assertPageErrorLacks mk page "/good"
+
+-- | The page fails, and its errors do not mention @needle@.
+assertPageErrorLacks :: MkService -> String -> String -> Assertion
+assertPageErrorLacks mk page needle = do
+  res <- runCResT $ do
+    ctss <- lift $ mk [page]
+    getTPrgm ctss
+  case res of
+    CRes _ _  -> assertFailure "the page is written to fail, and it type-checked"
+    CErr notes -> assertBool ("the error does not say " ++ show needle ++ ":\n" ++ prettyCNotes notes) (not (needle `isInfixOf` prettyCNotes notes))
+
 -- | A call of a function's longer shape, where its shorter shape is a call with a class result,
 -- is read both as the shorter call given the extra argument and as its result given it; the
 -- second is refuted rather than losing both. Fixture: unit/longerShapeCall.ct.
@@ -494,6 +515,7 @@ typecheckTests mk = do
     , testDeclResult mk
     , testPassedOnLink mk
     , testLongerShapeCall mk
+    , testClassSignature mk
     , testImportAfterAnnot mk
     , testCapturedField mk
     , testAmbiguousMember mk
