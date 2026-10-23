@@ -798,7 +798,7 @@ boundedByObjs feTypeEnv con@(Constraint _ _ vaenv (BoundedByObjs i p@SType{stype
                            metTop = case mTop of
                              Nothing -> BottomType
                              Just _
-                               | openPart /= BottomType && relaxRecursiveSelfArgs feTypeEnv openPart == openPart -> topPart
+                               | openTopWithinBound feTypeEnv chanReq -> topPart
                                | otherwise -> meetParts topPart boundParts
                              where topPart = UnionType mTop H.empty []
                            metConsts
@@ -823,6 +823,31 @@ boundedByObjs feTypeEnv con@(Constraint _ _ vaenv (BoundedByObjs i p@SType{stype
     pReqDecl' | pReqDecl == pReq && declChanVaenv == reqChanVaenv = pReq'
               | otherwise = narrowChannel declChanVaenv pReqDecl
 boundedByObjs _ con = (False, con)
+
+-- | Whether a requirement's top is within its own open-class part of the bound ('openClassPart'),
+-- and so meets the bound in all of itself ('boundedByObjs').
+openTopWithinBound :: FEnvTypeEnv -> Type -> Bool
+openTopWithinBound feTypeEnv chanReq = openPart /= BottomType && relaxRecursiveSelfArgs feTypeEnv openPart == openPart
+  where openPart = openClassPart feTypeEnv chanReq
+
+-- | What 'boundedByObjs' reads of the object universe for one requirement channel: the slice
+-- under each of its leafs' names ('boundSliceFor'), or the whole universe where a part of it can
+-- hold a value of any name and meets the universe whole — a top not within its own open-class part,
+-- a constant, a requirement that is not a union. Everything else it reads is in its resolved view.
+universeReads :: FEnvTypeEnv -> Type -> Type -> UniverseRead
+universeReads _ _ PTopType = UniverseSlices []
+universeReads feTypeEnv universe chanReq@(UnionType mTop leafs consts)
+  | not (null consts) = WholeUniverse universe
+  | isJust mTop, not (openTopWithinBound feTypeEnv chanReq) = WholeUniverse universe
+  | otherwise = UniverseSlices [ (n, boundSliceFor n universe) | n <- H.keys leafs ]
+universeReads _ universe _ = WholeUniverse universe
+
+-- | What a 'BoundedByObjs' reads of the object universe ('universeReads'), for both requirement
+-- channels.
+boundedByObjsUniverseReads :: FEnvTypeEnv -> RConstraint -> [UniverseRead]
+boundedByObjsUniverseReads feTypeEnv (Constraint _ _ _ (BoundedByObjs _ SType{stypeReq, stypeReqDecl} universe)) =
+  [universeReads feTypeEnv universe stypeReq, universeReads feTypeEnv universe stypeReqDecl]
+boundedByObjsUniverseReads _ _ = []
 
 -- | The part of a bound a value named @name@ can be within: its predicate top and constants whole,
 -- as they can hold a value of any name, and of its positive leafs only those named @name@ — exactly,
@@ -869,21 +894,25 @@ executeConstraint cid con = do
       -- compared every execution — its object expressions carry every meta and source
       -- position, and comparing them was a third of a fragmented solve. The parts of the
       -- objects a compute actually reads are covered separately ('conOaResolveKey').
-      let conMemoKey = con'{conOs=[], conCallArrs=[]}
+      --
       -- A 'BoundedByObjs' reads no more of the reaches graph than the declarations under its own
-      -- objects' names, so it is keyed by those rather than by the env stamp: the bound of a
-      -- point whose objects, universe and arguments are as they were is as it was, whatever
-      -- arrows elsewhere in the fragment changed.
-      let declsKey = case conDat con of
-            BoundedByObjs{} -> conObjDeclsKey env con
-            _               -> []
+      -- objects' names, and no more of the object universe than the slices its requirements meet
+      -- ('universeReads'), so it is keyed by those rather than by the env stamp and the whole
+      -- universe: the bound of a point whose objects, arguments and the parts of the universe it
+      -- meets are as they were is as it was, whatever changed elsewhere in the fragment. The reads
+      -- are taken in the page's env, not the one merged with the constraint's local arrows: those
+      -- add no class, and what the reads decide by is the classes ('openTopWithinBound').
+      let (conMemoKey, readsKey) = case conDat con' of
+            BoundedByObjs i p _ -> ( con'{conOs=[], conCallArrs=[], conDat=BoundedByObjs i p BottomType}
+                                   , BoundedReads (conObjDeclsKey env con) (boundedByObjsUniverseReads (feTypeEnv env) con') )
+            _ -> (con'{conOs=[], conCallArrs=[]}, BoundedReads [] [])
       case IM.lookup cid conMemo of
-        Just (ConMemo memoStamp memoCon memoOa memoDecls memoPrune)
-          | memoStamp == stampKey && memoCon == conMemoKey && memoOa == oaKey && memoDecls == declsKey -> return memoPrune
+        Just (ConMemo memoStamp memoCon memoOa memoReads memoPrune)
+          | memoStamp == stampKey && memoCon == conMemoKey && memoOa == oaKey && memoReads == readsKey -> return memoPrune
         _ -> do
           let (prune, con'') = computeConstraint env con'
           modify $ saveConstraint con con' con''
-          modify $ \e -> e{feConMemo = IM.insert cid (ConMemo stampKey conMemoKey oaKey declsKey prune) (feConMemo e)}
+          modify $ \e -> e{feConMemo = IM.insert cid (ConMemo stampKey conMemoKey oaKey readsKey prune) (feConMemo e)}
           return prune
 
 -- |

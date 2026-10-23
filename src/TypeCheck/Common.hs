@@ -131,10 +131,22 @@ data FEnv = FEnv { fePnts               :: IM.IntMap Scheme
 
 -- | A constraint's last-execution inputs and result: env stamp ('feEnvStamp'), the resolved
 -- constraint view ('showCon'+'stypeConstraint'), the resolved object-side arg entries an
--- 'ArrowTo' additionally reads ('mkReachesEnv'), the declarations a 'BoundedByObjs' reads of the
--- reaches graph ('TypeCheck.TypeUtils.conObjDeclsKey'), and the returned prune decision.
-data ConMemo = ConMemo Int RConstraint [(Maybe SExpr, Maybe ShowMeta)] [(PartialKey, Type)] Bool
+-- 'ArrowTo' additionally reads ('mkReachesEnv'), what a 'BoundedByObjs' reads of the reaches graph
+-- and the object universe ('BoundedReads'), and the returned prune decision.
+data ConMemo = ConMemo Int RConstraint [(Maybe SExpr, Maybe ShowMeta)] BoundedReads Bool
   deriving (Show)
+
+-- | What a 'BoundedByObjs' reads beyond its resolved view: what its objects' declarations say their
+-- higher-order arguments return ('TypeCheck.TypeUtils.conObjDeclsKey'), and the parts of the object
+-- universe each requirement channel meets ('TypeCheck.Constrain.universeReads'). The universe is
+-- left out of its view in the skip-memo key, as the parts it reads are here.
+data BoundedReads = BoundedReads [(PartialKey, Type)] [UniverseRead]
+  deriving (Eq, Show)
+
+-- | The part of the object universe a requirement is met with: the slice under each name it has
+-- leafs of, or all of it.
+data UniverseRead = UniverseSlices [(TypeName, Type)] | WholeUniverse Type
+  deriving (Eq, Show)
 
 type UnionObj = (Pnt, Pnt) -- a union of all TypeObj for argument inference, union of all Object types for function limiting
 
