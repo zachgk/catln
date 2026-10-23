@@ -6,6 +6,10 @@ export default mergeConfig(viteConfig, defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
+    // The monaco-vim stub the unit suites have, and none of the rest of their setup: that mocks
+    // fetch, and these requests go to a real compiler. An integration test reaches monaco-vim
+    // through the components it imports, and it does not resolve outside a bundler.
+    setupFiles: ['./src/test/stubMonacoVim.js'],
     css: true,
     include: ['src/test/integration/**/*.test.{js,jsx,ts,tsx}'],
     // These run against a real compiler rather than a stub, so a case is as slow as compiling

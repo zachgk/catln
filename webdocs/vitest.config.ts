@@ -6,7 +6,7 @@ export default mergeConfig(viteConfig, defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
-    setupFiles: ['./src/test/setup.js'],
+    setupFiles: ['./src/test/stubMonacoVim.js', './src/test/setup.js'],
     css: true,
     exclude: ['src/test/integration/**', 'node_modules/**'],
   },

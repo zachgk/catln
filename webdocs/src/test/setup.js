@@ -1,12 +1,5 @@
 import '@testing-library/jest-dom'
 
-// monaco-vim deep-imports monaco-editor, which does not resolve outside a bundler
-// and would pull the whole editor into jsdom. Stub it for every suite.
-vi.mock('monaco-vim', () => ({
-  initVimMode: vi.fn(() => ({ dispose: vi.fn() })),
-  VimMode: { Vim: { defineEx: vi.fn() } },
-}))
-
 // jsdom under this node leaves window.localStorage as a bare object with none of the Storage
 // methods on it, so anything remembering a preference throws rather than reading back what it
 // stored. Give every suite a working one, fresh per test so one test's writes do not reach another.
