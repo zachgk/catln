@@ -1024,8 +1024,11 @@ isSubtypeOfWithEnvRaw typeEnv vaenv (UnionType Nothing subPartials []) (UnionTyp
     subGroupCovered n subs = case H.lookup n supersByName of
       Just sups -> all (isSubPartial sups) subs
       Nothing   -> all (partialUninhabited typeEnv vaenv) subs
-    isSubPartial sup sub = directCheck || coveredByArgSets || coveredBySlotUnion sub sup || coveredBySplit (splitPartialByUnionVarArgs subLinked) || coveredBySplit (splitPartialByUnionVarArgs expandedSub) || partialUninhabited typeEnv vaenv sub || coveredBySlotPartition sub sup || coveredByDisjuncts || coveredByNegPred || coveredByNegRelEscapes || coveredByOptionalSplit
+    isSubPartial sup sub = directCheck || coveredByArgSets || coveredBySlotUnion sub sup || coveredBySplit (splitPartialByUnionVarArgs subLinked) || coveredByExpandedSplit || partialUninhabited typeEnv vaenv sub || coveredBySlotPartition sub sup || coveredByDisjuncts || coveredByNegPred || coveredByNegRelEscapes || coveredByOptionalSplit
       where
+        -- The expansion leaves a sub with no expandable class top as it was, and the split of that
+        -- is the one just refused, so only a sub the expansion changed is split again.
+        coveredByExpandedSplit = expandedSub /= subLinked && coveredBySplit (splitPartialByUnionVarArgs expandedSub)
         directCheck = any (isSubPartialOfWithEnv typeEnv vaenv sub) sup
         -- A leaf with an optional arg ('PtArgMode') is the leaf without it (typed ∅) and the leaf
         -- requiring it, so it is covered when both are: @F(x, y?=Y)..@ is within
