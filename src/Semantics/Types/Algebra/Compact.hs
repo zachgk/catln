@@ -344,7 +344,11 @@ compactDisconnectedPreds typeEnv vaenv = mapMaybe aux
                                         -- | If the intersection of the partial with its preds has no overlap then it is a bottom type
                                         intersection | isBottomType intersection -> Nothing
 
-                                        -- | If the intersection of the partial with its preds fully overlaps, then the preds are redundant
+                                        -- | If the intersection of the partial with its preds fully overlaps, then the preds are redundant.
+                                        -- A meet that keeps the predicates attached hands back the partial itself, which
+                                        -- lies within the partial without them (it is that partial narrowed), so only
+                                        -- the other inclusion is asked.
+                                        intersection | intersection == singletonType partial -> if isSubtypeOfWithEnv typeEnv vaenv (singletonType partialWithoutPreds) intersection then Just partialWithoutPreds else Just partial
                                         intersection | isEqTypeWithEnv typeEnv vaenv intersection (singletonType partialWithoutPreds) -> Just partialWithoutPreds
 
                                         _ -> Just partial
