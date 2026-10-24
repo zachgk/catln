@@ -16,16 +16,16 @@
 
 module TreeBuild where
 
-import qualified Data.HashMap.Strict as H
-import qualified Data.HashSet        as S
-import           Data.List           (nub, nubBy, partition)
+import qualified Data.HashMap.Strict   as H
+import qualified Data.HashSet          as S
+import           Data.List             (intercalate, nub, nubBy, partition)
 import           Data.Maybe
 
 import           Text.Printf
 
 import           Control.Monad
 import           CRes
-import           CtConstants         (contextValStr, pattern ContextInStr)
+import           CtConstants           (contextValStr, pattern ContextInStr)
 import           Data.Either
 import           Eval.Common
 import           Semantics
@@ -33,6 +33,7 @@ import           Semantics.Annots
 import           Semantics.Prgm
 import           Semantics.TypeGraph
 import           Semantics.Types
+import           TreeBuild.BodyPattern (instantiateBodyPatterns)
 
 type TBMetaDat = Maybe ReachesTree
 type TBMeta = Meta TBMetaDat
@@ -83,7 +84,7 @@ leafsFromMeta m = error $ printf "leafFromMeta with invalid type: %s" (show m)
 buildTBEnv :: ResBuildPrims -> TBPrgm -> TBEnv
 buildTBEnv primEnv prgm@Prgm{prgmObjMap} = baseEnv
   where
-    baseEnv = TBEnv "" resEnv prgm tbTypeEnv' untyped
+    baseEnv = TBEnv "" resEnv prgm tbTypeEnv' untyped []
     -- The tree build asks the same set-algebra questions over and over — a dispatch decides one
     -- call site by intersecting the source against every arm of the name, and the arms of a class
     -- method re-expand the same handful of classes each time. Those answers are memoized, but only
@@ -330,14 +331,27 @@ sortArrows _ = return . uncurry (++) . partition isNonLinear
 
 -- | This will find a single arrow (from the objMap, primitives, macros, or args) from the src type
 findResArrows :: TBEnv -> [ObjSrc] -> PartialType -> CRes [ResBuildEnvItem]
-findResArrows TBEnv{tbResEnv, tbTypeEnv, tbUntyped} os srcType@PartialType{ptName=srcName} = case argArrows ++ globalArrows of
-  arrows@(_:_) -> return arrows
-  -- Said as what it is. The definition is there in the program and has no type, so it was left out
-  -- of the environment ('buildTBEnv'); reporting that it could not be found would send whoever reads
-  -- this looking for a definition that is in front of them.
-  [] | S.member srcName tbUntyped -> CErr [MkCNote $ BuildTreeCErr Nothing $ printf "Cannot call %s, which did not typecheck" (show srcType)]
-  [] -> CErr [MkCNote $ BuildTreeCErr Nothing $ printf "Failed to find any arrows from %s" (show srcType)]
+findResArrows env@TBEnv{tbResEnv, tbTypeEnv, tbUntyped} os srcType@PartialType{ptName=srcName} = do
+  -- An arm written with a body pattern is one of the call's arms when the function the call gives
+  -- has the body it asks for, and is then the arm with what the pattern bound ('instantiateBodyPatterns').
+  instantiated <- catMaybes <$> mapM instantiateItem globalArrows
+  -- Arms are not ordered, so a function matching the body patterns of two arms would be given to
+  -- whichever is tried first. That is reported rather than chosen.
+  let matchedPatternArms = nub [ oa | (_, Just oa, _) <- instantiated, any (isJust . bodyPatternParts) (exprAppliedArgs (oaObjExpr oa)) ]
+  when (length matchedPatternArms > 1) $
+    CErr [MkCNote $ BuildTreeCErr Nothing $ printf "Several definitions of %s have a body pattern matching the function given in %s: %s" (show srcName) (show srcType) (intercalate ", " [ maybe (show $ oaObjPath oa) showCodeRange (getMetaPos $ getExprMeta $ oaObjExpr oa) | oa <- matchedPatternArms ])]
+  case argArrows ++ instantiated of
+    arrows@(_:_) -> return arrows
+    -- Said as what it is. The definition is there in the program and has no type, so it was left out
+    -- of the environment ('buildTBEnv'); reporting that it could not be found would send whoever reads
+    -- this looking for a definition that is in front of them.
+    [] | S.member srcName tbUntyped -> CErr [MkCNote $ BuildTreeCErr Nothing $ printf "Cannot call %s, which did not typecheck" (show srcType)]
+    -- Every arm asked for a body the function given does not have.
+    [] | not (null globalArrows) -> CErr [MkCNote $ BuildTreeCErr Nothing $ printf "No definition of %s has a body pattern matching the function given in %s" (show srcName) (show srcType)]
+    [] -> CErr [MkCNote $ BuildTreeCErr Nothing $ printf "Failed to find any arrows from %s" (show srcType)]
   where
+    instantiateItem (itemType, Just oa, TCObjArr _) = fmap (\oa' -> (itemType, Just oa', TCObjArr oa')) <$> instantiateBodyPatterns env srcType oa
+    instantiateItem item = return (Just item)
     globalArrows = case suffixLookupInDict srcName tbResEnv of
       Just resArrowsWithName -> filter (\(arrowType, _, _) -> not $ isBottomType $ intersectTypes tbTypeEnv (singletonType srcType) (singletonType arrowType)) resArrowsWithName
       Nothing ->
@@ -1002,7 +1016,7 @@ withArgArrows env@TBEnv{tbTypeEnv} lams = case lams of
   _    -> let arrows = [ ObjArr (Just obj) ArgObj Nothing [] (Just (Nothing, arrM)) | ObjArr{oaObj=Just obj, oaArr=Just (_, arrM)} <- lams ]
               objMap = objectMapFromList arrows
               merged0 = mkTypeEnv (Prgm objMap (classGraphFromObjs objMap) []) <> tbTypeEnv
-          in env{tbTypeEnv = withLocalArrowsOf Nothing (ObjArrTypeGraph objMap) tbTypeEnv merged0}
+          in env{tbTypeEnv = withLocalArrowsOf Nothing (ObjArrTypeGraph objMap) tbTypeEnv merged0, tbLambdas = [ lam | lam@ObjArr{oaArr=Just (Just _, _)} <- lams ] ++ tbLambdas env}
 
 -- | The lambdas given along a call's application chain (@f(a)(fn(v)= body)@): each argument whose
 -- object is applied to parameters and which has a body.
@@ -1140,7 +1154,12 @@ buildRootOA env oa = do
   objSrc <- case maybeGetSingleton (getExprType $ oaObjExpr oa) of
     Just objType -> return (objType, oa)
     Nothing      -> CErr [MkCNote $ BuildTreeCErr Nothing $ printf "Cannot build %s, whose object is not one type" (show $ oaObjPath oa)]
-  toTEObjArr env' [objSrc] False oa
+  -- A definition written with a body pattern ('bodyPatternParts') has a body only for a function the
+  -- pattern matched: until then its sub-function variables name no function. It is built where a
+  -- call chooses it ('TreeBuild.BodyPattern'), so here only what it is written over is.
+  let oa' | any (isJust . bodyPatternParts) (exprAppliedArgs (oaObjExpr oa)) = oa{oaArr = fmap (\(_, m) -> (Nothing, m)) (oaArr oa)}
+          | otherwise = oa
+  toTEObjArr env' [objSrc] False oa'
 
 buildRoot :: TBEnv -> TBExpr -> PartialType -> Type -> CRes (TExpr TBMetaDat)
 buildRoot env input src dest = do

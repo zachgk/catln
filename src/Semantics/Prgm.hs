@@ -588,6 +588,12 @@ instance ExprClass Expr where
             AliasExpr b a -> (a, b)
             _             -> (n, n)
   exprVarArgs (TupleApply _ _ (EAppArg ObjArr{oaObj, oaArr=Just (Nothing, _)})) = error $ printf "Unexpected unhandled obj type in exprVarArgs: %s" (show oaObj)
+  -- A body pattern ('bodyPatternParts') binds its parameter as the higher-order parameter it is,
+  -- and the pattern's variables. Not the parameter's own parameters: they are the matched
+  -- function's, named only inside the pattern.
+  exprVarArgs (TupleApply _ (_, be) (EAppArg oa))
+    | Just (obj, pat, arrM) <- bodyPatternParts oa
+    = H.insertWith (++) (TVArg $ inExprSingleton obj) [(obj, arrM)] (H.unionWith (++) (exprVarArgs be) (bodyPatternVarArgs pat))
   exprVarArgs (TupleApply _ (_, be) (EAppArg ObjArr{oaArr=Just (Just e, _)})) = H.unionWith (++) (exprVarArgs be) (exprVarArgs e)
   exprVarArgs (TupleApply _ (_, be) (EAppVar n m)) = H.insertWith (++) (TVVar n) [(Value (emptyMetaT $ partialToTypeSingleton n) (pkName n), m)] (exprVarArgs be)
   exprVarArgs (TupleApply _ _ (EAppArg ObjArr{oaObj, oaArr=Nothing})) = error $ printf "Not yet implemented: %s" (show oaObj)
@@ -617,6 +623,13 @@ instance ExprClass Expr where
       aux (TupleApply _ (_, be) arg) = joinPossVarArgMetaWithSrc typeEnv (exprVarArgsWithSrc typeEnv be src) (fromArg arg)
         where
           fromArg :: (MetaDat m, Show m) => EApp Expr m -> [ArgMetaMapWithSrc m]
+          -- A body pattern ('bodyPatternParts') reads its slot as the higher-order parameter it is.
+          -- Its variables are what the pattern says of them, as nothing in the source holds them:
+          -- they are bound where the arm is chosen for a function whose body matches.
+          fromArg (EAppArg oa)
+            | Just (_, pat, arrM) <- bodyPatternParts oa
+            = let patVars = H.map (\entries -> meetBind entries (getMetaType (snd (head entries)))) (bodyPatternVarArgs pat)
+              in map (`H.union` patVars) (fromArg (EAppArg oa{oaArr=Just (Nothing, arrM)}))
           fromArg (EAppArg ObjArr{oaObj=Just obj, oaArr=Just (Just e, _)}) = case typeGetArgLoose (inExprSingleton obj) src of
             Just (UnionType Nothing srcArg []) -> joinAllPossVarArgMetaWithSrc typeEnv $ map (exprVarArgsWithSrc typeEnv e) $ splitUnionType srcArg
             -- A pattern destructuring a CLASS-typed slot (@cs= Cons(head, tail)@ against
@@ -817,9 +830,67 @@ exprNonLinearArgGroups e =
     argInfos = mapMaybe argInfo (exprAppliedArgs e)
     -- (boundVarName, (argKeyRef, argMeta)) for an /aliased/ argument; 'Nothing' otherwise.
     argInfo oa = case (oaObj oa, oaArr oa) of
+      -- A body pattern's value is a pattern over a function's definition, not a value of the slot.
+      _ | isJust (bodyPatternParts oa) -> Nothing
       (Just (AliasExpr base alias), Just (Nothing, m)) -> (, (base, m)) <$> maybeExprPath alias
       (Just o, Just (Just (AliasExpr _ alias), m))     -> (, (o, m))    <$> maybeExprPath alias
       _                                                -> Nothing
+
+-- | An input argument written with its arrow's body as a pattern: @f(x, params)= pattern@ in a
+-- definition's object. The argument is the higher-order parameter @f(x, params)@, as it is written
+-- without the pattern, and the arm applies only to a function whose body matches the pattern — a
+-- pattern over the function's definition rather than over a value it holds. The same shape in an
+-- output is a lambda, and an input argument whose key takes no parameters (@field= pattern@) is a
+-- destructure of the value in the slot, so it is the key's parameters that tell this one apart.
+--
+-- Its parts are the parameter (@f(x, params)@), the pattern, and the parameter's result meta.
+bodyPatternParts :: (MetaDat m, Show m) => ObjArr Expr m -> Maybe (Expr m, Expr m, Meta m)
+bodyPatternParts ObjArr{oaObj=Just obj, oaArr=Just (Just pat, arrM)}
+  | not (Prelude.null (exprAppliedArgs obj)) = Just (obj, pat, arrM)
+bodyPatternParts _ = Nothing
+
+-- | Whether a node of a body pattern is a sub-function variable: a name applied to exactly the
+-- parameters of the function the pattern is written over, each by its key alone (@a(x, params)@
+-- in @f(x, params)= a(x, params) + b(x, params)@). It stands for a part of the body, and binds the
+-- function that part is: the same parameters, with that part as its body. It is written in the
+-- shape of a higher-order parameter because that is what it binds. The desugared pattern holds it
+-- as the alias of a hole (@_\@a(x, params)@, 'Syntax.Ct.Desugarf.Expr.desBodyPattern'), the hole
+-- being the part it matches, so it is bound as every alias is: the hole's meta is its result.
+bodyPatternSubFn :: (ExprClass e, MetaDat m, Show m, Show (e m)) => S.HashSet ArgName -> e m -> Bool
+bodyPatternSubFn params e = isJust (maybeExprPath e)
+  && not (Prelude.null args)
+  && all keyOnly args
+  && Prelude.null (exprAppliedOrdVars e)
+  && H.keysSet (exprAppliedArgsMap e) == params
+  where
+    args = exprAppliedArgs e
+    keyOnly ObjArr{oaObj=Just k, oaArr=Just (Nothing, _)} = exprIsName k
+    keyOnly _                                             = False
+
+-- | The sub-function variables of a body pattern ('bodyPatternSubFn'), each the higher-order
+-- parameter it binds.
+bodyPatternSubFns :: (ExprClass e, MetaDat m, Show m, Show (e m)) => e m -> e m -> [e m]
+bodyPatternSubFns obj = go
+  where
+    params = H.keysSet (exprAppliedArgsMap obj)
+    go e | bodyPatternSubFn params e = [e]
+    go e = concatMap go (exprChildren e)
+
+-- | The variables a body pattern binds: its aliases. A literal variable (@(n :: Float)@) is the
+-- alias of a typed hole, bound to the hole's meta, and a sub-function variable ('bodyPatternSubFn')
+-- the alias of an untyped one, bound as the higher-order parameter it is with the hole's meta its
+-- result. The parameters of the function the pattern is over are not bound: inside the pattern they
+-- refer to that function's parameters, which are not the definition's.
+bodyPatternVarArgs :: (MetaDat m, Show m) => Expr m -> VarArgMap Expr m
+bodyPatternVarArgs = go
+  where
+    go (AliasExpr base n) = H.insertWith (++) (TVArg $ inExprSingleton n) [(n, getExprMeta base)] (go base)
+    go (EWhere _ b _) = go b
+    go (TupleApply _ (_, be) arg) = H.unionWith (++) (go be) $ case arg of
+      EAppArg ObjArr{oaArr=Just (Just v, _)} -> go v
+      EAppSpread a                           -> go a
+      _                                      -> H.empty
+    go _ = H.empty
 
 mkIOObjArr :: (MetaDat m, Show m) => Meta m -> ArgName -> Expr m -> ObjArr Expr m
 mkIOObjArr m argName argVal = ObjArr (Just (Value (emptyMetaT $ partialToTypeSingleton argName) (pkName argName))) ArgObj Nothing [] (Just (Just argVal, m))
@@ -1080,6 +1151,10 @@ getRecursiveObjsExpr expr = concat [varSubObjects, argSubObjects, recursedSubObj
   where
     varSubObjects = map mkValue $ concatMap (varNamesWithPrefix . pkName . fst) $ exprAppliedOrdVars expr
     argSubObjects = concatMap (filter (isJust . maybeExprPath) . exprFromTupleArg) (exprAppliedArgs expr)
+    -- A body pattern's value ('bodyPatternParts') is a pattern over a function's definition: what
+    -- it is written with are parts of that definition, not objects of this one.
+    -- Its sub-function variables are the higher-order parameters they bind, as its key is one.
+    exprFromTupleArg ObjArr{oaObj=Just o, oaArr=Just (Just pat, _)} | not (Prelude.null (exprAppliedArgs o)) = o : bodyPatternSubFns o pat
     exprFromTupleArg ObjArr{oaObj, oaArr=Just (maybeOaObjExpr, _)} = maybeToList oaObj ++ maybeToList maybeOaObjExpr
     exprFromTupleArg ObjArr{oaArr=Nothing} = []
     recursedSubObjects = concatMap getRecursiveObjsExpr argSubObjects

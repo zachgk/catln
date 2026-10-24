@@ -29,8 +29,12 @@ import           TreeBuild           (buildArrow, withArgArrows)
 -- | Enters an arrow for a source. An arm is built for the source in the environment holding the
 -- arrows of the closures the source's arguments are ('withArgArrows'): a higher-order slot holds
 -- the closure's input object, and the arm's body reaches what the closure returns through its arrow.
-evalStartEArrow :: PartialType -> [ObjArr Expr EvalMetaDat] -> AnyObjArr -> Args -> EvalM (TExpr EvalMetaDat, [TExpr EvalMetaDat], Args)
-evalStartEArrow srcType closures oa newArgs = do
+--
+-- The closures' bodies are given too ('valClosureLambdas'): an arm written with a body pattern is
+-- chosen by the body of the function it is given ('TreeBuild.BodyPattern'), so the arm built for a
+-- source is the one for its closures' bodies as well as their types.
+evalStartEArrow :: PartialType -> [ObjArr Expr EvalMetaDat] -> [ObjArr Expr EvalMetaDat] -> AnyObjArr -> Args -> EvalM (TExpr EvalMetaDat, [TExpr EvalMetaDat], Args)
+evalStartEArrow srcType closures lambdas oa newArgs = do
   env@Env{evExEnv, evTbEnv, evClosureEnvs, evArgs, evCallIds, evNextCallId, evInstruments} <- get
   let callId = show evNextCallId
   let env' = env{
@@ -39,7 +43,7 @@ evalStartEArrow srcType closures oa newArgs = do
                 , evNextCallId = evNextCallId + 1
                 , evInstruments = evalInstArrowEnter callId oa evInstruments
                 }
-  let cacheKey' oa' = (srcType, [ getMetaType arrM | ObjArr{oaArr=Just (_, arrM)} <- closures ], oa')
+  let cacheKey' oa' = (srcType, [ getMetaType arrM | ObjArr{oaArr=Just (_, arrM)} <- closures ], lambdas, oa')
   case oa of
     Right oa' -> do
       put env'
@@ -57,7 +61,7 @@ evalStartEArrow srcType closures oa newArgs = do
                 _  -> case H.lookup closuresKey evClosureEnvs of
                   Just e  -> (e, evClosureEnvs)
                   Nothing -> let e = withArgArrows evTbEnv closures in (e, H.insert closuresKey e evClosureEnvs)
-          maybeArrow' <- liftCRes $ buildArrow buildEnv srcType oa'
+          maybeArrow' <- liftCRes $ buildArrow buildEnv{tbLambdas = lambdas ++ tbLambdas buildEnv} srcType oa'
           case maybeArrow' of
             Just (_, arrow'@(tree, annots')) -> do
               let env'' = env' {evExEnv = H.insert cacheKey arrow' evExEnv, evClosureEnvs = closureEnvs'}

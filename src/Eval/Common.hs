@@ -30,7 +30,8 @@ import           Data.Hashable
 import qualified Data.HashMap.Strict        as H
 import qualified Data.HashSet               as S
 import qualified Data.Map                   as Map
-import           Data.Maybe                 (fromMaybe, listToMaybe, mapMaybe)
+import           Data.Maybe                 (fromMaybe, isJust, listToMaybe,
+                                             mapMaybe, maybeToList)
 import           GHC.Generics               (Generic)
 
 import           Control.Monad.State
@@ -1167,6 +1168,48 @@ valClosureArrows (TupleVal _ args) = concatMap arrowsOf (H.elems args)
     arrowsOf v = valClosureArrows v
 valClosureArrows _ = []
 
+-- | The closures a value holds, at any depth, each as the lambda it was written as: its object and
+-- its body. A closure is chosen by its body where an arm is written with a body pattern
+-- ('bodyPatternParts'), and a call given one may be dispatched from the value it was passed in
+-- ('TreeBuild.BodyPattern'). A closure whose body holds a value no expression writes is left out.
+valClosureLambdas :: Val -> [ObjArr Expr EvalMetaDat]
+valClosureLambdas (TupleVal _ args) = concatMap lambdasOf (H.elems args)
+  where
+    lambdasOf (ObjArrVal oa _) = maybeToList (texprObjArrToExpr oa)
+    lambdasOf v                = valClosureLambdas v
+valClosureLambdas _ = []
+
+-- | A built tree read back as the expression it was built from: the calls it was built with
+-- ('TCalls') are dropped, and a constant is the value it holds. 'Nothing' where it holds a value
+-- that is not a constant, which no expression writes.
+texprToExpr :: TExpr m -> Maybe (Expr m)
+texprToExpr (TCExpr m v) = CExpr m <$> case v of
+  IntVal i   -> Just (CInt i)
+  FloatVal f -> Just (CFloat f)
+  StrVal s   -> Just (CStr s)
+  CharVal c  -> Just (CChar c)
+  _          -> Nothing
+texprToExpr (TValue m n) = Just (Value m n)
+texprToExpr (THoleExpr m h) = Just (HoleExpr m h)
+texprToExpr (TAliasExpr b a) = AliasExpr <$> texprToExpr b <*> texprToExpr a
+texprToExpr (TWhere m b c) = EWhere m <$> texprToExpr b <*> texprToExpr c
+texprToExpr (TTupleApply m (bm, be) arg) = do
+  be' <- texprToExpr be
+  arg' <- case arg of
+    EAppArg oa   -> EAppArg <$> texprObjArrToExpr oa
+    EAppVar n vm -> Just (EAppVar n vm)
+    EAppSpread s -> EAppSpread <$> texprToExpr s
+  return $ TupleApply m (bm, be') arg'
+texprToExpr (TCalls _ e _) = texprToExpr e
+
+-- | 'texprToExpr' over an object and its arrow.
+texprObjArrToExpr :: ObjArr TExpr m -> Maybe (ObjArr Expr m)
+texprObjArrToExpr (ObjArr obj basis doc annots arr) = do
+  obj' <- mapM texprToExpr obj
+  annots' <- mapM texprToExpr annots
+  arr' <- forM arr $ \(e, m) -> (, m) <$> mapM texprToExpr e
+  return $ ObjArr obj' basis doc annots' arr'
+
 -- | The key a value's argument is filled under. A closure argument ('ObjArrVal') is keyed with
 -- its parameters (@/fn(/v)@), as a typed higher-order slot is: the slot holds the closure's input
 -- object, and the key names the arguments that object takes. Only its arguments: a typed slot is
@@ -1247,7 +1290,7 @@ type ResBuildEnv = H.HashMap TypeName [ResBuildEnvItem]
 -- | Built arm trees, keyed by the source they were built for, the results of the closures that
 -- source's arguments hold (the arrows the arm reaches its higher-order arguments through, which
 -- the source's input objects do not spell), and the arm.
-type ResExEnv = H.HashMap (PartialType, [Type], ObjArr Expr EvalMetaDat) (TExpr EvalMetaDat, [TExpr EvalMetaDat]) -- (result, [compAnnot trees])
+type ResExEnv = H.HashMap (PartialType, [Type], [ObjArr Expr EvalMetaDat], ObjArr Expr EvalMetaDat) (TExpr EvalMetaDat, [TExpr EvalMetaDat]) -- (result, [compAnnot trees])
 
 data TBEnv = TBEnv {
     tbName    :: String
@@ -1258,6 +1301,10 @@ data TBEnv = TBEnv {
   -- what a definition that failed to typecheck leaves behind. Kept rather than forgotten so that a
   -- call which cannot find one is told why, instead of being told only that nothing matched.
   , tbUntyped :: S.HashSet TypeName
+  -- | The lambdas in scope where a call is built, the innermost first: what each call gives its
+  -- higher-order arguments ('TreeBuild.withCallArrows'). An arm written with a body pattern
+  -- ('bodyPatternParts') is chosen by the body of the function in its slot, which is the lambda's.
+  , tbLambdas :: [ObjArr Expr EvalMetaDat]
   }
 
 instance Eq MacroFunction where
@@ -1495,6 +1542,12 @@ exprArgsWithVal (AliasExpr base n) val = H.insert (nameStr (exprPath n)) val (ex
 exprArgsWithVal pat@(TupleApply _ (_, be) arg) val = H.union (exprArgsWithVal be val) (fromArg arg val)
   where
     fromArg :: (MetaDat m, Show m) => EApp Expr m -> Val -> Args
+    -- A body pattern ('bodyPatternParts') is the higher-order parameter its key is. Its pattern is
+    -- over the function's definition, matched when the arm was chosen ('TreeBuild.BodyPattern'),
+    -- and what it bound is part of the arm built from it, so it binds nothing of the value.
+    fromArg (EAppArg oa@ObjArr{oaObj=Just obj}) (TupleVal _ tupleArgs) | isJust (bodyPatternParts oa) = case H.lookup (nameStr (exprPath obj)) tupleArgs of
+      Just val' -> H.singleton (nameStr (exprPath obj)) val'
+      Nothing -> error $ printf "Failed to find expected arg %s in tuple %s" (show $ exprPath obj) (show val)
     fromArg (EAppArg ObjArr{oaObj=Just obj, oaArr=Just (Just e, _)}) (TupleVal _ tupleArgs) = case H.lookup (nameStr (exprPath obj)) tupleArgs of
       Just val' -> exprArgsWithVal e val'
       Nothing -> error $ printf "Failed to find expected arg %s in tuple %s" (show $ exprPath obj) (show val)

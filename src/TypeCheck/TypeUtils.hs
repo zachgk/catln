@@ -494,7 +494,17 @@ localArrowTypeEnv env (Constraint callArrs maybeConOa stypeVaenv _) = do
         , decl <- maybe [] omiDecls (graphItemOf reachesEnv (makeAbsoluteName (exprPath (oaObjExpr oa))))
         , ObjArr{oaObj=Just aObj, oaArr=Just (_, aM)} <- exprAppliedArgs (oaObjExpr decl)
         , not (null (exprAppliedArgs aObj)) ]
-  let declResultFor k = case H.lookup k declArgResults of
+  -- A body pattern's sub-function variable (@a(x, params)@ in @f(x, params)= a(x, params) + ..@)
+  -- binds a part of the function in the slot, which is a function of the same parameters
+  -- giving a part of its result. Nothing declares it, so it returns what the slot's declaration
+  -- says the function does.
+  let subFnParents = H.fromList
+        [ (inExprSingleton sub, inExprSingleton fObj)
+        | oa <- maybeConOa
+        , argOa <- exprAppliedArgs (oaObjExpr oa)
+        , Just (fObj, pat, _) <- [bodyPatternParts argOa]
+        , sub <- bodyPatternSubFns fObj pat ]
+  let declResultFor k0 = let k = H.lookupDefault k0 k0 subFnParents in case H.lookup k declArgResults of
         Just t -> Just t
         Nothing -> case [t | (k', t) <- H.toList declArgResults, pkName k' == pkName k, pkArgs k' == pkArgs k] of
           [t] -> Just t

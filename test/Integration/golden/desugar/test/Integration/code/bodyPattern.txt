@@ -1,0 +1,204 @@
+Prgm
+    { prgmObjMap = ObjectMapWith
+        { omItems = fromList
+            [
+                ( "/same"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value same= kind( Value a= Value In )
+                            ( f( Value a )= Value a )
+                        ]
+                    }
+                )
+            ,
+                ( "/kind"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ kind( Value a -> /In )
+                            ( f( Value a -> /In ) -> ∀/R ) -> ∀/R
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ kind( Value a )
+                            ( f( Value a )= Value Zr ) -> ∀/R = Value Zr
+                        , kind( Value a )
+                            ( f( Value a )= Value a ) -> ∀/R = Value a
+                        , kind( Value a )
+                            ( f( Value a )= Hole /Data/Primitive/Integer HoleActive { haName = Nothing }@Value c ) -> ∀/R = Value Lit
+                        , kind( Value a )
+                            ( f( Value a )= plus
+                                ( Value l= Hole TopType HoleActive { haName = Nothing }@g( Value a ) )
+                                ( Value r= Hole TopType HoleActive { haName = Nothing }@h( Value a ) )
+                            ) -> ∀/R = plus
+                            ( Value l= kind( Value a= Value a )
+                                ( f( Value a )= g( Value a= Value a ) )
+                            )
+                            ( Value r= kind( Value a= Value a )
+                                ( f( Value a )= h( Value a= Value a ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/parts"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value parts= kind( Value a= Value In )
+                            ( f( Value a )= plus( Value l= Value Zr )( Value r= Value a ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/#noCore"
+                , ObjectMapItem
+                    { omiDecls = [ Value #noCore ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/#invalid"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/#invalid ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Lit"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Value Lit
+                        , Value Lit
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Zr"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Value Zr
+                        , Value Zr
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/plus"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ plus( Value l -> ∀/R )( Value r -> ∀/R ) -> ∀/R ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ plus( Value l )( Value r ) -> ∀/R = Value r ]
+                    }
+                )
+            ,
+                ( "/literal"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value literal= kind( Value a= Value In )
+                            ( f( Value a )= CInt
+                                { ciValue = 3 }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Primitive/Integer"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/zero"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value zero= kind( Value a= Value In )
+                            ( f( Value a )= Value Zr )
+                        ]
+                    }
+                )
+            ,
+                ( "/In"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Value In
+                        , Value In
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        , omDecls = []
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /R
+            , cgcExtends =
+                [ /In
+                , /Zr
+                , /Lit
+                ]
+            , cgcDoc = Just ""
+            }
+        ]
+    , prgmAnnots =
+        [ Value #noCore
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "Arms chosen by the body of the function they are given.
+                A higher-order argument written with a body (@f(a)= Zr@) in an arm's object is a pattern over the
+                definition of the function given for it, not over a value: [kind] has an arm for each shape a
+                function's body may have. A name written with a type (@(c :: Integer)@) binds the constant the body
+                holds, and a name applied to the function's parameters (@g(a)@) binds the function that part of the
+                body is. A parameter of the function may be named for the pattern (@a\@x@), as [same] does, to keep
+                it apart from the arm's own. The last arm recurses into the parts it binds.
+                No arm covers every function, so the declaration is [#invalid]. Written without the core library,
+                so that when a compiler change breaks it there are a few lines to read rather than a standard
+                library. `bodyPatternRun.ct` runs the same shapes." }
+            )
+        ]
+    }

@@ -309,7 +309,9 @@ deriveOverlapTests (Prgm (ObjectMap ownOm) _ _) prgm@(Prgm (ObjectMap om) _ _) =
     -- A clause with no guard on it, which is the only kind whose domain is the whole of what
     -- selects it. 'TreeBuild.findResArrows' reads the same 'exprWhereConds' to decide which arrows
     -- it may pick without evaluating a condition first.
-    conditionFree oa = null (exprWhereConds (oaObjExpr oa))
+    -- A body pattern ('bodyPatternParts') is such a condition too, on the body of the function given:
+    -- its domain is the functions with that body, which a generated input does not have.
+    conditionFree oa = null (exprWhereConds (oaObjExpr oa)) && not (any (isJust . bodyPatternParts) (exprAppliedArgs (oaObjExpr oa)))
     clauseDom oa = getExprType (oaObjExpr oa)
     -- Where two clauses meet: their domains' intersection, or, where they are disjoint, where one
     -- clause meets the other read through the conversions on the way in. Two arms of a function over

@@ -223,6 +223,15 @@ fromExpr est (TupleApply m (baseM, baseExpr) arg) = do
               [
                             AddInferArg 13 baseM' m'
                             ]
+            (EncodeIn{}, Just obj, Just (Just _argExpr', arrM'))
+              | not (null (exprAppliedArgs obj)) ->
+              -- A body pattern ('bodyPatternParts'): the higher-order parameter its key is, as
+              -- below. The pattern is over the function's definition, so it says nothing of the
+              -- slot.
+              [
+                        AddArg 24 (getExprMeta baseExpr', TVArg $ inExprSingleton obj) m',
+                        PropEq 25 (m', TVArg $ inExprSingleton obj) (hoSlotPoint obj arrM')
+                        ]
             (EncodeIn{}, Just obj, Just (Just _argExpr', arrM')) ->
               -- Input with (x=x)
               -- Fix B (Bug 1): use the base expression's own meta (not the separate
@@ -509,6 +518,14 @@ fromObjArr est oa@ObjArr{oaObj, oaAnnots, oaArr} = do
     Nothing -> return Nothing
     Just (arrExpr, arrM) -> do
       case arrExpr of
+        -- A body pattern ('bodyPatternParts'): its pattern is over the definition of the function
+        -- in the slot, so it is encoded as written ('fromInertExpr').
+        Just argExpr
+          | EncodeIn <- est
+          , Just (bodyObj, _, _) <- bodyPatternParts oa -> do
+          arrM' <- fromMeta BAct est arrM $ printf "oa arrM %s" (show oa)
+          argExpr' <- fromInertExpr bodyObj argExpr
+          return $ Just (Just argExpr', arrM')
         -- A destructuring binding variable (the @x@ in @field= x@): both the binding
         -- value and the field's arrow slot are seeded open rather than as the nominal
         -- singleton of the binding's own name. The field's declared type flows into the
@@ -555,6 +572,10 @@ fromObjArr est oa@ObjArr{oaObj, oaAnnots, oaArr} = do
                         BoundedByObjs 15 arrM' PTopType,
                         ArrowTo 15 (getExprMeta argExpr') arrM'
                         ]
+        -- A body pattern is the higher-order parameter its key is ('fromExpr'), and its pattern is
+        -- over a function's definition, not the value in the slot ('fromInertExpr').
+        (EncodeIn{}, Just obj, Just (Just _, _))
+          | not (null (exprAppliedArgs obj)) -> []
         (EncodeIn{}, Just obj, Just (Just argExpr', arrM')) ->
           -- Input with (x=x)
           [
@@ -581,6 +602,44 @@ fromObjArr est oa@ObjArr{oaObj, oaAnnots, oaArr} = do
         oaAnnots=oaAnnots'
         }
   return oa'
+
+-- | A body pattern ('bodyPatternParts') as it is written: a point for every node, holding what the
+-- node is written as, and no constraint. The pattern is matched against the definition of the
+-- function in the slot when an arm is chosen for it ('TreeBuild'), not against a value, so nothing
+-- flows into it and its references are not to anything in scope: @params@ in it is the matched
+-- function's parameter. What it gives the definition is its variables ('bodyPatternVarArgs'), each
+-- of the type its node is written with.
+--
+-- A sub-function variable ('bodyPatternSubFn') is the exception: it is the higher-order parameter it
+-- binds, encoded as the pattern's own parameter is ('fromObjArr').
+fromInertExpr :: PExpr -> PExpr -> StateT FEnv TypeCheckResult VExpr
+fromInertExpr obj e0 = go e0
+  where
+    params = H.keysSet (exprAppliedArgsMap obj)
+    pt m = fromMeta BActReq EncodeIn m (printf "Body pattern %s" (show e0))
+    go e | bodyPatternSubFn params e = do
+      e' <- fromExpr EncodeIn e
+      definedNames <- getDefinedNames
+      modify $ addConstraints $ topArgPropEqs definedNames e'
+      return e'
+    go (CExpr m c) = (`CExpr` c) <$> pt m
+    go (Value m n) = (`Value` n) <$> pt m
+    go (HoleExpr m h) = (`HoleExpr` h) <$> pt m
+    go (AliasExpr b a) = AliasExpr <$> go b <*> go a
+    go (EWhere m b c) = EWhere <$> pt m <*> go b <*> go c
+    go (TupleApply m (bm, be) arg) = do
+      m' <- pt m
+      bm' <- pt bm
+      be' <- go be
+      arg' <- case arg of
+        EAppArg oa@ObjArr{oaObj, oaArr, oaAnnots} -> do
+          oaObj' <- mapM go oaObj
+          oaArr' <- forM oaArr $ \(arrE, arrM) -> (,) <$> mapM go arrE <*> pt arrM
+          oaAnnots' <- mapM go oaAnnots
+          return $ EAppArg oa{oaObj=oaObj', oaArr=oaArr', oaAnnots=oaAnnots'}
+        EAppVar vn vm -> EAppVar vn <$> pt vm
+        EAppSpread s -> EAppSpread <$> go s
+      return $ TupleApply m' (bm', be') arg'
 
 -- | A definition's references to its own arguments, spelled by the argument's absolute name.
 --

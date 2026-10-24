@@ -1,0 +1,26 @@
+import "core"
+
+
+# Arms chosen by the body of the function they are given.
+  [slope] is the derivative of [f] at [n], written as a rule for each shape of [f]'s body rather than
+  for [f]'s values: a constant has slope 0, the input itself has slope 1, and a sum or product of two
+  parts is the sum or product rule over the slopes of the parts. The parts are the sub-function
+  variables [g] and [h], each a function of the same input with its part of the body as its body, so
+  the rules recurse into them until the body is a constant or the input.
+  No definition covers every function, which is what [#invalid] says of the declaration: a function
+  whose body is none of these shapes has no slope here. `bodyPattern.ct` has the same shapes
+  without the core library.
+slope(n -> Integer, f(n -> Integer) -> Integer) -> Integer
+  #invalid
+slope(n, f(n)= (c :: Integer))= 0
+slope(n, f(n@x)= x)= 1
+slope(n, f(n)= g(n) + h(n))= slope(n= n, f(n)= g(n= n)) + slope(n= n, f(n)= h(n= n))
+slope(n, f(n)= g(n) * h(n))= slope(n= n, f(n)= g(n= n)) * h(n= n) + g(n= n) * slope(n= n, f(n)= h(n= n))
+
+main{io -> IO} -> (){IO} =
+  #assert(test= slope(n= 3, f(n)= 5) == 0)
+  #assert(test= slope(n= 3, f(n)= n) == 1)
+  #assert(test= slope(n= 3, f(n)= n + 5) == 1)
+  #assert(test= slope(n= 3, f(n)= n * n) == 6)
+  #assert(test= slope(n= 2, f(n)= n * n * n + n) == 13)
+  ()

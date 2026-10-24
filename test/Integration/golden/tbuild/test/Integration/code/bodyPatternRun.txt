@@ -1,0 +1,127 @@
+Prgm
+    { prgmObjMap = ObjectMapWith
+        { omItems = fromList
+            [
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg
+                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ).. = /
+                                    ( EAppArg { eaaArg = Value /io -> /Catln/IO } )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )
+                                }
+                            ) -> /Context
+                            ( /value=()
+                            , /ctx=( /io=/Catln/IO )
+                            ) = /Context
+                            ( EAppArg
+                                { eaaArg = Value /value -> () = Value / }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ) = /
+                                    ( EAppArg
+                                        { eaaArg = Value /io -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                    )
+                                }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/slope"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /slope
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } )
+                            ( EAppArg
+                                { eaaArg = /f
+                                    ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } ) -> /Data/Primitive/Integer
+                                }
+                            ) -> /Data/Primitive/Integer
+                        , /slope
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } )
+                            ( EAppArg
+                                { eaaArg = /f
+                                    ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } )= Hole /Data/Primitive/Integer HoleActive { haName = Nothing }@Value /c
+                                }
+                            ) -> /Data/Primitive/Integer
+                        , /slope
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } )
+                            ( EAppArg
+                                { eaaArg = /f
+                                    ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } )= ( Value /n ↦ TopType )
+                                }
+                            ) -> /Data/Primitive/Integer
+                        , /slope
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } )
+                            ( EAppArg
+                                { eaaArg = /f
+                                    ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } )= /operator+
+                                    ( EAppArg
+                                        { eaaArg = Value /l= Hole TopType HoleActive { haName = Nothing }@/g
+                                            ( EAppArg { eaaArg = Value /n } )
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /r= Hole TopType HoleActive { haName = Nothing }@/h
+                                            ( EAppArg { eaaArg = Value /n } )
+                                        }
+                                    )
+                                }
+                            ) -> /Data/Primitive/Integer
+                        , /slope
+                            ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } )
+                            ( EAppArg
+                                { eaaArg = /f
+                                    ( EAppArg { eaaArg = Value /n -> /Data/Primitive/Integer } )= /operator*
+                                    ( EAppArg
+                                        { eaaArg = Value /l= Hole TopType HoleActive { haName = Nothing }@/g
+                                            ( EAppArg { eaaArg = Value /n } )
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /r= Hole TopType HoleActive { haName = Nothing }@/h
+                                            ( EAppArg { eaaArg = Value /n } )
+                                        }
+                                    )
+                                }
+                            ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ]
+        , omDecls = []
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Arms chosen by the body of the function they are given.
+                  [slope] is the derivative of [f] at [n], written as a rule for each shape of [f]'s body rather than
+                  for [f]'s values: a constant has slope 0, the input itself has slope 1, and a sum or product of two
+                  parts is the sum or product rule over the slopes of the parts. The parts are the sub-function
+                  variables [g] and [h], each a function of the same input with its part of the body as its body, so
+                  the rules recurse into them until the body is a constant or the input.
+                  No definition covers every function, which is what [#invalid] says of the declaration: a function
+                  whose body is none of these shapes has no slope here. `bodyPattern.ct` has the same shapes
+                  without the core library."
+                }
+            )
+        ]
+    }

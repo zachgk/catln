@@ -166,6 +166,7 @@ evalObjArrCaptured captured input oa = do
   -- closure's input object (@/fn(/v=..)@), as a typed arm's higher-order slot does, and the arm's
   -- body reaches what it returns through the closure's arrow, which the build is given.
   let closures = valClosureArrows input
+  let lambdas = valClosureLambdas input
   -- Read as deep as the arm's own object looks ('getValDispatchPartial'), as dispatch reads it:
   -- past that a value is its constructors' declared forms with their parameters bound. The arm is
   -- built for what this input is to it, and what the build reads of the input reaches every call
@@ -174,7 +175,7 @@ evalObjArrCaptured captured input oa = do
   Env{evTypeEnv} <- get
   let armT = either (getExprType . oaObjExpr) (getExprType . oaObjExpr) oa
   let srcP = getValDispatchPartial evTypeEnv [armT] (1 + typePatternDepth armT) input
-  (resArrowTree, compAnnots, oldArgs) <- evalStartEArrow srcP closures oa newArrArgs
+  (resArrowTree, compAnnots, oldArgs) <- evalStartEArrow srcP closures lambdas oa newArrArgs
   forM_ compAnnots $ \compAnnot -> do
             modify evalStartAnnot
             compAnnot' <- withEvalPush (printf "annot %s" (show compAnnot)) $ evalExpr compAnnot

@@ -168,7 +168,9 @@ semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (`setExprMeta` m'') $ sn
         objSdm = case sdm of
           SDInput{} -> sdm
           _         -> SDInput False
-        arg'' = arg'{
+        arg'' = (case sdm of
+                  SDInput{} -> desBodyPattern
+                  _         -> id) arg'{
           oaObj=fmap (semiDesExpr objSdm obj) (oaObj arg'),
           oaAnnots=indexAnnots ++ fmap (semiDesExpr sdm obj) (oaAnnots arg'),
           oaArr=fmap (first (fmap (semiDesExpr sdm (oaObj arg')))) (oaArr arg')
@@ -256,6 +258,46 @@ semiDesExpr _ _ e = error $ printf "Not yet implemented semiDesExpr for %s" (sho
 
 -- | The expression with every value rewritten: the values applied, aliased, conditioned on and
 -- passed as argument values, not the names arguments are passed under.
+-- | A body pattern ('bodyPatternParts', @f(x\@fx, params)= getOr(m= params, key= (p :: String),
+-- def= 0.0) * fx@) in the form the rest of the compiler reads.
+--
+-- Its parameter is keyed by the parameter's names alone (@f(x, params)@), as the declaration it
+-- fills keys it, and a name given to one of them (@x\@fx@) is that parameter wherever the pattern
+-- uses it: the pattern is matched against the function's own body, which names its parameters by
+-- their keys. The alias is how a pattern tells the matched function's @x@ from the definition's.
+--
+-- A name written with a type (@(p :: String)@) is a variable binding the literal it matches. It is
+-- the typed hole aliased with the name (@(_ :: String)\@p@), the spelling every pattern binds a
+-- typed value with, so that it is told apart from a reference to something defined (@Leaf@) by its
+-- form rather than by the type the name is given, which inference changes. A sub-function variable
+-- (@a(x, params)@, 'bodyPatternSubFn') is the alias of an untyped hole for the same reason.
+desBodyPattern :: PSObjArr -> PSObjArr
+desBodyPattern oa = case bodyPatternParts oa of
+  Just (obj, pat, arrM) -> let (obj', aliases) = unaliasKeys obj
+                               params = H.keysSet (exprAppliedArgsMap obj')
+                           in oa{oaObj=Just obj', oaArr=Just (Just (wrapSubFns params $ mapExprValues (patValue aliases) pat), arrM)}
+  Nothing -> oa
+  where
+    -- A sub-function variable ('bodyPatternSubFn') names the part of the body it matches, so it is
+    -- the alias of a hole there, as every pattern names a part it matches.
+    wrapSubFns params e | bodyPatternSubFn params e = AliasExpr (HoleExpr (mWithType PTopType (getExprMeta e)) (HoleActive Nothing)) e
+    wrapSubFns params (TupleApply m (bm, be) arg) = TupleApply m (bm, wrapSubFns params be) $ case arg of
+      EAppArg a    -> EAppArg a{oaArr=fmap (first (fmap (wrapSubFns params))) (oaArr a)}
+      EAppSpread a -> EAppSpread (wrapSubFns params a)
+      a@EAppVar{}  -> a
+    wrapSubFns params (AliasExpr b a) = AliasExpr (wrapSubFns params b) a
+    wrapSubFns params (EWhere m b c) = EWhere m (wrapSubFns params b) c
+    wrapSubFns _ e = e
+    unaliasKeys (TupleApply m (bm, be) (EAppArg a@ObjArr{oaObj=Just (AliasExpr key@Value{} (Value _ alias))})) =
+      let (be', aliases) = unaliasKeys be in (TupleApply m (bm, be') (EAppArg a{oaObj=Just key}), (alias, exprPath key) : aliases)
+    unaliasKeys (TupleApply m (bm, be) arg) = let (be', aliases) = unaliasKeys be in (TupleApply m (bm, be') arg, aliases)
+    unaliasKeys e = (e, [])
+    patValue aliases (m, n) = case lookup n aliases of
+      Just key -> Value (mWithType (relTypeVal key) m) key
+      Nothing
+        | getMetaType m /= PTopType && getMetaType m /= relTypeVal n -> AliasExpr (HoleExpr m (HoleActive Nothing)) (Value (mWithType (relTypeVal n) m) n)
+        | otherwise -> Value m n
+
 mapExprValues :: ((Meta m, TypeName) -> Expr m) -> Expr m -> Expr m
 mapExprValues f = go
   where
