@@ -1,0 +1,283 @@
+Prgm
+    { prgmObjMap = ObjectMapWith
+        { omItems = fromList
+            [
+                ( "/Catln/llvm"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/llvm
+                            ( EAppArg { eaaArg = Value /c } ) -> /Catln/CatlnResult..
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Catln/llvm
+                            ( EAppArg { eaaArg = Value /c } ) -> /Catln/CatlnResult
+                            ( /files=/Data/List/Cons
+                                [ /T=/Catln/BuildFile
+                                    ( /path=( /Data/String/Text.. + /Catln/CStr )
+                                    , /contents=∀/Data/String
+                                    )
+                                ]
+                                ( /head=/Catln/BuildFile
+                                    ( /path=( /Data/String/Text.. + /Catln/CStr )
+                                    , /contents=∀/Data/String
+                                    )
+                                , /tail=/Data/List/Nil
+                                )
+                            ) = /Catln/CatlnResult
+                            ( EAppArg
+                                { eaaArg = Value /files -> /Data/List/Cons
+                                    [ /T=/Catln/BuildFile
+                                        ( /path=( /Data/String/Text.. + /Catln/CStr )
+                                        , /contents=∀/Data/String
+                                        )
+                                    ]
+                                    ( /head=/Catln/BuildFile
+                                        ( /path=( /Data/String/Text.. + /Catln/CStr )
+                                        , /contents=∀/Data/String
+                                        )
+                                    , /tail=/Data/List/Nil
+                                    ) = /Data/List/Cons
+                                    ( EAppArg
+                                        { eaaArg = Value /head -> /Catln/BuildFile
+                                            ( /path=( /Data/String/Text.. + /Catln/CStr )
+                                            , /contents=∀/Data/String
+                                            ) = /Catln/BuildFile
+                                            ( EAppArg
+                                                { eaaArg = Value /path ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "main.ll"
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /contents -> ∀/Data/String = ( Value /LLVM/llvmPlaceholderModule ↦ ∀/Data/String ) }
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/llvmPlaceholderModule"
+                , ObjectMapItem
+                    { omiDecls = [ Value /LLVM/llvmPlaceholderModule -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /LLVM/llvmPlaceholderModule -> ∀/Data/String =
+                            ( /operator++
+                                ( EAppArg
+                                    { eaaArg = Value /l ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = "; ModuleID = 'catln'
+
+                                      "
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r -> ∀/Data/String =
+                                        ( /LLVM/llvmDefine
+                                            ( EAppArg
+                                                { eaaArg = Value /ret ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "i32"
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /name ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "main"
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /body -> /Data/List/Cons
+                                                    [ /T=( /Data/String/Text.. + /Catln/CStr ) ]
+                                                    ( /head=( /Data/String/Text.. + /Catln/CStr )
+                                                    , /tail=/Data/List/Cons
+                                                        [ /T=( /Data/String/Text.. + /Catln/CStr ) ]
+                                                        ( /head=( /Data/String/Text.. + /Catln/CStr )
+                                                        , /tail=/Data/List/Nil
+                                                        )
+                                                    ) = /Data/List/Cons
+                                                    ( EAppArg
+                                                        { eaaArg = Value /head ->
+                                                            ( /Data/String/Text
+                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                            ) = "entry:"
+                                                        }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /tail -> /Data/List/Cons
+                                                            [ /T=( /Data/String/Text.. + /Catln/CStr ) ]
+                                                            ( /head=( /Data/String/Text.. + /Catln/CStr )
+                                                            , /tail=/Data/List/Nil
+                                                            ) = /Data/List/Cons
+                                                            ( EAppArg
+                                                                { eaaArg = Value /head ->
+                                                                    ( /Data/String/Text
+                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                    ) = "  ret i32 0"
+                                                                }
+                                                            )
+                                                            ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                                        }
+                                                    )
+                                                }
+                                            ) ↦ ∀/Data/String
+                                        )
+                                    }
+                                ) ↦ ∀/Data/String
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/llvmDefine"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /LLVM/llvmDefine
+                            ( EAppArg { eaaArg = Value /ret -> ∀/Data/String } )
+                            ( EAppArg { eaaArg = Value /name -> ∀/Data/String } )
+                            ( EAppArg
+                                { eaaArg = Value /body -> ∀/Data/List/ConsList[ /T=∀/Data/String ] }
+                            ) -> ∀/Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmDefine
+                            ( EAppArg { eaaArg = Value /ret -> ∀/Data/String } )
+                            ( EAppArg { eaaArg = Value /name -> ∀/Data/String } )
+                            ( EAppArg
+                                { eaaArg = Value /body -> ∀/Data/List/ConsList[ /T=∀/Data/String ] }
+                            ) -> ∀/Data/String =
+                            ( /operator++
+                                ( EAppArg
+                                    { eaaArg = Value /l -> ∀/Data/String =
+                                        ( /Data/String/join
+                                            ( EAppArg
+                                                { eaaArg = Value /sep ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = "
+                                                  "
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /parts -> /Data/List/Cons[ /T=∀/Data/String ]
+                                                    ( /head=∀/Data/String
+                                                    , /tail=∀/Data/List/ConsList[ /T=$_/T ]
+                                                    ) = /Data/List/Cons
+                                                    ( EAppArg
+                                                        { eaaArg = Value /head -> ∀/Data/String =
+                                                            ( /operator++
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /l -> ∀/Data/String =
+                                                                        ( /operator++
+                                                                            ( EAppArg
+                                                                                { eaaArg = Value /l -> ∀/Data/String =
+                                                                                    ( /operator++
+                                                                                        ( EAppArg
+                                                                                            { eaaArg = Value /l -> ∀/Data/String =
+                                                                                                ( /operator++
+                                                                                                    ( EAppArg
+                                                                                                        { eaaArg = Value /l ->
+                                                                                                            ( /Data/String/Text
+                                                                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                                                            ) = "define "
+                                                                                                        }
+                                                                                                    )
+                                                                                                    ( EAppArg
+                                                                                                        { eaaArg = Value /r -> TVArg /ret = ( Value /ret ↦ TVArg /ret ) }
+                                                                                                    ) ↦ ∀/Data/String
+                                                                                                )
+                                                                                            }
+                                                                                        )
+                                                                                        ( EAppArg
+                                                                                            { eaaArg = Value /r ->
+                                                                                                ( /Data/String/Text
+                                                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                                                ) = " @"
+                                                                                            }
+                                                                                        ) ↦ ∀/Data/String
+                                                                                    )
+                                                                                }
+                                                                            )
+                                                                            ( EAppArg
+                                                                                { eaaArg = Value /r -> TVArg /name = ( Value /name ↦ TVArg /name ) }
+                                                                            ) ↦ ∀/Data/String
+                                                                        )
+                                                                    }
+                                                                )
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /r ->
+                                                                        ( /Data/String/Text
+                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                        ) = "() {"
+                                                                    }
+                                                                ) ↦ ∀/Data/String
+                                                            )
+                                                        }
+                                                    )
+                                                    ( EAppArg
+                                                        { eaaArg = Value /tail -> TVArg /body = ( Value /body ↦ TVArg /body ) }
+                                                    )
+                                                }
+                                            ) ↦ ∀/Data/String
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = Value /r ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = "
+                                      }
+                                      "
+                                    }
+                                ) ↦ ∀/Data/String
+                            )
+                        ]
+                    }
+                )
+            ]
+        , omDecls = []
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "# LLVM Compiler
+                  The compiler from Catln to the [LLVM Compiler Infrastructure](https://llvm.org/), written in
+                  Catln. A build of a runnable function is a call of [llvm] on it, and what it answers with is the
+                  program as an LLVM module in its textual form (a `.ll` file), built up as a [String].
+                  It is a placeholder for now: whatever it is given, the module it writes is one whose `main`
+                  ends with the exit code 0."
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "## Writing a module
+                  The parts of a module, each written as the text it is in a `.ll` file."
+                }
+            )
+        ]
+    }

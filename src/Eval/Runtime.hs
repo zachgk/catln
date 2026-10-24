@@ -308,22 +308,6 @@ contextMacro = ("context", Right (MacroFunction macroBuild))
           return $ Right $ eVal ContextInStr `eApply` (contextValStr, val) `eApplyOAs` contextArgs
         _ -> fail "Invalid context macro input"
 
-llvm :: Op
-llvm = ("llvm", Right (MacroFunction macroBuild))
-  where
-    macroBuild input MacroData{mdTbEnv} =
-      case input of
-        (TupleApply _ (_, Value _ "/Catln/llvm") (EAppArg ObjArr{oaObj=Just (Value _ "/c"), oaArr=Just (Just (Value _ functionToCodegen), _)})) -> buildName functionToCodegen
-        _ -> error $ printf "Unknown expr to llvm macro: %s" (show input)
-      where
-        buildName functionToCodegen = do
-          let TBEnv{tbPrgm} = mdTbEnv
-          let codegenSrcTypeInner = singletonType $ PartialType functionToCodegen H.empty H.empty PredsNone PtArgExact
-          let codegenSrcType = PartialType "/Catln/Context" H.empty (H.fromList [(partialKey "/value", codegenSrcTypeInner), (partialKey "/oaObjExprio", ioType)]) PredsNone PtArgExact
-          let val = LLVMVal $ codegenPrgm (eVal (nameStr functionToCodegen)) codegenSrcType ioType tbPrgm
-          return $ Left val
-        codegenPrgm _ _ _ _ = return ()
-
 -- | Completes a call with the page it is written in, as a @page@ argument read by
 -- @\/Catln\/pageAt@: a call of @lcm(input)@ written in a page is a call of @lcm(input, page)@.
 --
@@ -474,4 +458,4 @@ primEnv = H.fromList [(mkName k, v) | (k, v) <- map mapPrim prims ++ macros]
             , floatCeil
             , intDiv
             ]
-    macros = [arrExists, contextMacro, llvm, callerPage, callerSource, typeOfMacro]
+    macros = [arrExists, contextMacro, callerPage, callerSource, typeOfMacro]

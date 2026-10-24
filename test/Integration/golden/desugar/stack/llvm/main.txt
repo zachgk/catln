@@ -1,0 +1,125 @@
+Prgm
+    { prgmObjMap = ObjectMapWith
+        { omItems = fromList
+            [
+                ( "/Catln/llvm"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/llvm( Value c ) -> /Catln/CatlnResult.. ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Catln/llvm( Value c ) -> /Catln/CatlnResult.. = CatlnResult
+                            ( Value files= /Data/List/Cons
+                                ( Value /head= BuildFile
+                                    ( Value path= CStr
+                                        { csValue = "main.ll" }
+                                    )( Value contents= Value /LLVM/llvmPlaceholderModule )
+                                )( Value /tail= Value /Data/List/Nil )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/llvmPlaceholderModule"
+                , ObjectMapItem
+                    { omiDecls = [ Value /LLVM/llvmPlaceholderModule -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /LLVM/llvmPlaceholderModule -> ∀/Data/String = /operator++
+                            ( Value /l= CStr
+                                { csValue = "; ModuleID = 'catln'
+
+                                " }
+                            )
+                            ( Value /r= llvmDefine
+                                ( Value ret= CStr
+                                    { csValue = "i32" }
+                                )
+                                ( Value name= CStr
+                                    { csValue = "main" }
+                                )
+                                ( Value body= /Data/List/Cons
+                                    ( Value /head= CStr
+                                        { csValue = "entry:" }
+                                    )
+                                    ( Value /tail= /Data/List/Cons
+                                        ( Value /head= CStr
+                                            { csValue = "  ret i32 0" }
+                                        )( Value /tail= Value /Data/List/Nil )
+                                    )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/llvmDefine"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /LLVM/llvmDefine( Value ret -> ∀/Data/String )( Value name -> ∀/Data/String )
+                            ( Value body -> ∀/Data/List/ConsList[ /T=∀/Data/String ] ) -> ∀/Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmDefine( Value ret )( Value name )( Value body ) -> ∀/Data/String = /operator++
+                            ( Value /l= join
+                                ( Value sep= CStr
+                                    { csValue = "
+                                    " }
+                                )
+                                ( Value parts= /Data/List/Cons
+                                    ( Value head= /operator++
+                                        ( Value /l= /operator++
+                                            ( Value /l= /operator++
+                                                ( Value /l= /operator++
+                                                    ( Value /l= CStr
+                                                        { csValue = "define " }
+                                                    )( Value /r= Value ret )
+                                                )
+                                                ( Value /r= CStr
+                                                    { csValue = " @" }
+                                                )
+                                            )( Value /r= Value name )
+                                        )
+                                        ( Value /r= CStr
+                                            { csValue = "() {" }
+                                        )
+                                    )( Value tail= Value body )
+                                )
+                            )
+                            ( Value /r= CStr
+                                { csValue = "
+                                }
+                                " }
+                            )
+                        ]
+                    }
+                )
+            ]
+        , omDecls = []
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr
+                { csValue = "# LLVM Compiler
+                The compiler from Catln to the [LLVM Compiler Infrastructure](https://llvm.org/), written in
+                Catln. A build of a runnable function is a call of [llvm] on it, and what it answers with is the
+                program as an LLVM module in its textual form (a `.ll` file), built up as a [String].
+                It is a placeholder for now: whatever it is given, the module it writes is one whose `main`
+                ends with the exit code 0." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## Writing a module
+                The parts of a module, each written as the text it is in a `.ll` file." }
+            )
+        ]
+    }

@@ -21,9 +21,6 @@ module(Catln)
   www(html -> String)= CatlnResult(files= [BuildFile(path= "index.html", contents= html)])
     # [www] is used to build web results.
 
-  llvm(c) -> CatlnResult..
-    # [llvm] runs the [LLVM Compiler](https://llvm.org/) to build the runnable argument [c] into a [CatlnResult] executable.
-    #runtime("llvm")
-
+  # [llvm], which builds a runnable function into an LLVM module, is declared in @llvm/main.ct@.
   every(/Catln/BuildFile.., isa= [/Catln/Doc/DShow])
   every(/Catln/CatlnResult.., isa= [/Catln/Doc/DShow])

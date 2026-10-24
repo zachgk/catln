@@ -1,0 +1,26 @@
+import "core"
+
+
+module(Catln)
+  # # LLVM Compiler
+    The compiler from Catln to the [LLVM Compiler Infrastructure](https://llvm.org/), written in
+    Catln. A build of a runnable function is a call of [llvm] on it, and what it answers with is the
+    program as an LLVM module in its textual form (a `.ll` file), built up as a [String].
+    It is a placeholder for now: whatever it is given, the module it writes is one whose `main`
+    ends with the exit code 0.
+  llvm(c) -> CatlnResult..
+    # [llvm] compiles the runnable argument [c] into a [CatlnResult] holding the LLVM module `main.ll`.
+  llvm(c)= CatlnResult(files= [BuildFile(path= "main.ll", contents= /LLVM/llvmPlaceholderModule)])
+module(LLVM)
+  # ## Writing a module
+    The parts of a module, each written as the text it is in a `.ll` file.
+  llvmDefine(ret -> String, name -> String, body -> /Data/List/ConsList[$T -> String]) -> String
+    # [llvmDefine] is the definition of the function [name], taking no arguments and returning a
+      [ret]. Its [body] is the lines of its basic blocks, each label and instruction written as it
+      appears in the function.
+  llvmDefine(ret, name, body)= join(sep= "\n", parts= /Data/List/Cons(head= "define " ++ ret ++ " @" ++ name ++ "() {", tail= body)) ++ "\n}\n"
+
+  llvmPlaceholderModule -> String
+    # [llvmPlaceholderModule] is the module every build compiles to for now: a `main` which ends at
+      once, with the exit code 0.
+  llvmPlaceholderModule= "; ModuleID = 'catln'\n\n" ++ llvmDefine(ret= "i32", name= "main", body= ["entry:", "  ret i32 0"])

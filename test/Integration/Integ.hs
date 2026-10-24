@@ -27,6 +27,7 @@ import           Semantics.Prgm
 import           Semantics.Types         (nameStr)
 import           Syntax.Ct.Formatter     (formatRootPrgm)
 import           Syntax.Ct.Parser.Syntax (PPrgmGraphData)
+import           Syntax.HsBuiltins.Types (BuiltFile (..), valResultFiles)
 import           Syntax.Parsers          (mkDesCanonicalImportStr)
 import           System.Directory        (createDirectoryIfMissing,
                                           doesFileExist, getCurrentDirectory)
@@ -55,6 +56,9 @@ goldenConvertDir = "test/Integration/golden/convert"
 
 goldenAnnotsDir :: String
 goldenAnnotsDir = "test/Integration/golden/annots"
+
+goldenLlvmDir :: String
+goldenLlvmDir = "test/Integration/golden/llvm"
 
 goldenWriteEnv :: String
 goldenWriteEnv = "GOLDEN_TEST_WRITE"
@@ -137,6 +141,21 @@ runAnnotsGoldenTest fileName annots step = do
       (graphFromEdges [((), fileName, [])])
       step
 
+-- | Golden test of the LLVM module a runnable page's @main@ compiles to, compared with
+-- test/Integration/golden/llvm: the @.ll@ file the build of @llvm(c= main)@ answers with
+-- (stack/llvm/main.ct). Only written, never assembled or run.
+runLlvmGoldenTest :: FileImport -> Val -> (String -> IO ()) -> IO ()
+runLlvmGoldenTest fileName built step = do
+  ll <- case valResultFiles built of
+    Right [BuiltFile{bfPath, bfContents}] | ".ll" `isSuffixOf` bfPath -> return bfContents
+    Right files -> assertFailure $ printf "The llvm build wrote %s rather than one .ll file" (show $ map bfPath files)
+    Left err -> assertFailure $ printf "The llvm build did not build a result: %s" err
+  runGoldenTestGen "llvm"
+    (\cwd _ -> T.unpack $ withoutCwd cwd $ T.pack ll)
+    (\rel -> goldenLlvmDir ++ rel ++ ".ll")
+    (graphFromEdges [((), fileName, [])])
+    step
+
 runTest :: Bool -> IO CTSS -> String -> TestTree
 runTest runGolden getCtss fileNameStr = testCaseSteps fileNameStr $ \step -> do
   step $ printf "Read file %s..." fileNameStr
@@ -191,8 +210,10 @@ runTest runGolden getCtss fileNameStr = testCaseSteps fileNameStr $ \step -> do
     -- as holds a value and no functions, so it is the first fixture that cannot.
     when (evalBuildable targetMode) $ do
       lift $ step "Eval Build..."
-      _ <- getEvalBuild defaultEvalSession ctss fileName "main"
-      return ()
+      (built, _) <- getEvalBuild defaultEvalSession ctss fileName "main"
+      -- A runnable main is built by the LLVM compiler, and the module it compiles to is a golden.
+      when (runGolden && evalRunnable targetMode) $
+        lift $ runLlvmGoldenTest fileName built step
 
     lift $ step "Eval Annots..."
     annots <- getEvalAnnots ctss fileName

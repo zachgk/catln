@@ -1,0 +1,207 @@
+Prgm
+    { prgmObjMap = ObjectMapWith
+        { omItems = fromList
+            [
+                ( "/Catln/llvm"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/llvm( Value /c ) -> /Catln/CatlnResult.. ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Catln/llvm( Value /c ) -> /Catln/CatlnResult
+                            ( /files=/Data/List/Cons
+                                [ /T=/Catln/BuildFile
+                                    ( /path=( /Data/String/Text.. + /Catln/CStr )
+                                    , /contents=∀/Data/String
+                                    )
+                                ]
+                                ( /head=/Catln/BuildFile
+                                    ( /path=( /Data/String/Text.. + /Catln/CStr )
+                                    , /contents=∀/Data/String
+                                    )
+                                , /tail=/Data/List/Nil
+                                )
+                            ) = /Catln/CatlnResult
+                            ( Value /files -> /Data/List/Cons
+                                [ /T=/Catln/BuildFile
+                                    ( /path=( /Data/String/Text.. + /Catln/CStr )
+                                    , /contents=∀/Data/String
+                                    )
+                                ]
+                                ( /head=/Catln/BuildFile
+                                    ( /path=( /Data/String/Text.. + /Catln/CStr )
+                                    , /contents=∀/Data/String
+                                    )
+                                , /tail=/Data/List/Nil
+                                ) = /Data/List/Cons
+                                ( Value /head -> /Catln/BuildFile
+                                    ( /path=( /Data/String/Text.. + /Catln/CStr )
+                                    , /contents=∀/Data/String
+                                    ) = /Catln/BuildFile
+                                    ( Value /path ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = CStr
+                                        { csValue = "main.ll" }
+                                    )( Value /contents -> ∀/Data/String = Value /LLVM/llvmPlaceholderModule )
+                                )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/llvmPlaceholderModule"
+                , ObjectMapItem
+                    { omiDecls = [ Value /LLVM/llvmPlaceholderModule -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /LLVM/llvmPlaceholderModule -> ∀/Data/String = /operator++
+                            ( Value /l ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
+                                { csValue = "; ModuleID = 'catln'
+
+                                " }
+                            )
+                            ( Value /r -> ∀/Data/String = /LLVM/llvmDefine
+                                ( Value /ret ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
+                                    { csValue = "i32" }
+                                )
+                                ( Value /name ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
+                                    { csValue = "main" }
+                                )
+                                ( Value /body -> /Data/List/Cons
+                                    [ /T=( /Data/String/Text.. + /Catln/CStr ) ]
+                                    ( /head=( /Data/String/Text.. + /Catln/CStr )
+                                    , /tail=/Data/List/Cons
+                                        [ /T=( /Data/String/Text.. + /Catln/CStr ) ]
+                                        ( /head=( /Data/String/Text.. + /Catln/CStr )
+                                        , /tail=/Data/List/Nil
+                                        )
+                                    ) = /Data/List/Cons
+                                    ( Value /head ->
+                                        ( /Data/String/Text
+                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                        ) = CStr
+                                        { csValue = "entry:" }
+                                    )
+                                    ( Value /tail -> /Data/List/Cons
+                                        [ /T=( /Data/String/Text.. + /Catln/CStr ) ]
+                                        ( /head=( /Data/String/Text.. + /Catln/CStr )
+                                        , /tail=/Data/List/Nil
+                                        ) = /Data/List/Cons
+                                        ( Value /head ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                            ) = CStr
+                                            { csValue = "  ret i32 0" }
+                                        )( Value /tail -> /Data/List/Nil = Value /Data/List/Nil )
+                                    )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/llvmDefine"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /LLVM/llvmDefine( Value /ret -> ∀/Data/String )( Value /name -> ∀/Data/String )
+                            ( Value /body -> ∀/Data/List/ConsList[ /T=∀/Data/String ] ) -> ∀/Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmDefine( Value /ret -> ∀/Data/String )( Value /name -> ∀/Data/String )
+                            ( Value /body -> ∀/Data/List/ConsList[ /T=∀/Data/String ] ) -> ∀/Data/String = /operator++
+                            ( Value /l -> ∀/Data/String = /Data/String/join
+                                ( Value /sep ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                    ) = CStr
+                                    { csValue = "
+                                    " }
+                                )
+                                ( Value /parts -> /Data/List/Cons[ /T=∀/Data/String ]
+                                    ( /head=∀/Data/String
+                                    , /tail=∀/Data/List/ConsList[ /T=$_/T ]
+                                    ) = /Data/List/Cons
+                                    ( Value /head -> ∀/Data/String = /operator++
+                                        ( Value /l -> ∀/Data/String = /operator++
+                                            ( Value /l -> ∀/Data/String = /operator++
+                                                ( Value /l -> ∀/Data/String = /operator++
+                                                    ( Value /l ->
+                                                        ( /Data/String/Text
+                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                        ) = CStr
+                                                        { csValue = "define " }
+                                                    )( Value /r -> TVArg /ret = Value /ret )
+                                                )
+                                                ( Value /r ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = CStr
+                                                    { csValue = " @" }
+                                                )
+                                            )( Value /r -> TVArg /name = Value /name )
+                                        )
+                                        ( Value /r ->
+                                            ( /Data/String/Text
+                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                            ) = CStr
+                                            { csValue = "() {" }
+                                        )
+                                    )( Value /tail -> TVArg /body = Value /body )
+                                )
+                            )
+                            ( Value /r ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                ) = CStr
+                                { csValue = "
+                                }
+                                " }
+                            )
+                        ]
+                    }
+                )
+            ]
+        , omDecls = []
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
+                { csValue = "# LLVM Compiler
+                The compiler from Catln to the [LLVM Compiler Infrastructure](https://llvm.org/), written in
+                Catln. A build of a runnable function is a call of [llvm] on it, and what it answers with is the
+                program as an LLVM module in its textual form (a `.ll` file), built up as a [String].
+                It is a placeholder for now: whatever it is given, the module it writes is one whose `main`
+                ends with the exit code 0." }
+            )
+        , /Catln/#md
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
+                { csValue = "## Writing a module
+                The parts of a module, each written as the text it is in a `.ll` file." }
+            )
+        ]
+    }

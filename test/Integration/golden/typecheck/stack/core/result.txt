@@ -2,16 +2,6 @@ Prgm
     { prgmObjMap = ObjectMapWith
         { omItems = fromList
             [
-                ( "/Catln/llvm"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls =
-                        [ /Catln/llvm( Value /c ) -> /Catln/CatlnResult.. ]
-                    , omiRefineDecls = []
-                    , omiDefs = []
-                    }
-                )
-            ,
                 ( "/Catln/www"
                 , ObjectMapItem
                     { omiDecls = []
@@ -77,7 +67,6 @@ Prgm
     , prgmCg =
         [ CGType
         , CGType
-        , CGType
         , CGClass
             { cgcSealed = False
             , cgcPartial = /Catln/BuildFile
@@ -100,6 +89,13 @@ Prgm
                 reads, because the compiler reads a build result back out of an evaluation itself — so what the
                 type is called there and what it is read as in Haskell are one thing rather than two kept in
                 step. [CatlnResult] around it is still declared here." }
+            )
+        , /Catln/#md
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
+                { csValue = "[llvm], which builds a runnable function into an LLVM module, is declared in @llvm/main.ct@." }
             )
         ]
     }

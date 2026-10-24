@@ -53,7 +53,7 @@ import           Syntax.Ct.Prgm          (RawObjArr (..), RawPrgm (..),
                                           RawStatementTree (..))
 import           Syntax.Ct.Results       (AnnotShown (..), notePage,
                                           showAnnotResults, statementStart)
-import           Syntax.HsBuiltins.Types (oneFileResult, valResultFiles)
+import           Syntax.HsBuiltins.Types (valResultFiles)
 import           Text.Megaparsec         (sourceName)
 import           Text.Printf
 import           TreeBuild
@@ -1458,7 +1458,8 @@ evalBuild session function prgm = do
   let targetMode = evalPrgmTargetMode function prgm
   input <-  case targetMode of
         EvalRunWithContext function' ->
-          -- Case for eval llvm(c=Context(value=main, io=IO))
+          -- Case for a runnable main, compiled by the Catln LLVM compiler: llvm(c=main), declared
+          -- in stack/llvm/main.ct
           return $ eVal "/Catln/llvm" `eApply` ("/c", eVal function')
         EvalBuildWithContext function' ->
           -- Case for buildable ContextIn(value=main, io=IO)
@@ -1475,14 +1476,9 @@ evalBuild session function prgm = do
   let res = case res0 of
         TupleVal n args | n == ContextStr, Just v <- H.lookup contextValStr args -> v
         _ -> res0
-  case res of
-    (LLVMVal _) -> do
-      -- llvmStr <- codegenExInit toCodegen
-      let llvmStr = "LLVM Placeholder result"
-      return (oneFileResult "out.ll" llvmStr, results)
-    -- Checked here rather than merely returned, so that a value which is not a result is reported
-    -- as the compilation failure it is instead of reaching whoever asked for the build.
-    val -> case valResultFiles val of
-      Right _ -> return (val, results)
-      Left err -> asCResT $ CErr [MkCNote $ GenCErr Nothing $ printf "Eval %s did not build a %s: %s" function catlnResultPath err]
+  -- Checked here rather than merely returned, so that a value which is not a result is reported
+  -- as the compilation failure it is instead of reaching whoever asked for the build.
+  case valResultFiles res of
+    Right _ -> return (res, results)
+    Left err -> asCResT $ CErr [MkCNote $ GenCErr Nothing $ printf "Eval %s did not build a %s: %s" function catlnResultPath err]
 
