@@ -801,8 +801,10 @@ exprWhereConds (TupleApply _ (_, b) (EAppSpread a)) = exprWhereConds b ++ exprWh
 exprWithMetaType :: (Show m) => Type -> Expr m -> Expr m
 exprWithMetaType t e = exprWithMeta (mWithType t (getExprMeta e)) e
 
+-- | The type node of every name an object map holds an object under: one per name, however many
+-- objects it holds there, as a graph has one node per key.
 classGraphFromObjs :: (ExprClass e, MetaDat m, Show m, Show (e m)) => ObjectMap e m -> ClassGraph
-classGraphFromObjs objMap = ClassGraph $ graphFromEdges $ map (\oa -> (CGType, PTypeName (oaObjPath oa), [])) $ flatObjectMap objMap
+classGraphFromObjs objMap = ClassGraph $ graphFromEdges $ map (\n -> (CGType, PTypeName n, [])) $ S.toList $ S.fromList $ map oaObjPath $ flatObjectMap objMap
 
 mapExprPath :: (Show m) => ((Meta m, TypeName) -> Expr m) -> Expr m -> Expr m
 mapExprPath f (Value m n) = f (m, n)

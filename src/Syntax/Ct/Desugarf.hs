@@ -23,6 +23,7 @@ import           Text.Printf
 import           CRes
 import           CtConstants
 import           Data.Bifunctor                   (first)
+import           Data.Containers.ListUtils        (nubOrd)
 import           Data.Graph                       hiding (path)
 import           Data.List                        (partition)
 import           MapMeta
@@ -230,7 +231,8 @@ desMultiTypeDef statementEnv@(inheritPath, _) (MultiTypeDef clssExpr dataExprs e
   let objs = objectMapFromList $ map (desMultiTypeDefObj inheritPath classVars) $ rights $ map eitherTypeVarExpr dataExprs
   let objPaths = map (PRelativeName . oaObjPath) $ flatObjectMap objs
 
-  let typeCGNodes = map (CGType, , []) objPaths
+  -- One type node per name, however many of the objects share it.
+  let typeCGNodes = map (CGType, , []) (nubOrd objPaths)
   let classCGNode = (CGClass True clss' dataTypes (desObjDocComment subStatements), PClassName (makeAbsoluteName (mkName (show path'))), objPaths)
   let extendNodes = [(CGClass False (exprToPartialType extendClass) [classPartial clss'] Nothing, PClassName (exprPath extendClass), [PClassName $ makeAbsoluteName $ mkName $ show path']) | extendClass <- extends]
   let classGraph' = ClassGraph $ graphFromEdges (classCGNode:extendNodes ++ typeCGNodes)
