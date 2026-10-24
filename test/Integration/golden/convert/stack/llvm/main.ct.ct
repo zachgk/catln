@@ -6,21 +6,86 @@ module(Catln)
     The compiler from Catln to the [LLVM Compiler Infrastructure](https://llvm.org/), written in
     Catln. A build of a runnable function is a call of [llvm] on it, and what it answers with is the
     program as an LLVM module in its textual form (a `.ll` file), built up as a [String].
-    It is a placeholder for now: whatever it is given, the module it writes is one whose `main`
-    ends with the exit code 0.
+    The compiler follows the definitions of the program from the function it is given: it compiles
+    that function, and each function a compiled one calls, until none is left to compile.
   llvm(c) -> CatlnResult..
     # [llvm] compiles the runnable argument [c] into a [CatlnResult] holding the LLVM module `main.ll`.
-  llvm(c)= CatlnResult(files= [BuildFile(path= "main.ll", contents= /LLVM/llvmPlaceholderModule)])
+      The [/LLVM/LlvmProgram] state is made here, holding [c] as the one function to compile, and
+      is dropped again before [llvm] answers: [/LLVM/llvmProgram] answers with the finished module.
+  llvm(c)= CatlnResult(files= [BuildFile(path= "main.ll", contents= /Data/Context/unwrap(this= /ContextIn(value= /LLVM/llvmProgram, ctx= (llvmprogram= /LLVM/LlvmProgram(todo= [/LLVM/LlvmTodo(fun= c)], functions= /Data/List/Nil)))))])
 module(LLVM)
+  # ## Compiling a program
+    A program is compiled in a [Context] holding an [LlvmProgram]: what has been compiled so far,
+    and what is still to be compiled. Each function is compiled in turn, in a [Context] holding an
+    [LlvmFn] as well: the lines of that one function.
+  data(LlvmTodo(fun))
+    # An [LlvmTodo] is a function still to be compiled: [fun] is its name, as a value.
+  data(LlvmProgram(todo -> /Data/List/ConsList[$T -> LlvmTodo..], functions -> /Data/List/ConsList[$T -> String]))
+    # An [LlvmProgram] is a program being compiled: the functions still [todo], and the
+      [functions] already compiled, each as the text of its definition, the latest first.
+  data(LlvmFn(next -> Integer, lines -> /Data/List/ConsList[$T -> String]))
+    # An [LlvmFn] is a function being compiled: [next] is the number of the next register it
+      names, and [lines] are the lines of its body written so far, the latest first.
+
+  llvmProgram{LlvmProgram(todo, functions)} -> String{llvmprogram -> LlvmProgram..}
+    # [llvmProgram] compiles each function [todo], and the functions they call, and answers with
+      the module of them all.
+  llvmProgram{LlvmProgram(todo= /Data/List/Nil, functions)}= (llvmModule(functions= functions)){LlvmProgram(todo= /Data/List/Nil, functions= functions)}
+  llvmProgram{LlvmProgram(todo= /Data/List/Cons(head= LlvmTodo(fun), tail), functions)} =
+    _<- (){LlvmProgram(todo= tail, functions= functions)}
+    _<- llvmFunction(fun= fun)
+    text<- llvmProgram
+    text
+
+  llvmFunction{LlvmProgram(todo, functions)}(fun) -> (){llvmprogram -> LlvmProgram..}
+    # [llvmFunction] compiles the function [fun] and adds it to the program's [functions]. It is
+      compiled in a fresh [LlvmFn].
+    # TODO The [LlvmFn] is replaced by the next function's rather than removed when the function is
+    #   done. It needs a state added within a scope and removed when it ends, which is not supported
+    #   yet (see [imperative] in @memory/main.ct@).
+    # TODO Every function is compiled to a placeholder for now, as its body is not yet read.
+  llvmFunction{LlvmProgram(todo, functions)}(fun) =
+    _<- (){LlvmFn(next= 0, lines= /Data/List/Nil)}
+    _<- llvmEmit(line= "  ; TODO unsupported: the body of the function")
+    _<- llvmEmit(line= "  ret i32 0")
+    body<- llvmLines
+    _<- llvmAddFunction(text= llvmDefine(ret= "i32", name= "main", body= /Data/List/Cons(head= "entry:", tail= body)))
+    ()
+
+  llvmAddFunction{LlvmProgram(todo, functions)}(text -> String)= (){LlvmProgram(todo= todo, functions= /Data/List/Cons(head= text, tail= functions))}
+    # [llvmAddFunction] adds the compiled function [text] to the program.
+
+  # ## Compiling a function
+  llvmEmit{LlvmFn(next, lines)}(line -> String)= (){LlvmFn(next= next, lines= /Data/List/Cons(head= line, tail= lines))}
+    # [llvmEmit] writes the [line] at the end of the function's body.
+
+  llvmLines{LlvmFn(next, lines)}= (llvmReversed(lines= lines, acc= /Data/List/Nil)){LlvmFn(next= next, lines= lines)}
+    # [llvmLines] are the lines of the function's body, in the order they were written.
+
+  llvmReversed(lines -> /Data/List/ConsList[$T -> String], acc -> /Data/List/ConsList[$T -> String]) -> /Data/List/ConsList[$T -> String]
+    # [llvmReversed] is [lines] backwards, in front of [acc].
+  llvmReversed(lines= /Data/List/Nil, acc)= acc
+  llvmReversed(lines= /Data/List/Cons(head, tail), acc)= llvmReversed(lines= tail, acc= /Data/List/Cons(head= head, tail= acc))
+
+  > join(sep= ",", parts= llvmReversed(lines= ["c", "b", "a"], acc= /Data/List/Nil))
+    >>> a,b,c
   # ## Writing a module
     The parts of a module, each written as the text it is in a `.ll` file.
+  llvmModule(functions -> /Data/List/ConsList[$T -> String]) -> String
+    # [llvmModule] is the module of the compiled [functions], given the latest first.
+  llvmModule(functions)= "; ModuleID = 'catln'\n\n" ++ join(sep= "\n", parts= llvmReversed(lines= functions, acc= /Data/List/Nil))
+
   llvmDefine(ret -> String, name -> String, body -> /Data/List/ConsList[$T -> String]) -> String
     # [llvmDefine] is the definition of the function [name], taking no arguments and returning a
       [ret]. Its [body] is the lines of its basic blocks, each label and instruction written as it
       appears in the function.
   llvmDefine(ret, name, body)= join(sep= "\n", parts= /Data/List/Cons(head= "define " ++ ret ++ " @" ++ name ++ "() {", tail= body)) ++ "\n}\n"
 
-  llvmPlaceholderModule -> String
-    # [llvmPlaceholderModule] is the module every build compiles to for now: a `main` which ends at
-      once, with the exit code 0.
-  llvmPlaceholderModule= "; ModuleID = 'catln'\n\n" ++ llvmDefine(ret= "i32", name= "main", body= ["entry:", "  ret i32 0"])
+  > llvmModule(functions= [llvmDefine(ret= "i32", name= "main", body= ["entry:", "  ret i32 0"])])
+    >>> ; ModuleID = 'catln'
+    >>>
+    >>> define i32 @main() {
+    >>> entry:
+    >>>   ret i32 0
+    >>> }
+    >>>

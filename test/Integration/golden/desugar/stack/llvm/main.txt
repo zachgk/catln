@@ -2,6 +2,51 @@ Prgm
     { prgmObjMap = ObjectMapWith
         { omItems = fromList
             [
+                ( "/LLVM/llvmFunction.$5991a2"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmFunction.$5991a2
+                            ( Value $5991a2-arg= /Context( Value value )
+                                ( Value ctx@Value $5991a2-ctx )
+                            )
+                            ( Value $5991a2-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= llvmEmit
+                                    ( Value line= CStr
+                                        { csValue = "  ; TODO unsupported: the body of the function" }
+                                    )
+                                )
+                                ( Value ctx= /
+                                    ( ..Value $5991a2-states )
+                                    ( ..Value $5991a2-ctx )
+                                )
+                            )
+                            ( fn( Value v )= /LLVM/llvmFunction.$5991a2.$a79854( Value $a79854-arg= Value v )
+                                ( Value $a79854-states= /
+                                    ( ..Value $5991a2-states )
+                                    ( ..Value $5991a2-ctx )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/LlvmProgram"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /LLVM/LlvmProgram
+                            ( Value /todo -> ∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ] )
+                            ( Value /functions -> ∀/Data/List/ConsList[ /T=∀/Data/String ] )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/llvm"
                 , ObjectMapItem
                     { omiDecls =
@@ -14,42 +59,193 @@ Prgm
                                 ( Value /head= BuildFile
                                     ( Value path= CStr
                                         { csValue = "main.ll" }
-                                    )( Value contents= Value /LLVM/llvmPlaceholderModule )
+                                    )
+                                    ( Value contents= /Data/Context/unwrap
+                                        ( Value this= /ContextIn( Value value= Value /LLVM/llvmProgram )
+                                            ( Value ctx= /
+                                                ( Value llvmprogram= /LLVM/LlvmProgram
+                                                    ( Value todo= /Data/List/Cons
+                                                        ( Value /head= /LLVM/LlvmTodo( Value fun= Value c ) )( Value /tail= Value /Data/List/Nil )
+                                                    )( Value functions= Value /Data/List/Nil )
+                                                )
+                                            )
+                                        )
+                                    )
                                 )( Value /tail= Value /Data/List/Nil )
                             )
                         ]
                     }
                 )
             ,
-                ( "/LLVM/llvmPlaceholderModule"
+                ( "/LLVM/llvmProgram.$7cac4a.$cae351"
                 , ObjectMapItem
-                    { omiDecls = [ Value /LLVM/llvmPlaceholderModule -> ∀/Data/String ]
+                    { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ Value /LLVM/llvmPlaceholderModule -> ∀/Data/String = /operator++
+                        [ /LLVM/llvmProgram.$7cac4a.$cae351
+                            ( Value $cae351-arg= /Context( Value value )( Value ctx@Value $cae351-ctx ) )( Value $cae351-states )= /Data/bindap
+                            ( Value m= /ContextIn( Value value= Value llvmProgram )
+                                ( Value ctx= /( ..Value $cae351-states )( ..Value $cae351-ctx ) )
+                            )
+                            ( fn( Value v )= /LLVM/llvmProgram.$7cac4a.$cae351.$b01fec( Value $b01fec-arg= Value v )
+                                ( Value $b01fec-states= /( ..Value $cae351-states )( ..Value $cae351-ctx ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /ContextIn( Value /value= Value /LLVM/llvmProgram )
+                            ( Value /ctx= /
+                                ( Value llvmprogram= LlvmProgram( Value todo )( Value functions )@Value llvmprogram )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=∀/Data/String
+                            , /ctx=( /llvmprogram=/LLVM/LlvmProgram.. )..
+                            )
+                        , /ContextIn
+                            ( Value /value= /LLVM/llvmFunction( Value fun ) )
+                            ( Value /ctx= /
+                                ( Value llvmprogram= LlvmProgram( Value todo )( Value functions )@Value llvmprogram )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=()
+                            , /ctx=( /llvmprogram=/LLVM/LlvmProgram.. )..
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value /LLVM/llvmProgram )
+                            ( Value /ctx= /
+                                ( Value llvmprogram= LlvmProgram( Value todo= Value /Data/List/Nil )( Value functions )@Value llvmprogram )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=∀/Data/String
+                            , /ctx=( /llvmprogram=/LLVM/LlvmProgram.. )..
+                            ) = /Context
+                            ( Value /value= llvmModule( Value functions= Value functions ) )
+                            ( Value /ctx= /
+                                ( Value llvmprogram= LlvmProgram( Value todo= Value /Data/List/Nil )( Value functions= Value functions ) )
+                            )
+                        , /ContextIn( Value /value= Value /LLVM/llvmProgram )
+                            ( Value /ctx= /
+                                ( Value llvmprogram= LlvmProgram
+                                    ( Value todo= /Data/List/Cons
+                                        ( Value head= LlvmTodo( Value fun ) )( Value tail )
+                                    )( Value functions )@Value llvmprogram
+                                )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=∀/Data/String
+                            , /ctx=( /llvmprogram=/LLVM/LlvmProgram.. )..
+                            ) = /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= /Context( Value /value= Value / )
+                                    ( Value /ctx= /
+                                        ( Value llvmprogram= LlvmProgram( Value todo= Value tail )( Value functions= Value functions ) )
+                                    )
+                                )
+                                ( Value ctx= /( Value llvmprogram= Value llvmprogram ) )
+                            )
+                            ( fn( Value v )= /LLVM/llvmProgram.$7cac4a( Value /fun= Value /fun )
+                                ( Value $7cac4a-arg= Value v )
+                                ( Value $7cac4a-states= /( Value llvmprogram= Value llvmprogram ) )
+                            )
+                        , /ContextIn
+                            ( Value /value= /LLVM/llvmFunction( Value fun ) )
+                            ( Value /ctx= /
+                                ( Value llvmprogram= LlvmProgram( Value todo )( Value functions )@Value llvmprogram )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=()
+                            , /ctx=( /llvmprogram=/LLVM/LlvmProgram.. )..
+                            ) = /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= /Context( Value /value= Value / )
+                                    ( Value /ctx= /
+                                        ( Value llvmfn= LlvmFn
+                                            ( Value next= CInt
+                                                { ciValue = 0 }
+                                            )( Value lines= Value /Data/List/Nil )
+                                        )
+                                    )
+                                )
+                                ( Value ctx= /( Value llvmprogram= Value llvmprogram ) )
+                            )
+                            ( fn( Value v )= /LLVM/llvmFunction.$5991a2
+                                ( Value $5991a2-arg= Value v )
+                                ( Value $5991a2-states= /( Value llvmprogram= Value llvmprogram ) )
+                            )
+                        , /ContextIn
+                            ( Value /value= /LLVM/llvmAddFunction( Value text -> ∀/Data/String ) )
+                            ( Value /ctx= /
+                                ( Value llvmprogram= LlvmProgram( Value todo )( Value functions )@Value llvmprogram )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Context( Value /value= Value / )
+                            ( Value /ctx= /
+                                ( Value llvmprogram= LlvmProgram( Value todo= Value todo )
+                                    ( Value functions= /Data/List/Cons( Value head= Value text )( Value tail= Value functions ) )
+                                )
+                            )
+                        , /ContextIn
+                            ( Value /value= /LLVM/llvmEmit( Value line -> ∀/Data/String ) )
+                            ( Value /ctx= /
+                                ( Value llvmfn= LlvmFn( Value next )( Value lines )@Value llvmfn )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Context( Value /value= Value / )
+                            ( Value /ctx= /
+                                ( Value llvmfn= LlvmFn( Value next= Value next )
+                                    ( Value lines= /Data/List/Cons( Value head= Value line )( Value tail= Value lines ) )
+                                )
+                            )
+                        , /ContextIn( Value /value= Value /LLVM/llvmLines )
+                            ( Value /ctx= /
+                                ( Value llvmfn= LlvmFn( Value next )( Value lines )@Value llvmfn )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Context
+                            ( Value /value= llvmReversed( Value lines= Value lines )( Value acc= Value /Data/List/Nil ) )
+                            ( Value /ctx= /
+                                ( Value llvmfn= LlvmFn( Value next= Value next )( Value lines= Value lines ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/LlvmTodo"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /LLVM/LlvmTodo( Value /fun ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/LLVM/llvmModule"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /LLVM/llvmModule
+                            ( Value functions -> ∀/Data/List/ConsList[ /T=∀/Data/String ] ) -> ∀/Data/String
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmModule( Value functions ) -> ∀/Data/String = /operator++
                             ( Value /l= CStr
                                 { csValue = "; ModuleID = 'catln'
 
                                 " }
                             )
-                            ( Value /r= llvmDefine
-                                ( Value ret= CStr
-                                    { csValue = "i32" }
+                            ( Value /r= join
+                                ( Value sep= CStr
+                                    { csValue = "
+                                    " }
                                 )
-                                ( Value name= CStr
-                                    { csValue = "main" }
-                                )
-                                ( Value body= /Data/List/Cons
-                                    ( Value /head= CStr
-                                        { csValue = "entry:" }
-                                    )
-                                    ( Value /tail= /Data/List/Cons
-                                        ( Value /head= CStr
-                                            { csValue = "  ret i32 0" }
-                                        )( Value /tail= Value /Data/List/Nil )
-                                    )
-                                )
+                                ( Value parts= llvmReversed( Value lines= Value functions )( Value acc= Value /Data/List/Nil ) )
                             )
                         ]
                     }
@@ -98,11 +294,199 @@ Prgm
                         ]
                     }
                 )
+            ,
+                ( "/LLVM/LlvmFn"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /LLVM/LlvmFn( Value /next -> /Data/Primitive/Integer )
+                            ( Value /lines -> ∀/Data/List/ConsList[ /T=∀/Data/String ] )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/LLVM/llvmProgram.$7cac4a"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmProgram.$7cac4a( Value /fun )
+                            ( Value $7cac4a-arg= /Context( Value value )
+                                ( Value ctx@Value $7cac4a-ctx )
+                            )
+                            ( Value $7cac4a-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= llvmFunction( Value fun= Value fun ) )
+                                ( Value ctx= /
+                                    ( ..Value $7cac4a-states )
+                                    ( ..Value $7cac4a-ctx )
+                                )
+                            )
+                            ( fn( Value v )= /LLVM/llvmProgram.$7cac4a.$cae351( Value $cae351-arg= Value v )
+                                ( Value $cae351-states= /
+                                    ( ..Value $7cac4a-states )
+                                    ( ..Value $7cac4a-ctx )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/llvmProgram.$7cac4a.$cae351.$b01fec"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmProgram.$7cac4a.$cae351.$b01fec
+                            ( Value $b01fec-arg= /Context( Value value@Value text )( Value ctx@Value $b01fec-ctx ) )( Value $b01fec-states )= /Context( Value value= Value text )
+                            ( Value ctx= /( ..Value $b01fec-states )( ..Value $b01fec-ctx ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/llvmFunction.$5991a2.$a79854.$c99305"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmFunction.$5991a2.$a79854.$c99305
+                            ( Value $c99305-arg= /Context( Value value )( Value ctx@Value $c99305-ctx ) )( Value $c99305-states )= /Data/bindap
+                            ( Value m= /ContextIn( Value value= Value llvmLines )
+                                ( Value ctx= /( ..Value $c99305-states )( ..Value $c99305-ctx ) )
+                            )
+                            ( fn( Value v )= /LLVM/llvmFunction.$5991a2.$a79854.$c99305.$47156d
+                                ( Value $47156d-arg= Value v )
+                                ( Value $47156d-states= /( ..Value $c99305-states )( ..Value $c99305-ctx ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/llvmReversed"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /LLVM/llvmReversed
+                            ( Value lines -> ∀/Data/List/ConsList[ /T=∀/Data/String ] )
+                            ( Value acc -> ∀/Data/List/ConsList[ /T=∀/Data/String ] ) -> ∀/Data/List/ConsList[ /T=∀/Data/String ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmReversed( Value lines= Value /Data/List/Nil )( Value acc ) -> ∀/Data/List/ConsList[ /T=∀/Data/String ] = Value acc
+                        , /LLVM/llvmReversed
+                            ( Value lines= /Data/List/Cons( Value head )( Value tail ) )( Value acc ) -> ∀/Data/List/ConsList[ /T=∀/Data/String ] = llvmReversed( Value lines= Value tail )
+                            ( Value acc= /Data/List/Cons( Value head= Value head )( Value tail= Value acc ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/llvmFunction.$5991a2.$a79854"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmFunction.$5991a2.$a79854
+                            ( Value $a79854-arg= /Context( Value value )( Value ctx@Value $a79854-ctx ) )( Value $a79854-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= llvmEmit
+                                    ( Value line= CStr
+                                        { csValue = "  ret i32 0" }
+                                    )
+                                )
+                                ( Value ctx= /( ..Value $a79854-states )( ..Value $a79854-ctx ) )
+                            )
+                            ( fn( Value v )= /LLVM/llvmFunction.$5991a2.$a79854.$c99305( Value $c99305-arg= Value v )
+                                ( Value $c99305-states= /( ..Value $a79854-states )( ..Value $a79854-ctx ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/llvmFunction.$5991a2.$a79854.$c99305.$47156d"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmFunction.$5991a2.$a79854.$c99305.$47156d
+                            ( Value $47156d-arg= /Context( Value value@Value body )
+                                ( Value ctx@Value $47156d-ctx )
+                            )
+                            ( Value $47156d-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= llvmAddFunction
+                                    ( Value text= llvmDefine
+                                        ( Value ret= CStr
+                                            { csValue = "i32" }
+                                        )
+                                        ( Value name= CStr
+                                            { csValue = "main" }
+                                        )
+                                        ( Value body= /Data/List/Cons
+                                            ( Value head= CStr
+                                                { csValue = "entry:" }
+                                            )( Value tail= Value body )
+                                        )
+                                    )
+                                )
+                                ( Value ctx= /
+                                    ( ..Value $47156d-states )
+                                    ( ..Value $47156d-ctx )
+                                )
+                            )
+                            ( fn( Value v )= /LLVM/llvmFunction.$5991a2.$a79854.$c99305.$47156d.$24e069
+                                ( Value $24e069-arg= Value v )
+                                ( Value $24e069-states= /
+                                    ( ..Value $47156d-states )
+                                    ( ..Value $47156d-ctx )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/llvmFunction.$5991a2.$a79854.$c99305.$47156d.$24e069"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmFunction.$5991a2.$a79854.$c99305.$47156d.$24e069
+                            ( Value $24e069-arg= /Context( Value value )
+                                ( Value ctx@Value $24e069-ctx )
+                            )
+                            ( Value $24e069-states )= /Context( Value value= Value / )
+                            ( Value ctx= /
+                                ( ..Value $24e069-states )
+                                ( ..Value $24e069-ctx )
+                            )
+                        ]
+                    }
+                )
             ]
         , omDecls = []
         }
     , prgmCg =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         ]
@@ -113,13 +497,82 @@ Prgm
                 The compiler from Catln to the [LLVM Compiler Infrastructure](https://llvm.org/), written in
                 Catln. A build of a runnable function is a call of [llvm] on it, and what it answers with is the
                 program as an LLVM module in its textual form (a `.ll` file), built up as a [String].
-                It is a placeholder for now: whatever it is given, the module it writes is one whose `main`
-                ends with the exit code 0." }
+                The compiler follows the definitions of the program from the function it is given: it compiles
+                that function, and each function a compiled one calls, until none is left to compile." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## Compiling a program
+                A program is compiled in a [Context] holding an [LlvmProgram]: what has been compiled so far,
+                and what is still to be compiled. Each function is compiled in turn, in a [Context] holding an
+                [LlvmFn] as well: the lines of that one function." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## Compiling a function" }
+            )
+        , /Catln/#print
+            ( Value /p= join
+                ( Value sep= CStr
+                    { csValue = "," }
+                )
+                ( Value parts= llvmReversed
+                    ( Value lines= /Data/List/Cons
+                        ( Value /head= CStr
+                            { csValue = "c" }
+                        )
+                        ( Value /tail= /Data/List/Cons
+                            ( Value /head= CStr
+                                { csValue = "b" }
+                            )
+                            ( Value /tail= /Data/List/Cons
+                                ( Value /head= CStr
+                                    { csValue = "a" }
+                                )( Value /tail= Value /Data/List/Nil )
+                            )
+                        )
+                    )( Value acc= Value /Data/List/Nil )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "a,b,c" }
             )
         , /Catln/#md
             ( Value /text= CStr
                 { csValue = "## Writing a module
                 The parts of a module, each written as the text it is in a `.ll` file." }
+            )
+        , /Catln/#print
+            ( Value /p= llvmModule
+                ( Value functions= /Data/List/Cons
+                    ( Value /head= llvmDefine
+                        ( Value ret= CStr
+                            { csValue = "i32" }
+                        )
+                        ( Value name= CStr
+                            { csValue = "main" }
+                        )
+                        ( Value body= /Data/List/Cons
+                            ( Value /head= CStr
+                                { csValue = "entry:" }
+                            )
+                            ( Value /tail= /Data/List/Cons
+                                ( Value /head= CStr
+                                    { csValue = "  ret i32 0" }
+                                )( Value /tail= Value /Data/List/Nil )
+                            )
+                        )
+                    )( Value /tail= Value /Data/List/Nil )
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "; ModuleID = 'catln'
+
+                define i32 @main() {
+                entry:
+                  ret i32 0
+                }
+                " }
             )
         ]
     }
