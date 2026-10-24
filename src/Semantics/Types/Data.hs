@@ -1217,6 +1217,11 @@ data ClassSatInfo = ClassSatInfo {
   csiTypes    :: [Type]
   }
 
+-- | The sat cache of an env whose class graph is the one the cache was built from, with the
+-- name universe it has now: only 'scTypeNames' reads the names.
+satCacheWithNames :: SatCache -> S.HashSet TypeName -> SatCache
+satCacheWithNames sc names = sc{scTypeNames = S.toList names}
+
 -- | Builds the 'teSatCache' for a 'TypeEnv' with the given class graph and name universe.
 mkSatCache :: ClassGraph -> S.HashSet TypeName -> SatCache
 mkSatCache (ClassGraph cg) names = SatCache{

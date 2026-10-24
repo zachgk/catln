@@ -526,7 +526,10 @@ localArrowTypeEnv env (Constraint callArrs maybeConOa stypeVaenv _) = do
 
   return $ if H.null argVaenv' && null callArrs'
     then Nothing
-    else Just (mkTypeEnv $ Prgm argObjMap (classGraphFromObjs argObjMap) [])
+    -- The arrows declare no class and are members of none, so they bring no class graph: the
+    -- type nodes 'classGraphFromObjs' would give them are there only for classes to point at, and
+    -- merging them in rebuilt the program's whole class graph for every constraint.
+    else Just (mkTypeEnv $ Prgm argObjMap emptyClassGraph [])
 
 -- | The part of the reaches graph 'localArrowTypeEnv' reads for a constraint: what the declarations
 -- kept under the name of each of its objects say their higher-order arguments return. This is all

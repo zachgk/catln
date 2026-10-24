@@ -493,8 +493,10 @@ instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGr
       objMap@(ObjectMap lamTg) = objectMapFromList lamArrows
       unshadowed = baseOm{omItems = H.mapWithKey (\n item -> if H.member n lamTg then item{omiDecls = notArg (omiDecls item), omiDefs = notArg (omiDefs item)} else item) baseTg}
       notArg = filter ((/= ArgObj) . oaBasis)
+      -- The lambdas declare no class (see 'TypeCheck.TypeUtils.localArrowTypeEnv'), so they are
+      -- merged with no class graph and the program's is kept as it is.
       base = typeEnv{teTypeGraph = ObjArrTypeGraph unshadowed}
-      merged = withLocalArrowsOf (internLocalArrows typeEnv (LocalLambdas arrows (teLocalKey typeEnv))) (ObjArrTypeGraph objMap) base (mkTypeEnv (Prgm objMap (classGraphFromObjs objMap) []) <> base)
+      merged = withLocalArrowsOf (internLocalArrows typeEnv (LocalLambdas arrows (teLocalKey typeEnv))) (ObjArrTypeGraph objMap) base (mkTypeEnv (Prgm objMap emptyClassGraph []) <> base)
   typeGraphDeclaredArgResults typeEnv name =
     [ (inExprSingleton aObj, getMetaType aM)
     | decl <- maybe [] omiDecls (graphItemOf typeEnv (makeAbsoluteName name))

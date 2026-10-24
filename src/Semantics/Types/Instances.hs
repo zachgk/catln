@@ -30,9 +30,14 @@ import qualified Data.List            as L
 import           Semantics.Types.Data
 import           Semantics.Types.Ops
 import           Text.Printf
+import           Utils                (graphEmpty)
 
 
 instance Semigroup ClassGraph where
+  -- A graph with nothing in it adds nothing: the other is the merge as it is, rather than
+  -- listed out and rebuilt ('graphFromEdges' sorts every node again).
+  ClassGraph classGraphA <> ClassGraph classGraphB | graphEmpty classGraphB = ClassGraph classGraphA
+  ClassGraph classGraphA <> ClassGraph classGraphB | graphEmpty classGraphA = ClassGraph classGraphB
   (ClassGraph classGraphA) <> (ClassGraph classGraphB) = ClassGraph $ mapToGraph $ H.unionWith mergeClasses (graphToMap classGraphA) (graphToMap classGraphB)
     where
       graphToMap (g, nodeFromVertex, _) = H.fromList $ map ((\classData@(_, className, _) -> (className, classData)) . nodeFromVertex) $ vertices g
@@ -62,9 +67,17 @@ instance (Semigroup tg) => Semigroup (TypeEnv tg) where
   -- its reads of them are noted as that side's are. What it was merged with is no item of the
   -- series, and only the merge that names it ('Semantics.withLocalArrowsOf', 'teLocalKey') lets an
   -- answer read in it be handed to another env.
-  (TypeEnv cg1 tg1 n1 b1 d1 dc1 pe1 ap1 is1 _ _ ln1 rf1 r1 _ _) <> (TypeEnv cg2 tg2 n2 b2 d2 dc2 pe2 ap2 is2 _ _ ln2 rf2 r2 _ _) = TypeEnv cg' (tg1 <> tg2) n' (H.unionWith (++) b1 b2) (d1 || d2) (dc1 || dc2) (pe1 || pe2) (ap1 || ap2) (is1 || is2) Nothing Nothing (S.union ln1 ln2) (min rf1 rf2) reuse Nothing (mkSatCache cg' n')
+  e1@(TypeEnv cg1 tg1 n1 b1 d1 dc1 pe1 ap1 is1 _ _ ln1 rf1 r1 _ _) <> e2@(TypeEnv cg2 tg2 n2 b2 d2 dc2 pe2 ap2 is2 _ _ ln2 rf2 r2 _ _) = TypeEnv cg' (tg1 <> tg2) n' (H.unionWith (++) b1 b2) (d1 || d2) (dc1 || dc2) (pe1 || pe2) (ap1 || ap2) (is1 || is2) Nothing Nothing (S.union ln1 ln2) (min rf1 rf2) reuse Nothing satCache'
     where
       cg' = cg1 <> cg2
+      -- The class part of the sat cache is read off the class graph alone, so a side with no
+      -- classes keeps the other side's and only the names are new ('satCacheWithNames').
+      ClassGraph g1 = cg1
+      ClassGraph g2 = cg2
+      satCache'
+        | graphEmpty g2 = satCacheWithNames (teSatCache e1) n'
+        | graphEmpty g1 = satCacheWithNames (teSatCache e2) n'
+        | otherwise = mkSatCache cg' n'
       n' = S.union n1 n2
       reuse = case (r1, r2) of
         (Nothing, r)              -> r
