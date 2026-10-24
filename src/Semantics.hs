@@ -1222,10 +1222,15 @@ isDataConstruction typeEnv e = case maybeExprPath e of
 -- | The bindings of an application's ARGUMENT REFERENCES: each applied argument whose value is a
 -- bare reference to one of the enclosing object's arguments (@head=x@, @m= m@) is that argument's
 -- bound value in the env.
+--
+-- A lambda (@fn(v)= y@) is not one, whatever its body: its slot holds its input object, and its body
+-- is what it returns. Read as a reference, the slot was the referenced argument's value, which is
+-- not an input object, and met with the slot it was nothing.
 exprArgRefBindings :: (ExprClass e, Show m, Show (e m), MetaDat m) => TypeVarArgEnv -> e m -> H.HashMap ArgName Type
 exprArgRefBindings vaenv e = H.fromList
   [ (inExprSingleton (oaObjExpr a), fv)
   | a <- exprAppliedArgs e
+  , null (exprAppliedArgs (oaObjExpr a))
   , Just (Just valExpr, _) <- [oaArr a]
   , isJust (maybeExprPath valExpr)
   , null (exprAppliedArgs valExpr)
