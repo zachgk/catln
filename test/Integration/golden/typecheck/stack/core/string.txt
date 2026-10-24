@@ -3050,6 +3050,36 @@ Prgm
                 ( /Data/String/Text
                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
                 ) = CStr
+                { csValue = "A string ending in a newline prints its last line empty." }
+            )
+        , /Catln/#print
+            ( Value /p -> ∀/Data/String = /operator++
+                ( Value /l ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = CStr
+                    { csValue = "foo" }
+                )
+                ( Value /r ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = CStr
+                    { csValue = "
+                    " }
+                )
+            )
+            ( Value /result ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
+                { csValue = "foo
+                " }
+            )
+        , /Catln/#md
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
                 { csValue = "## Numbers as text" }
             )
         , /Catln/#print

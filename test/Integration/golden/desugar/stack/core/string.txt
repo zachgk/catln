@@ -2155,6 +2155,24 @@ Prgm
             )
         , /Catln/#md
             ( Value /text= CStr
+                { csValue = "A string ending in a newline prints its last line empty." }
+            )
+        , /Catln/#print
+            ( Value /p= /operator++
+                ( Value /l= CStr
+                    { csValue = "foo" }
+                )
+                ( Value /r= CStr
+                    { csValue = "
+                    " }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "foo
+                " }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
                 { csValue = "## Numbers as text" }
             )
         , /Catln/#print

@@ -144,7 +144,15 @@ formatStatement indent statement = formatIndent indent ++ statement' ++ "\n"
     resultText annot = case rawExprArgNamed resultAnnotText annot of
       Just (RawCExpr _ (CStr s)) -> Just s
       _                          -> Nothing
-    resultLines annot = maybe "" (concatMap (\l -> "\n" ++ formatIndent (indent + 1) ++ (if null l then ">>>" else ">>> " ++ l)) . lines) (resultText annot)
+    resultLines annot = maybe "" (concatMap (\l -> "\n" ++ formatIndent (indent + 1) ++ (if null l then ">>>" else ">>> " ++ l)) . resultTextLines) (resultText annot)
+    -- The lines of a result as its @>>>@ lines are read back ('Syntax.Ct.Parser.withResultLines'
+    -- joins them with newlines): a result ending in a newline ends in an empty line, which 'lines'
+    -- would drop, and the golden written would then never match the result it was written from.
+    resultTextLines "" = []
+    resultTextLines s = splitLines s
+    splitLines s = case break (== '\n') s of
+      (l, [])       -> [l]
+      (l, _ : rest) -> l : splitLines rest
     withoutResult = rawExprWithoutArg resultAnnotText
 
     -- What an annotation written as a line of text asks, with the prefix it is written with: a
