@@ -938,12 +938,17 @@ compactType typeEnv vaenv (UnionType Nothing partials0 consts0) =
 -- EVERY caller of the leaf stage settles: the merge is the same merge whether the leafs sit in a
 -- bare positive union or beside a predicate top.
 compactSettleMerged :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> PartialLeafs -> PartialLeafs
-compactSettleMerged typeEnv vaenv leafs =
-  let merged = compactPartialLeafs typeEnv vaenv leafs
-      before = S.fromList (splitUnionType leafs)
-      (fresh, kept) = L.partition (not . (`S.member` before)) (splitUnionType merged)
-      fresh' = map (compactPartialArgs typeEnv vaenv) fresh
-  in if fresh' == fresh then merged else compactSettleMerged typeEnv vaenv (joinUnionType (kept ++ fresh'))
+compactSettleMerged typeEnv vaenv leafs
+  -- The stage handed its input back (the common case): no leaf is new, so there is nothing to
+  -- settle, which is what the membership test below would find leaf by leaf.
+  | merged == leafs = merged
+  | fresh' == fresh = merged
+  | otherwise = compactSettleMerged typeEnv vaenv (joinUnionType (kept ++ fresh'))
+  where
+    merged = compactPartialLeafs typeEnv vaenv leafs
+    before = S.fromList (splitUnionType leafs)
+    (fresh, kept) = L.partition (not . (`S.member` before)) (splitUnionType merged)
+    fresh' = map (compactPartialArgs typeEnv vaenv) fresh
 
 -- | Recurse 'compactType' into a partial's argument and variable types. Compaction
 -- otherwise only operates on the top level of a union, so without this a recursive type
