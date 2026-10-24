@@ -51,7 +51,9 @@ import           System.IO.Unsafe     (unsafePerformIO)
 -- ('unsafePerformIO' is not duplicated), so a cycle is always met on the thread it is a cycle
 -- of. A thread's set is dropped when it empties, so the map holds only threads mid-derivation
 -- rather than every thread a server has run.
-type InFlight k = IORef (M.Map ThreadId (S.HashSet k))
+-- The goals are held hashed ('Hashed'): a goal is hashed once per derivation, for the test and
+-- the mark both.
+type InFlight k = IORef (M.Map ThreadId (S.HashSet (Hashed k)))
 
 newInFlight :: IO (InFlight k)
 newInFlight = newIORef M.empty
@@ -71,12 +73,13 @@ inFlightOn :: (Eq k, Hashable k) => InFlight k -> k -> IO a -> IO a -> IO a
 inFlightOn ref k reentered derive = do
   thread <- myThreadId
   inflight <- M.findWithDefault S.empty thread <$> readIORef ref
-  if S.member k inflight
+  hk <- evaluate (hashed k)
+  if S.member hk inflight
     then reentered
     else do
       -- Built before the table is touched: hashing the goal can read the graph, and so ask for
       -- goals of its own ('atomicModifyIORef'' must not be entered while it is being forced).
-      withGoal <- evaluate (S.insert k inflight)
+      withGoal <- evaluate (S.insert hk inflight)
       bracket_
         (atomicModifyIORef' ref $ \m -> (M.insert thread withGoal m, ()))
         (atomicModifyIORef' ref $ \m -> (if S.null inflight then M.delete thread m else M.insert thread inflight m, ()))

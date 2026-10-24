@@ -22,7 +22,7 @@ import           CtConstants         (builtinAnnotNames, contextValStr,
                                       errPageSuffix, macroThisKey,
                                       pattern ContextInStr)
 import           Data.Graph          (graphFromEdges)
-import           Data.Hashable       (Hashable (..), hash)
+import           Data.Hashable       (Hashable (..), Hashed, hash, hashed)
 import qualified Data.HashSet        as S
 import           Data.IORef          (IORef, atomicModifyIORef', newIORef,
                                       readIORef)
@@ -183,7 +183,7 @@ type QueryMemoKey = (Int, (Bool, Bool, Bool, Bool), PartialType, [(VarKey, Type)
 -- thrashed them away, while keep-all accumulated large-vaenv keys without bound. A new
 -- (fourth) token evicts the least-recently-used generation.
 {-# NOINLINE queryMemoRef #-}
-queryMemoRef :: IORef [(Int, H.HashMap QueryMemoKey ([(String, Type, Type)], ReadDeps))]
+queryMemoRef :: IORef [(Int, H.HashMap (Hashed QueryMemoKey) ([(String, Type, Type)], ReadDeps))]
 queryMemoRef = unsafePerformIO (newIORef [])
 
 -- | A query asked again in another env of a 'ReuseScope': the same question in every part of the
@@ -307,17 +307,19 @@ objArrGraphQueryMemo prune typeEnv vaenv partial tok = unsafePerformIO $ do
     -- Tracked by hash rather than by the key itself, to keep the set monomorphic. A collision
     -- costs a memo miss and nothing else, since the fallthrough recomputes the same answer.
     inProgress <- readIORef queryInProgressRef
-    if S.member (hash key) inProgress
+    -- Hashed once, for the in-progress mark, the lookup and the store.
+    hkey <- evaluate (hashed key)
+    if S.member (hash hkey) inProgress
       then return $ objArrGraphQueryRaw prune typeEnv vaenv partial
       else do
         gens <- readIORef queryMemoRef
-        case lookup tok gens >>= H.lookup key of
+        case lookup tok gens >>= H.lookup hkey of
           Just (r, deps) -> noteReadDeps deps >> return r
           Nothing -> do
             reused <- reusedAnswer
-            answer@(r, deps) <- maybe compute return reused
+            answer@(r, deps) <- maybe (compute hkey) return reused
             noteReadDeps deps
-            remember answer
+            remember hkey answer
             return r
     where
       -- Computed HERE, inside the mark, rather than published as a thunk to be forced later.
@@ -328,9 +330,9 @@ objArrGraphQueryMemo prune typeEnv vaenv partial tok = unsafePerformIO $ do
       -- mark's extent exactly the computation's, and publishes a value rather than a thunk —
       -- a half-evaluated one would leave the same hazard one level down. 'forceType' goes
       -- through the structure only, which is all of it that can ask the graph anything.
-      compute = bracket_
-        (atomicModifyIORef' queryInProgressRef (\s -> (S.insert (hash key) s, ())))
-        (atomicModifyIORef' queryInProgressRef (\s -> (S.delete (hash key) s, ())))
+      compute hkey = bracket_
+        (atomicModifyIORef' queryInProgressRef (\s -> (S.insert (hash hkey) s, ())))
+        (atomicModifyIORef' queryInProgressRef (\s -> (S.delete (hash hkey) s, ())))
         (memoReading typeEnv $ do
             let res = objArrGraphQueryRaw prune typeEnv vaenv partial
             _ <- evaluate (forceQueryResult res)
@@ -356,11 +358,11 @@ objArrGraphQueryMemo prune typeEnv vaenv partial tok = unsafePerformIO $ do
               | scope == rsScope
               , all (\(n, v) -> H.lookup n rsVersions == Just v) (H.toList deps) -> Just answer
             _ -> Nothing
-      remember answer = do
+      remember hkey answer = do
         atomicModifyIORef' queryMemoRef $ \gens2 ->
           let mTok = fromMaybe H.empty (lookup tok gens2)
               rest = filter ((/= tok) . fst) gens2
-          in ((tok, H.insert key answer mTok) : take 2 rest, ())
+          in ((tok, H.insert hkey answer mTok) : take 2 rest, ())
         case reuseScope of
           Nothing -> return ()
           Just ReuseScope{rsScope} -> atomicModifyIORef' queryReuseRef $ \(scope, table) ->

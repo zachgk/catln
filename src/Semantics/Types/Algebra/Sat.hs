@@ -23,6 +23,7 @@ module Semantics.Types.Algebra.Sat where
 
 import                          Control.Exception               (evaluate)
 import                          Control.Monad                   (foldM)
+import                          Data.Hashable                   (Hashed, hashed)
 import                qualified Data.HashMap.Strict             as H
 import                qualified Data.HashSet                    as S
 import                          Data.IORef                      (IORef,
@@ -758,14 +759,14 @@ type SatMemoKey = (Int, (Bool, Bool, Bool, Bool, Bool), [(VarKey, Type)], SatUse
 -- guard would have, had the path carried the stack. Without the marker such a cycle would
 -- re-derive the same goals without end while the hypothesis depth stays fixed.
 {-# NOINLINE satMemoRef #-}
-satMemoRef :: IORef [(Int, H.HashMap SatMemoKey (Bool, ReadDeps))]
+satMemoRef :: IORef [(Int, H.HashMap (Hashed SatMemoKey) (Bool, ReadDeps))]
 satMemoRef = unsafePerformIO (newIORef [])
 
 -- | The keys whose decision is currently BEING computed, on each thread's evaluation stack
 -- ('InFlight'). Never capped: its size is bounded by the recursion depth, and dropping a marker
 -- mid-derivation would silently re-open the very cycle the marker refutes.
 {-# NOINLINE satInFlightRef #-}
-satInFlightRef :: InFlight SatMemoKey
+satInFlightRef :: InFlight (Hashed SatMemoKey)
 satInFlightRef = unsafePerformIO newInFlight
 
 -- | Is some (finite) value able to satisfy the goal? Conservative towards 'True'.
@@ -788,7 +789,8 @@ satGoal :: TypeGraph tg => TypeEnv tg -> TypeVarArgEnv -> SatUse -> SatHyps -> S
 satGoal typeEnv vaenv satUse hyps goal = case teQueryCacheKey typeEnv of
   Nothing -> satGoalRaw typeEnv vaenv satUse hyps goal
   Just tok -> unsafePerformIO $ do
-    let key = (tok, (teDisableCompact typeEnv, tePrgmEnv typeEnv, teArgModeProjection typeEnv, teInSatDecision typeEnv, teDebug typeEnv), L.sortOn fst (H.toList vaenv), satUse, L.sort (S.toList hyps), goal)
+    -- Hashed once, for the lookup, the in-flight mark and the store.
+    key <- evaluate (hashed (tok, (teDisableCompact typeEnv, tePrgmEnv typeEnv, teArgModeProjection typeEnv, teInSatDecision typeEnv, teDebug typeEnv), L.sortOn fst (H.toList vaenv), satUse, L.sort (S.toList hyps), goal))
     -- The value table keeps the THREE most-recently-used token generations, exactly like
     -- the reach-query memo ('queryMemoRef'): hypothesis-path dependence is IN the key, so
     -- entries are reusable ACROSS top-level decisions under the same env token — an epoch

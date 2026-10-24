@@ -22,6 +22,7 @@
 module Semantics.Types.Algebra.Expand where
 
 import                          Control.Exception               (evaluate)
+import                          Data.Hashable                   (Hashed, hashed)
 import                qualified Data.HashMap.Strict             as H
 import                qualified Data.HashSet                    as S
 import                          Data.IORef                      (IORef,
@@ -300,7 +301,7 @@ expandClassPartialWithinNames typeEnv vaenv allowedNames = expandClassPartialAux
 type ExpandClassMemoKey = (Int, (Bool, Bool, Bool), Maybe (S.HashSet TypeName), PartialType, [(VarKey, Type)])
 
 {-# NOINLINE expandClassMemoRef #-}
-expandClassMemoRef :: IORef [(Int, H.HashMap ExpandClassMemoKey (Type, ReadDeps))]
+expandClassMemoRef :: IORef [(Int, H.HashMap (Hashed ExpandClassMemoKey) (Type, ReadDeps))]
 expandClassMemoRef = unsafePerformIO (newIORef [])
 
 expandClassPartialAux :: (TypeGraph tg) => Maybe (S.HashSet TypeName) -> TypeEnv tg -> TypeVarArgEnv -> PartialType -> Type
@@ -308,7 +309,8 @@ expandClassPartialAux mAllowed typeEnv vaenv pp = case teQueryCacheKey typeEnv o
   Nothing -> expandClassPartialAuxRaw mAllowed typeEnv vaenv pp
   Just _ | teInSatDecision typeEnv -> expandClassPartialAuxRaw mAllowed typeEnv vaenv pp
   Just tok -> unsafePerformIO $ do
-    let key = (tok, (teDisableCompact typeEnv, tePrgmEnv typeEnv, teArgModeProjection typeEnv), mAllowed, pp, L.sortOn fst (H.toList vaenv))
+    -- Hashed once, for the lookup and the store both.
+    key <- evaluate (hashed (tok, (teDisableCompact typeEnv, tePrgmEnv typeEnv, teArgModeProjection typeEnv), mAllowed, pp, L.sortOn fst (H.toList vaenv)))
     gens <- readIORef expandClassMemoRef
     case lookup tok gens >>= H.lookup key of
       Just (r, deps) -> noteReadDeps deps >> return r

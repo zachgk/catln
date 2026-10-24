@@ -28,6 +28,7 @@ module Semantics.Types.Algebra.Subtype where
 import                          Control.Exception               (evaluate)
 import                          Control.Monad                   (when)
 import                          Data.Either
+import                          Data.Hashable                   (Hashed, hashed)
 import                qualified Data.HashMap.Strict             as H
 import                qualified Data.HashSet                    as S
 import                          Data.IORef                      (IORef,
@@ -630,7 +631,7 @@ constantInType _ _ _ _ = False
 type SubtypeMemoKey = (Int, (Bool, Bool, Bool), [(VarKey, Type)], Type, Type)
 
 {-# NOINLINE subtypeMemoRef #-}
-subtypeMemoRef :: IORef [(Int, H.HashMap SubtypeMemoKey (Bool, ReadDeps))]
+subtypeMemoRef :: IORef [(Int, H.HashMap (Hashed SubtypeMemoKey) (Bool, ReadDeps))]
 subtypeMemoRef = unsafePerformIO (newIORef [])
 
 -- | Checks if one type contains another type. In set terminology, it is equivalent to subset or equal to ⊆.
@@ -644,7 +645,8 @@ isSubtypeOfWithEnv typeEnv vaenv t1 t2 = case teQueryCacheKey typeEnv of
   Just tok -> unsafePerformIO $ do
     let vaenvList = L.sortOn fst (H.toList vaenv)
     _ <- evaluate (forceType t1 `seq` forceType t2 `seq` foldr (\(_, v) acc -> forceType v `seq` acc) () vaenvList)
-    let key = (tok, (teDisableCompact typeEnv, tePrgmEnv typeEnv, teArgModeProjection typeEnv), vaenvList, t1, t2)
+    -- Hashed once, for the lookup and the store both.
+    key <- evaluate (hashed (tok, (teDisableCompact typeEnv, tePrgmEnv typeEnv, teArgModeProjection typeEnv), vaenvList, t1, t2))
     gens <- readIORef subtypeMemoRef
     case lookup tok gens >>= H.lookup key of
       Just (r, deps) -> noteReadDeps deps >> return r
