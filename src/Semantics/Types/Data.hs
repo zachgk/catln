@@ -90,7 +90,13 @@ data PtArgMode = PtArgMode {
   ptArgLb  :: Bool,
   ptArgUb  :: Bool,
   ptArgOpt :: S.HashSet ArgName
-  } deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
+  } deriving (Eq, Ord, Show, Generic, ToJSON)
+
+-- | Equal to the derived hash (its fields in order; a single constructor hashes no tag), written
+-- out for the reason 'TypeVarLoc''s is: every 'PartialType' and 'PartialArgsOption' hash ends in
+-- one, and the derived instance walked the generic representation each time.
+instance Hashable PtArgMode where
+  hashWithSalt s (PtArgMode lb ub opt) = s `hashWithSalt` lb `hashWithSalt` ub `hashWithSalt` opt
 
 -- | How a partial's listed arguments bound a matching instance's, read as a Catln type. Already a
 -- record, so its whole instance is what it says.
