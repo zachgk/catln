@@ -589,10 +589,9 @@ instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGr
   -- @/operator++@ against a module-keyed @/Data/…/operator++@ objMap entry) matches by
   -- 'relativeNameFilter', the same fallback 'typeGraphArgKeys' uses.
   --
-  -- Only a name spelled relatively is looked for that way. An absolute name the graph does not
-  -- hold names nothing in it: read as a suffix it could only match a key with an empty path
-  -- component before it, which is no spelling of it, and the scan of every key (once per meet of
-  -- such a partial, 'intersectPartialsBaseN') found none across the standard library.
+  -- An absolute name matches only itself ('relativeNameMatches'), so one the graph does not hold
+  -- names nothing in it and the keys are not scanned for it (once per meet of such a partial,
+  -- 'intersectPartialsBaseN').
   typeGraphArrowTemplates typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} name = case graphItemOf typeEnv name of
     Just item -> itemTemplates item
     Nothing | nameIsAbsolute name -> []

@@ -146,12 +146,15 @@ matchesNPath (NPath True _) (NPath False _) = False
 -- | Whether a name written relative to some scope names this one: a relative name matches an
 -- absolute name it is a path suffix of, broken at a path separator.
 --
--- The anonymous type's name is the separator and nothing else, so it has no components to be
--- matched by and names only itself. Otherwise it would be a suffix of every name whose last
--- component is empty — integer division is written @//@, so 'CtConstants.operatorName' makes it
--- @/operator//@ — and the unit type would name both itself and integer division.
+-- An absolute name is no description to match: it names exactly itself, as 'matchesNPath' reads
+-- one. Read as a suffix it would also name any key spelling it after an empty path component
+-- (@/x@ inside @/operator///x@), which is no spelling of it.
+--
+-- The anonymous type's name, the separator alone, is one: read as a suffix it would name every name
+-- whose last component is empty — integer division is written @//@, so 'CtConstants.operatorName'
+-- makes it @/operator//@ — and the unit type would name both itself and integer division.
 relativeNameMatches :: RelativeName -> Name -> Bool
-relativeNameMatches rn n = rn == n || (not (SBS.null r) && r /= SBS.singleton slashByte && suffixAtSeparator)
+relativeNameMatches rn n = rn == n || (not (nameIsAbsolute rn) && not (SBS.null r) && suffixAtSeparator)
   where
     r = nameBytes rn
     b = nameBytes n
