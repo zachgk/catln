@@ -935,8 +935,13 @@ executeConstraint cid con = do
 computeReading :: FEnvTypeEnv -> (Bool, RConstraint) -> ((Bool, RConstraint), ReadDeps)
 computeReading reachesEnv result = unsafePerformIO $ memoReading reachesEnv $ do
   _ <- evaluate (fst result)
-  _ <- evaluate (hash (snd result))
+  _ <- evaluate (forceComputed (snd result))
   return result
+  where
+    -- What a compute writes: the schemes of its points and of its var env. Its objects
+    -- ('conOs', 'conCallArrs') are its view's own, read and not written, and are left as they are.
+    forceComputed con = foldr (seq . forceSType) () (constraintDatMetas (conDat con) ++ concat [ [a, b] | (a, b) <- H.elems (conVaenv con) ])
+    forceSType s = forceType (stypeAct s) `seq` forceType (stypeReq s) `seq` forceType (stypeReqDecl s) `seq` maybe () (\t -> hash t `seq` ()) (stypeTree s)
 
 -- |
 -- Applies the constraints continuously to update the environment.
