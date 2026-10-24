@@ -23,7 +23,7 @@
 module Semantics.Types.Memo where
 
 import           Control.Concurrent   (ThreadId, myThreadId)
-import           Control.Exception    (bracket_, onException)
+import           Control.Exception    (bracket_, evaluate, onException)
 import           Data.Hashable
 import qualified Data.HashMap.Strict  as H
 import qualified Data.HashSet         as S
@@ -61,16 +61,26 @@ newInFlight = newIORef M.empty
 --
 -- The mark is taken off however the derivation ends. One left behind by a derivation that threw
 -- would refute its goal on every later derivation of this thread as though it were a cycle.
+--
+-- Taking it off puts back the set the derivation started from. A thread's goals nest: every
+-- derivation started inside this one has ended, and put back its own set, by the time this one
+-- ends, and only this thread changes its set, so what is left is that set with this goal added.
+-- Deleting the goal from it instead found the goal again by comparing it with itself — every
+-- type in it, in full.
 inFlightOn :: (Eq k, Hashable k) => InFlight k -> k -> IO a -> IO a -> IO a
 inFlightOn ref k reentered derive = do
   thread <- myThreadId
   inflight <- M.findWithDefault S.empty thread <$> readIORef ref
   if S.member k inflight
     then reentered
-    else bracket_
-      (atomicModifyIORef' ref $ \m -> (M.insertWith S.union thread (S.singleton k) m, ()))
-      (atomicModifyIORef' ref $ \m -> (M.update (\s -> let s' = S.delete k s in if S.null s' then Nothing else Just s') thread m, ()))
-      derive
+    else do
+      -- Built before the table is touched: hashing the goal can read the graph, and so ask for
+      -- goals of its own ('atomicModifyIORef'' must not be entered while it is being forced).
+      withGoal <- evaluate (S.insert k inflight)
+      bracket_
+        (atomicModifyIORef' ref $ \m -> (M.insert thread withGoal m, ()))
+        (atomicModifyIORef' ref $ \m -> (if S.null inflight then M.delete thread m else M.insert thread inflight m, ()))
+        derive
 
 -- | The items of a graph an answer was read from that can change while the graph's other answers
 -- are reused, each at the version it was read at ('ReuseScope'). An answer is the same answer
