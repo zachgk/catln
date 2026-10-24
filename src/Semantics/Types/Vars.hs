@@ -117,6 +117,7 @@ detachParentRefs (UnionType mtop pos consts) =
 -- 'ptVars' values of the value's top partials (which sit at the same level). References inside a
 -- partial's arguments name that partial and are left alone.
 detachLevelParentRefs :: Type -> Type
+detachLevelParentRefs t | not (typeMentionsVars t) = t
 detachLevelParentRefs (TypeVar _ TVParent i) = detachLevelParentRefs i
 detachLevelParentRefs (TypeVar v loc i) = TypeVar v loc (detachLevelParentRefs i)
 detachLevelParentRefs (UnionType mtop pos consts) =
@@ -134,6 +135,7 @@ detachLevelParentRefs (UnionType mtop pos consts) =
 detachForeignParentRefs :: S.HashSet TypeVarName -> Type -> Type
 detachForeignParentRefs names = go
   where
+    go t | not (typeMentionsVars t) = t
     go (TypeVar (TVVar n) TVParent i) | not (S.member n names) = go i
     go (TypeVar v loc i) = TypeVar v loc (go i)
     go (UnionType mtop pos consts) = UnionType (fmap onTop mtop) (joinUnionType $ map onLeaf $ splitUnionType pos) consts
@@ -161,6 +163,7 @@ freeTVIntToTop _ t = t
 freeTVExtToTopDeep :: TypeVarArgEnv -> Type -> Type
 freeTVExtToTopDeep vaenv = go
   where
+    go t | not (typeMentionsVars t) = t
     go t@(TypeVar v TVExt i) | not (H.member (extKey v) vaenv) = go i
                              | otherwise              = t
     go (TypeVar v loc i) = TypeVar v loc (go i)
@@ -175,6 +178,7 @@ freeTVExtToTopDeep vaenv = go
 -- through nested scopes (a name a nested partial itself binds is still counted), the safe
 -- direction for its consumer ('partialEscapes'\'s identical-form skip only becomes rarer).
 typeTVIntRefs :: Type -> S.HashSet TypeVarAux
+typeTVIntRefs t | not (typeMentionsVars t) = S.empty
 typeTVIntRefs (TypeVar v TVInt _) = S.singleton v
 typeTVIntRefs (UnionType mtop pos _) = S.unions $ topRefs ++ map leafRefs (splitUnionType pos)
   where
@@ -377,23 +381,7 @@ typeMentionsVar v (UnionType mtop leafs _) = any partialHas (splitUnionType leaf
 -- frame-closure (a self-referential discovered binding like @/T → Cons[/T=$/T]@ would
 -- otherwise embed a fresh occurrence each epoch and grow without bound).
 typeHasTypeVars :: Type -> Bool
-typeHasTypeVars TypeVar{} = True
-typeHasTypeVars (UnionType mtop leafs _) = any partialHas (splitUnionType leafs) || topHas
-  where
-    topHas = case mtop of
-      Just (preds, negLeafs, _) -> predsHas preds || any partialHas (splitUnionType negLeafs)
-      Nothing                   -> False
-    predsHas (PredsOne p)  = predHas p
-    predsHas (PredsAnd ps) = any predsHas ps
-    predsHas (PredsNot ps) = predsHas ps
-    predHas (PredClass p)   = partialHas p
-    predHas (PredRel p)     = partialHas p
-    predHas (PredExpr p)    = partialHas p
-    predHas (PredConstEq _) = False
-    partialHas PartialType{ptVars, ptArgs, ptPreds} =
-      any typeHasTypeVars (H.elems ptVars)
-        || any typeHasTypeVars (H.elems ptArgs)
-        || predsHas ptPreds
+typeHasTypeVars = typeMentionsVars
 
 -- | Whether any 'TypeVar' occurrence in the type (at any depth, including predicate dims)
 -- carries occurrence-local knowledge (a non-⊤ inner). Consumers without a 'TypeEnv' use it
@@ -423,6 +411,7 @@ typeHasInnerKnowledge (UnionType mtop leafs _) = topHas || any partialHas (split
 -- 'typeOuterVarRefs' this excludes 'TVParent', which names a variable of an enclosing PARTIAL —
 -- lexically a different variable from any like-named parameter of the partial it sits in.
 typeExtVarRefs :: Type -> S.HashSet TypeVarName
+typeExtVarRefs t | not (typeMentionsVars t) = S.empty
 typeExtVarRefs (TypeVar (TVVar n) TVExt i) = S.insert n (typeExtVarRefs i)
 typeExtVarRefs (TypeVar _ _ i) = typeExtVarRefs i
 typeExtVarRefs (UnionType mtop leafs _) = S.unions $ topRefs ++ map partialRefs (splitUnionType leafs)
@@ -469,6 +458,7 @@ typeLayerVarRefs = go
 -- | 'typeExtVarRefs' keyed by the full 'TypeVarAux', so an externally-located 'TVArg' reference
 -- counts too — the key a 'TypeVarArgEnv' binds.
 typeExtVarAuxes :: Type -> S.HashSet TypeVarAux
+typeExtVarAuxes t | not (typeMentionsVars t) = S.empty
 typeExtVarAuxes (TypeVar aux TVExt i) = S.insert aux (typeExtVarAuxes i)
 typeExtVarAuxes (TypeVar _ _ i) = typeExtVarAuxes i
 typeExtVarAuxes (UnionType mtop leafs _) = S.unions $ topRefs ++ map partialRefs (splitUnionType leafs)
@@ -562,6 +552,7 @@ typeParentVarAuxes (UnionType mtop leafs _) = S.unions $ topRefs ++ map partialR
 -- by 'intersectPartialsBase' to decide which arg-meet discoveries genuinely belong to the
 -- enclosing partial's scope.
 typeOuterVarRefs :: Type -> S.HashSet TypeVarName
+typeOuterVarRefs t | not (typeMentionsVars t) = S.empty
 typeOuterVarRefs t@(TypeVar _ _ i) = maybe id S.insert (outerVarName t) (typeOuterVarRefs i)
 typeOuterVarRefs PTopType = S.empty
 typeOuterVarRefs (UnionType mtop leafs _) = S.unions $ topRefs ++ map partialRefs (splitUnionType leafs)
@@ -732,6 +723,7 @@ tagParentVarRefs = onType
     onSlot sc (TypeVar (TVApplied b ovr) loc i) = case onSlot sc (TypeVar b loc i) of
       TypeVar b' loc' i' -> reapplyTypeVar (fmap (onSlot sc) ovr) b' loc' i'
       t                  -> error $ printf "tagParentVarRefs re-spelled the variable %s as %s" (show b) (show t)
+    onSlot _ t | not (typeMentionsVars t) = t
     onSlot sc (UnionType mtop pos consts) =
       UnionType (fmap (onTop sc) mtop) (joinUnionType $ map (onLeaf sc) $ splitUnionType pos) consts
     onSlot _ t = t
@@ -797,6 +789,7 @@ tagParentVarRefsPartial sc p = case tagParentVarRefs sc (singletonType p) of
 dropOutOfScopeTVExt :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
 dropOutOfScopeTVExt typeEnv vaenv = onType (S.fromList (H.keys (envAmbient vaenv)))
   where
+    onType _ t | not (typeMentionsVars t) = t
     onType sc (UnionType mtop pos consts) =
       UnionType (fmap (onTop sc) mtop) (joinUnionType $ map (onLeaf sc) $ splitUnionType pos) consts
     onType _ t = t -- a bare top-level variable stays symbolic
@@ -832,6 +825,7 @@ dropOutOfScopeTVExt typeEnv vaenv = onType (S.fromList (H.keys (envAmbient vaenv
 hasOutOfScopeTVExt :: TypeVarArgEnv -> Type -> Bool
 hasOutOfScopeTVExt vaenv = onType (S.fromList (H.keys (envAmbient vaenv)))
   where
+    onType _ t | not (typeMentionsVars t) = False
     onType sc (UnionType mtop pos _) = maybe False (onTop sc) mtop || any (onLeaf sc) (splitUnionType pos)
     onType _ _ = False
     onTop sc (preds, negLeafs, _) = predsHas sc preds || any (onLeaf sc) (splitUnionType negLeafs)
@@ -963,6 +957,8 @@ restoreLostTVExtVars :: Type -> Type -> Type
 restoreLostTVExtVars = go
   where
     go :: Type -> Type -> Type
+    -- An old type mentioning no variable has no link to restore.
+    go old new | not (typeMentionsVars old) = new
     go old new = case (old, new) of
       (_, PTopType) | isJust (outerVarRef old) -> old
       (UnionType otop oldLeafs _, UnionType ntop newLeafs ncs) ->

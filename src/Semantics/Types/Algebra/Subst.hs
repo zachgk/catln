@@ -142,6 +142,8 @@ substituteTVExt typeEnv = substituteTVExtScoped typeEnv H.empty
 -- class's value directly, so @tail=∀ConsList[/T=$^/T]@ would become @tail=∀ConsList[/T=Integer]@
 -- and the reference would stop tracking the parameter it was written to follow.
 substituteTVExtScoped :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> TypeVarArgEnv -> Type -> Type
+-- A type that mentions no variable has nothing to substitute ('typeMentionsVars').
+substituteTVExtScoped _ _ _ t | not (typeMentionsVars t) = t
 substituteTVExtScoped typeEnv scope vaenv (UnionType Nothing partials []) =
   UnionType Nothing (joinUnionType $ map (substitutePartialTVExtScoped typeEnv scope vaenv) $ splitUnionType partials) []
 -- Also substitute inside the predicate ('Just') component: a class/rel predicate such as
@@ -291,6 +293,7 @@ substitutePartialKeepScopedR typeEnv readEnv scope vaenv partial@PartialType{ptV
 -- Integer). 'TVInt' references are kept — they
 -- are the member's own declaration linkage, resolved against its own 'ptVars'.
 substituteExit :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
+substituteExit _ _ t | not (typeMentionsVars t) = t
 substituteExit typeEnv vaenv (TypeVar (TVApplied b overrides) loc i) =
   applyTypeVarOverrides typeEnv (fmap (substituteExit typeEnv vaenv) overrides) (substituteExit typeEnv vaenv (TypeVar b loc i))
 substituteExit typeEnv vaenv (TypeVar v loc@TVExt i) = case H.lookup (extKey v) vaenv of
@@ -362,6 +365,7 @@ substituteKeepScoped typeEnv scope vaenv = substituteKeepScopedR typeEnv vaenv s
 
 -- | 'substituteKeepScoped' whose meets read @readEnv@ (see 'substituteKeepReading').
 substituteKeepScopedR :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> TypeVarArgEnv -> TypeVarArgEnv -> Type -> Type
+substituteKeepScopedR _ _ _ _ t | not (typeMentionsVars t) = t
 substituteKeepScopedR typeEnv readEnv scope vaenv (TypeVar (TVApplied b overrides) loc i) =
   applyTypeVarOverrides typeEnv (fmap (substituteKeepScopedR typeEnv readEnv scope vaenv) overrides) (substituteKeepScopedR typeEnv readEnv scope vaenv (TypeVar b loc i))
 -- A concrete binding resolves the occurrence: @binding ∩ inner@. A kept occurrence keeps its
