@@ -438,6 +438,27 @@ predImpliesAtom typeEnv vaenv (PredRel r) (PredClass c)
   where
     -- Same named entity (either absoluteness direction): @isa c ⟹ hasClass c@.
     sameClass = relativeNameMatches (ptName r) (ptName c) || relativeNameMatches (ptName c) (ptName r)
+-- A relation or class implies a value predicate when the predicate holds of every value in it.
+-- The predicate is decided per value shape ('predExprHoldsOn', where a leaf meets it in
+-- 'isSubPartialOfWithEnv'), so the universe is re-expressed as what it expands to and that is
+-- asked against the predicate, the same re-expression the subtype relation makes of a top
+-- ('isSubtypeOfWithEnvRaw''s @oldReexpress@). Without it the two answered @isa Dog ⟹ fluffy@
+-- differently: the subtype relation proved @~Dog ⊆ (⊤|fluffy)@ while the implication refused it,
+-- so their union kept the De Morgan spelling @¬(¬~Dog ∧ ¬fluffy)@ that the implication then
+-- could not equate to @⊤|fluffy@. Gated on the same exactness: only an atom whose extent is
+-- fixed ('predsPositiveSealed' — a data name or a sealed class) or the closed world may be read
+-- through its current members, as a future member of an open class need not satisfy the
+-- predicate. The expansion must differ from the atom's own universe, so each step reads a more
+-- concrete spelling (relation, then class members, then leafs).
+predImpliesAtom typeEnv vaenv a1 (PredExpr e)
+  | not (isPredExprAtom a1)
+  , tePrgmEnv typeEnv || predsPositiveSealed typeEnv (PredsOne a1)
+  , let expanded = expandPredicates typeEnv vaenv (PredsOne a1)
+  , expanded /= TopType H.empty (PredsOne a1)
+  = isSubtypeOfWithEnv typeEnv vaenv expanded (TopType H.empty (PredsOne (PredExpr e)))
+  where
+    isPredExprAtom PredExpr{} = True
+    isPredExprAtom _          = False
 -- Cross-kind: conservative False
 predImpliesAtom _ _ _ _ = False
 
