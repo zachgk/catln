@@ -29,7 +29,6 @@ import                          Data.IORef                      (IORef,
                                                                  atomicModifyIORef',
                                                                  newIORef,
                                                                  readIORef)
-import                qualified Data.List                       as L
 import                          Data.Maybe
 import {-# SOURCE #-}           Semantics.Types.Algebra.SetOps  (differencePartialLeafs,
                                                                  intersectPartialLeafsWithVarEnv,
@@ -298,7 +297,7 @@ expandClassPartialWithinNames typeEnv vaenv allowedNames = expandClassPartialAux
 -- 'compactPartialsWithClassPred' re-expand the SAME small classes (@Boolean@, @Eq@, ...) through
 -- per-leaf-pair subtype checks many thousands of times per epoch, while the expansion is a pure
 -- function of the key below.
-type ExpandClassMemoKey = (Int, (Bool, Bool, Bool), Maybe (S.HashSet TypeName), PartialType, [(VarKey, Type)])
+type ExpandClassMemoKey = (Int, (Bool, Bool, Bool), Maybe (S.HashSet TypeName), PartialType, TypeVarArgEnv)
 
 {-# NOINLINE expandClassMemoRef #-}
 expandClassMemoRef :: IORef [(Int, H.HashMap (Hashed ExpandClassMemoKey) (Type, ReadDeps))]
@@ -310,7 +309,7 @@ expandClassPartialAux mAllowed typeEnv vaenv pp = case teQueryCacheKey typeEnv o
   Just _ | teInSatDecision typeEnv -> expandClassPartialAuxRaw mAllowed typeEnv vaenv pp
   Just tok -> unsafePerformIO $ do
     -- Hashed once, for the lookup and the store both.
-    key <- evaluate (hashed (tok, (teDisableCompact typeEnv, tePrgmEnv typeEnv, teArgModeProjection typeEnv), mAllowed, pp, L.sortOn fst (H.toList vaenv)))
+    key <- evaluate (hashed (tok, (teDisableCompact typeEnv, tePrgmEnv typeEnv, teArgModeProjection typeEnv), mAllowed, pp, vaenv))
     gens <- readIORef expandClassMemoRef
     case lookup tok gens >>= H.lookup key of
       Just (r, deps) -> noteReadDeps deps >> return r

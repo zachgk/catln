@@ -749,7 +749,7 @@ satEscapesAtomic typeEnv vaenv satUse hyps m atom = case atom of
 -- the three most-recently-used token generations like the reach-query memo in "Semantics"
 -- (the static per-page env's, the epoch reaches env's, and the current merged reaches env's
 -- tokens rotate).
-type SatMemoKey = (Int, (Bool, Bool, Bool, Bool, Bool), [(VarKey, Type)], SatUse, [SatGoal], SatGoal)
+type SatMemoKey = (Int, (Bool, Bool, Bool, Bool, Bool), TypeVarArgEnv, SatUse, SatHyps, SatGoal)
 
 -- | 'Nothing' marks a key whose decision is IN FLIGHT: a lookup hitting it is a derivation
 -- that returned to its own goal through a helper chain the hypothesis stack does not thread
@@ -790,7 +790,7 @@ satGoal typeEnv vaenv satUse hyps goal = case teQueryCacheKey typeEnv of
   Nothing -> satGoalRaw typeEnv vaenv satUse hyps goal
   Just tok -> unsafePerformIO $ do
     -- Hashed once, for the lookup, the in-flight mark and the store.
-    key <- evaluate (hashed (tok, (teDisableCompact typeEnv, tePrgmEnv typeEnv, teArgModeProjection typeEnv, teInSatDecision typeEnv, teDebug typeEnv), L.sortOn fst (H.toList vaenv), satUse, L.sort (S.toList hyps), goal))
+    key <- evaluate (hashed (tok, (teDisableCompact typeEnv, tePrgmEnv typeEnv, teArgModeProjection typeEnv, teInSatDecision typeEnv, teDebug typeEnv), vaenv, satUse, hyps, goal))
     -- The value table keeps the THREE most-recently-used token generations, exactly like
     -- the reach-query memo ('queryMemoRef'): hypothesis-path dependence is IN the key, so
     -- entries are reusable ACROSS top-level decisions under the same env token — an epoch

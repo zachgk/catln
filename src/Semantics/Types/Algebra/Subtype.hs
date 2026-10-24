@@ -221,7 +221,7 @@ isSubPartialOfWithEnv typeEnv vaenv sub0 super0 = isSubPartialOfWithEnvN typeEnv
 -- | One materialized sub-partial goal: the two partials, plus the env they are read under and
 -- the flags that change the reading. Compared by 'Eq' (the 'Hashable' instances on types are
 -- deliberately shallow), so a hit is the same goal, never a collision.
-type SubPartialKey = (Bool, Bool, [(VarKey, Type)], PartialType, PartialType)
+type SubPartialKey = (Bool, Bool, TypeVarArgEnv, PartialType, PartialType)
 
 -- | The sub-partial goals whose answer is currently BEING computed, on each thread's evaluation
 -- stack ('InFlight') — the materialized counterpart of 'satInFlightRef'.
@@ -249,7 +249,7 @@ subPartialInFlightRef = unsafePerformIO newInFlight
 
 isSubPartialOfWithEnvN :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> PartialType -> PartialType -> Bool
 isSubPartialOfWithEnvN typeEnv vaenv sub super = unsafePerformIO $ do
-  let k = (tePrgmEnv typeEnv, teArgModeProjection typeEnv, L.sort (H.toList vaenv), sub, super)
+  let k = (tePrgmEnv typeEnv, teArgModeProjection typeEnv, vaenv, sub, super)
   inFlightOn subPartialInFlightRef k (noteCycleCut False) $
     evaluate (isSubPartialOfWithEnvNRaw typeEnv vaenv sub super)
 
@@ -628,7 +628,7 @@ constantInType _ _ _ _ = False
 -- took Char out of core/string.ct). The questions themselves never needed those entries: with the
 -- memo bypassed the same pages compile. Stored keys are now values, so a comparison forces
 -- nothing that is still being worked out.
-type SubtypeMemoKey = (Int, (Bool, Bool, Bool), [(VarKey, Type)], Type, Type)
+type SubtypeMemoKey = (Int, (Bool, Bool, Bool), TypeVarArgEnv, Type, Type)
 
 {-# NOINLINE subtypeMemoRef #-}
 subtypeMemoRef :: IORef [(Int, H.HashMap (Hashed SubtypeMemoKey) (Bool, ReadDeps))]
@@ -643,10 +643,9 @@ isSubtypeOfWithEnv typeEnv vaenv t1 t2 = case teQueryCacheKey typeEnv of
   Nothing -> isSubtypeOfWithEnvRaw typeEnv vaenv t1 t2
   Just _ | teInSatDecision typeEnv -> isSubtypeOfWithEnvRaw typeEnv vaenv t1 t2
   Just tok -> unsafePerformIO $ do
-    let vaenvList = L.sortOn fst (H.toList vaenv)
-    _ <- evaluate (forceType t1 `seq` forceType t2 `seq` foldr (\(_, v) acc -> forceType v `seq` acc) () vaenvList)
+    _ <- evaluate (forceType t1 `seq` forceType t2 `seq` forceTypeMap vaenv)
     -- Hashed once, for the lookup and the store both.
-    key <- evaluate (hashed (tok, (teDisableCompact typeEnv, tePrgmEnv typeEnv, teArgModeProjection typeEnv), vaenvList, t1, t2))
+    key <- evaluate (hashed (tok, (teDisableCompact typeEnv, tePrgmEnv typeEnv, teArgModeProjection typeEnv), vaenv, t1, t2))
     gens <- readIORef subtypeMemoRef
     case lookup tok gens >>= H.lookup key of
       Just (r, deps) -> noteReadDeps deps >> return r

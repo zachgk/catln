@@ -26,8 +26,7 @@ import           Data.Hashable       (Hashable (..), Hashed, hash, hashed)
 import qualified Data.HashSet        as S
 import           Data.IORef          (IORef, atomicModifyIORef', newIORef,
                                       readIORef)
-import           Data.List           (foldl', isPrefixOf, isSuffixOf, partition,
-                                      sortOn)
+import           Data.List           (foldl', isPrefixOf, isSuffixOf, partition)
 import           Data.Maybe
 import           Data.Time.Calendar  (Day, fromGregorian)
 import           Semantics.Prgm
@@ -175,7 +174,7 @@ narrowSlotByClassArrows typeEnv arrows t
 -- shared token 1 and the memo mixed answers across epochs and programs. The mint's IO
 -- now forces its argument INSIDE the action, so the expression depends on the argument
 -- and cannot float.
-type QueryMemoKey = (Int, (Bool, Bool, Bool, Bool), PartialType, [(VarKey, Type)])
+type QueryMemoKey = (Int, (Bool, Bool, Bool, Bool), PartialType, TypeVarArgEnv)
 
 -- | Keeps the THREE most-recently-used token generations: the per-page static env's
 -- token, the current epoch's reaches token, and the current constraint's merged reaches
@@ -189,7 +188,7 @@ queryMemoRef = unsafePerformIO (newIORef [])
 -- | A query asked again in another env of a 'ReuseScope': the same question in every part of the
 -- env the scope does not version — the behavior flags, the fuel a body may still be read again
 -- with, the local arrows merged in ('teLocalKey') — about the same partial in the same var env.
-type QueryReuseKey = ((Bool, Bool, Bool, Bool), Int, Maybe Int, PartialType, [(VarKey, Type)])
+type QueryReuseKey = ((Bool, Bool, Bool, Bool), Int, Maybe Int, PartialType, TypeVarArgEnv)
 
 -- | THE REACH QUERIES OF A SCOPE. Each epoch of a solve reads the program through a new env, and so
 -- under a new token, and each constraint with local arrows through yet another; under a new token
@@ -338,9 +337,8 @@ objArrGraphQueryMemo prune typeEnv vaenv partial tok = unsafePerformIO $ do
             _ <- evaluate (forceQueryResult res)
             return res)
       flags = (prune, teDisableCompact typeEnv, tePrgmEnv typeEnv, teArgModeProjection typeEnv)
-      vaenvList = sortOn fst (H.toList vaenv)
-      key = (tok, flags, partial, vaenvList)
-      reuseKey = (flags, teRederiveFuel typeEnv, teLocalKey typeEnv, partial, vaenvList)
+      key = (tok, flags, partial, vaenv)
+      reuseKey = (flags, teRederiveFuel typeEnv, teLocalKey typeEnv, partial, vaenv)
       reuseScope = case teReuse typeEnv of
         Just scope | S.null (teLocalNames typeEnv) || isJust (teLocalKey typeEnv) -> Just scope
         _ -> Nothing
