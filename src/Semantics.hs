@@ -584,8 +584,14 @@ instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGr
   -- no-information, the monotone-safe direction. A relatively-spelled name (a call's
   -- @/operator++@ against a module-keyed @/Data/…/operator++@ objMap entry) matches by
   -- 'relativeNameFilter', the same fallback 'typeGraphArgKeys' uses.
+  --
+  -- Only a name spelled relatively is looked for that way. An absolute name the graph does not
+  -- hold names nothing in it: read as a suffix it could only match a key with an empty path
+  -- component before it, which is no spelling of it, and the scan of every key (once per meet of
+  -- such a partial, 'intersectPartialsBaseN') found none across the standard library.
   typeGraphArrowTemplates typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} name = case graphItemOf typeEnv name of
     Just item -> itemTemplates item
+    Nothing | nameIsAbsolute name -> []
     Nothing -> case relativeNameFilter name (H.keys tg) of
       []    -> []
       names -> concatMap (itemTemplates . graphItemOrEmpty typeEnv) names
@@ -623,6 +629,8 @@ instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGr
   typeGraphArgKeys typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} name = case graphItemOf typeEnv name of
     Just item | itemOpen item -> Nothing
               | otherwise     -> Just $ itemArgKeys item
+    -- Only a relative spelling is looked for by suffix ('typeGraphArrowTemplates').
+    Nothing   | nameIsAbsolute name -> Nothing
     Nothing   -> case relativeNameFilter name (H.keys tg) of
       []    -> Nothing
       names | any (itemOpen . graphItemOrEmpty typeEnv) names -> Nothing
@@ -634,6 +642,7 @@ instance (ExprClass e, MetaDat m, Show m, Show (e m)) => TypeGraph (ObjArrTypeGr
 
   typeGraphNameOpen typeEnv@TypeEnv{teTypeGraph=ObjArrTypeGraph (ObjectMap tg)} name = case graphItemOf typeEnv name of
     Just item -> itemOpen item
+    Nothing   | nameIsAbsolute name -> False
     Nothing   -> any (itemOpen . graphItemOrEmpty typeEnv) (relativeNameFilter name (H.keys tg))
     where
       itemOpen item = any (exprSpreadsArgs . oaObjExpr) (flatObjectMapItem item)
