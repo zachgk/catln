@@ -426,7 +426,11 @@ objArrGraphQueryRaw prune typeEnv vaenv partial@PartialType{ptName} = concatMap 
           -- What each kept promise accepts OF THIS SOURCE.
           keptSrcs = map snd kept
           covered = materializedCovers || symbolicCovers
-          materializedCovers = isSubtypeOfWithEnv typeEnv vaenv (singletonType partial) (unionAllTypesWithEnv typeEnv vaenv keptSrcs)
+          -- The kept sources are joined with one compaction ('unionAllTypesWithEnvOnce'), as the
+          -- tree builder's coverage check joins its kept arms ('Semantics.TypeGraph'): folded
+          -- pairwise, the union re-canonicalized the growing join once per promise, comparing
+          -- its same-named leafs pairwise each time, for one subtype question.
+          materializedCovers = isSubtypeOfWithEnv typeEnv vaenv (singletonType partial) (unionAllTypesWithEnvOnce typeEnv vaenv keptSrcs)
           -- The engine sees joint covers a leafwise subtype check cannot (e.g. Nil and Cons arms
           -- jointly covering a class-typed argument); out of fragment the materialized check decides.
           symbolicCovers = case traverse unionLeafs keptSrcs of
