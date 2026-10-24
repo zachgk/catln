@@ -49,3 +49,73 @@ module(Data/DL)
     >>> 7.0
   > evalAt(f= constOne, x= 3.0, params= /Data/Map/insert(m= /Data/Map/insert(m= /Data/Map/Leaf, key= "m", value= 2.0), key= "b", value= 1.0))
     >>> 1.0
+  # ## Forward and backward
+    Backpropagation evaluates a function and, in the same pass, finds how its value moves with each
+    of its parameters: the forward value [y] and the backward [grads]. It is written over the body of
+    the function rather than over its values. Each arm of [fwdBwd] takes a function whose body has one
+    shape, and a body built from parts is taken apart and its parts are done in turn, so no definition
+    of [fwdBwd] is written for every function at once.
+  data(FwdBwd(y -> Float, grads -> /Data/Map[$K -> String, $V -> Float]))
+    # A [FwdBwd] is a function's value [y] at a point and its [grads]: for each parameter the
+      function reads, how fast its value changes as that parameter does. A parameter the function does
+      not read is left out, and its gradient is 0.
+
+  fwdBwd(x -> Float, params -> /Data/Map[$K -> String, $V -> Float], f(x -> Float, params -> /Data/Map[$K -> String, $V -> Float]) -> Float) -> FwdBwd..
+    # [fwdBwd] is [f]'s value and gradients at [x] under [params]. Its arms are chosen by the body of
+      the function [f] is given as, so [f] is written in place (`f(x, params)= ..`). A body that is
+      none of the shapes below has no arm, which is what [#invalid] says of this declaration: it
+      promises a [FwdBwd] for every function of its signature, and keeps that promise only for the
+      functions built from constants, the input, parameters and sums.
+    #invalid
+  fwdBwd(x, params, f(x, params)= (n :: Float))= FwdBwd(y= n, grads= /Data/Map/Leaf)
+    # A constant is the same wherever it is evaluated, so it moves with no parameter.
+  fwdBwd(x, params, f(x@fx, params)= fx)= FwdBwd(y= x, grads= /Data/Map/Leaf)
+    # The input itself reads no parameter. The function's own [x] is named [fx] in the pattern, apart
+      from the [x] [fwdBwd] is given.
+  fwdBwd(x, params, f(x, params@ps)= /Data/Map/getOr(m= ps, key= (p :: String), def= 0.0))= FwdBwd(y= /Data/Map/getOr(m= params, key= p, def= 0.0), grads= /Data/Map/insert(m= /Data/Map/Leaf, key= p, value= 1.0))
+    # A parameter [p] read on its own moves exactly as [p] does.
+  fwdBwd(x, params, f(x@fx, params@ps)= /Data/Map/getOr(m= ps, key= (p :: String), def= 0.0) * fx)= FwdBwd(y= /Data/Map/getOr(m= params, key= p, def= 0.0) * x, grads= /Data/Map/insert(m= /Data/Map/Leaf, key= p, value= x))
+    # A parameter [p] scaling the input moves [x] times as fast as [p] does.
+  fwdBwd(x, params, f(x, params)= a(x, params) + b(x, params))= addFwdBwd(l= fwdBwd(x= x, params= params, f(x, params)= a(x= x, params= params)), r= fwdBwd(x= x, params= params, f(x, params)= b(x= x, params= params)))
+    # A sum is taken apart: [a] and [b] are its two parts, each a function of the same [x] and
+      [params] whose body is that part. The sum's value and gradients are its parts' added.
+
+  addFwdBwd(l -> FwdBwd.., r -> FwdBwd..) -> FwdBwd..
+    # [addFwdBwd] adds two [FwdBwd]s: their values, and their gradients parameter by parameter.
+  addFwdBwd(l= FwdBwd(y@ly, grads@lg), r= FwdBwd(y@ry, grads@rg))= FwdBwd(y= ly + ry, grads= addGrads(a= lg, b= rg))
+
+  addGrads(a -> /Data/Map[$K -> String, $V -> Float], b -> /Data/Map[$K -> String, $V -> Float]) -> /Data/Map[$K -> String, $V -> Float]
+    # [addGrads] adds two sets of gradients. A parameter only one of them has is the other's 0.
+  addGrads(a, b) =
+    addGrad(acc -> /Data/Map[$K -> String, $V -> Float], k -> String, v -> Float) -> /Data/Map[$K -> String, $V -> Float]
+    addGrad(acc, k, v)= /Data/Map/insert(m= acc, key= k, value= /Data/Map/getOr(m= acc, key= k, def= 0.0) + v)
+
+    /Data/Map/foldEntries(m= b, fn(acc, k, v)= addGrad(acc= acc, k= k, v= v), init= a)
+
+  fwdOf(r -> FwdBwd..) -> Float
+    # [fwdOf] is the forward value of a [FwdBwd].
+  fwdOf(r= FwdBwd(y, grads))= y
+
+  gradOf(r -> FwdBwd.., name -> String) -> Float
+    # [gradOf] is the gradient of the parameter [name], 0 for one the function does not read.
+  gradOf(r= FwdBwd(y, grads), name)= /Data/Map/getOr(m= grads, key= name, def= 0.0)
+
+  > fwdOf(r= fwdBwd(x= 3.0, params= /Data/Map/Leaf, f(x, params)= 1.0))
+    >>> 1.0
+  > fwdOf(r= fwdBwd(x= 3.0, params= /Data/Map/Leaf, f(x, params)= x))
+    >>> 3.0
+  > gradOf(r= fwdBwd(x= 3.0, params= /Data/Map/insert(m= /Data/Map/Leaf, key= "m", value= 2.0), f(x, params)= /Data/Map/getOr(m= params, key= "m", def= 0.0) * x), name= "m")
+    >>> 3.0
+  # The body of [linear], written in place: its value at 3 is 7, it moves 3 times as fast as its
+    slope [m] and as fast as its offset [b], and it does not read [c].
+  > fwdOf(r= fwdBwd(x= 3.0, params= /Data/Map/insert(m= /Data/Map/insert(m= /Data/Map/Leaf, key= "m", value= 2.0), key= "b", value= 1.0), f(x, params)= /Data/Map/getOr(m= params, key= "m", def= 0.0) * x + /Data/Map/getOr(m= params, key= "b", def= 0.0)))
+    >>> 7.0
+  > gradOf(r= fwdBwd(x= 3.0, params= /Data/Map/insert(m= /Data/Map/insert(m= /Data/Map/Leaf, key= "m", value= 2.0), key= "b", value= 1.0), f(x, params)= /Data/Map/getOr(m= params, key= "m", def= 0.0) * x + /Data/Map/getOr(m= params, key= "b", def= 0.0)), name= "m")
+    >>> 3.0
+  > gradOf(r= fwdBwd(x= 3.0, params= /Data/Map/insert(m= /Data/Map/insert(m= /Data/Map/Leaf, key= "m", value= 2.0), key= "b", value= 1.0), f(x, params)= /Data/Map/getOr(m= params, key= "m", def= 0.0) * x + /Data/Map/getOr(m= params, key= "b", def= 0.0)), name= "b")
+    >>> 1.0
+  > gradOf(r= fwdBwd(x= 3.0, params= /Data/Map/insert(m= /Data/Map/insert(m= /Data/Map/Leaf, key= "m", value= 2.0), key= "b", value= 1.0), f(x, params)= /Data/Map/getOr(m= params, key= "m", def= 0.0) * x + /Data/Map/getOr(m= params, key= "b", def= 0.0)), name= "c")
+    >>> 0.0
+  # A sum of three parts, two reading the same parameter: their gradients add up.
+  > gradOf(r= fwdBwd(x= 2.0, params= /Data/Map/insert(m= /Data/Map/Leaf, key= "m", value= 5.0), f(x, params)= /Data/Map/getOr(m= params, key= "m", def= 0.0) * x + /Data/Map/getOr(m= params, key= "m", def= 0.0) + x), name= "m")
+    >>> 3.0
