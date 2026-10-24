@@ -64,7 +64,34 @@ Prgm
                                     ( /f( Value /n -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /h( Value /n -> TVArg /n = Value /n ) )
                                 )
                             )
+                        , /slope( Value /n -> /Data/Primitive/Integer )
+                            ( /f( Value /n -> /Data/Primitive/Integer )=
+                                ( Hole TopType HoleActive { haName = Nothing }@Value /fun )
+                                ( Value /n= Hole TopType HoleActive { haName = Nothing }@/g( Value /n ) )
+                            ) | /operator@->
+                            ( Value /l=
+                                ( Hole TopType HoleActive { haName = Nothing }@Value /fun )( Value /n= Value /n )
+                            )( Value /r= Value /Data/Primitive/Integer )@/Data/Maybe/Some
+                            ( Value /value= Hole /Data/Primitive/Integer HoleActive { haName = Nothing }@/fd( Value /n ) ) -> /Data/Primitive/Integer = /operator*
+                            ( Value /l -> /Data/Primitive/Integer = /slope
+                                ( Value /n -> /Data/Primitive/Integer = /g( Value /n -> TVArg /n = Value /n ) )
+                                ( /f( Value /n -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /fd( Value /n -> TVArg /n = Value /n ) )
+                            )
+                            ( Value /r -> /Data/Primitive/Integer = /slope( Value /n -> TVArg /n = Value /n )
+                                ( /f( Value /n -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /g( Value /n -> TVArg /n = Value /n ) )
+                            )
                         ]
+                    }
+                )
+            ,
+                ( "/sq"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /sq( Value /n -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /sq( Value /n -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator*( Value /l -> TVArg /n = Value /n )( Value /r -> TVArg /n = Value /n ) ]
                     }
                 )
             ]
@@ -72,6 +99,7 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
         , CGType
         ]
     , prgmAnnots =
@@ -86,6 +114,9 @@ Prgm
                 parts is the sum or product rule over the slopes of the parts. The parts are the sub-function
                 variables [g] and [h], each a function of the same input with its part of the body as its body, so
                 the rules recurse into them until the body is a constant or the input.
+                A call of a named function is the chain rule: [fun] is the name called and [g] its input, and the
+                guard asks for [fun]'s definition (@\@->@), which is [fd]. The slope of the call is the slope of
+                [fd] at what [g] gives, times the slope of [g].
                 No definition covers every function, which is what [#invalid] says of the declaration: a function
                 whose body is none of these shapes has no slope here. `bodyPattern.ct` has the same shapes
                 without the core library." }

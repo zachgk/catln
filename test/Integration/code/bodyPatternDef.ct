@@ -1,0 +1,46 @@
+annot(#noCore)
+
+#noCore
+# Arms that look into the definition of a function the body calls.
+  A value variable (@${fun}@) in a body pattern binds the name the body calls, and a guard
+  @(${fun}(a= a) \@-> R)\@Some(value\@body)@ asks for the definition an arrow reaches from that
+  name given the arm's own [a]: [body] is then the function the definition is, of the callee's
+  parameters with the definition's body as its body. The arm passes [body] on, so the arm chosen
+  next is chosen by the callee's definition, and a definition calling a further function is looked
+  into the same way. A guard matching @Nothing@ instead holds for a name with no definition to
+  look into, such as a runtime primitive. Written without the core library, which has no such
+  primitive to call; `bodyPatternRun.ct` runs the chain rule.
+module(Data/Primitive)
+  data(Integer)
+module(Data/Maybe)
+  data(Some(value))
+  data(Nothing)
+module(Catln)
+  annot(#invalid)
+
+data(In)
+data(Zr)
+data(Lit)
+
+class(R, [In, Zr, Lit])
+
+zero(a -> In) -> R
+zero(a)= Zr
+
+two(a -> In) -> R
+two(a)= zero(a= a)
+
+idf(a -> In) -> R
+idf(a)= a
+
+kind(a -> In, f(a -> In) -> R) -> R
+  #invalid
+kind(a, f(a)= Zr)= Zr
+kind(a, f(a@x)= x)= a
+kind(a, f(a)= ${fun}(a= a)) | (${fun}(a= a) @-> R)@Some(value@body)= kind(a= a, f(a)= body(a= a))
+
+viaZero= kind(a= In, f(a)= zero(a= a))
+
+viaTwo= kind(a= In, f(a)= two(a= a))
+
+viaId= kind(a= In, f(a)= idf(a= a))

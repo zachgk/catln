@@ -487,6 +487,11 @@ class ExprClass e where
   exprWhereCond :: e m -> Maybe (e m, e m)
   exprWhereCond _ = Nothing
 
+  -- | The base and alias of an expression that is an alias at its root (@x\@fx@). Only the
+  -- desugared 'Expr' has one; the raw forms read as having none.
+  exprAliasParts :: e m -> Maybe (e m, e m)
+  exprAliasParts _ = Nothing
+
   -- | Returns all arguments applied to a value
   exprAppliedArgs :: (Show m, MetaDat m) => e m -> [ObjArr e m]
 
@@ -557,6 +562,8 @@ instance ExprClass Expr where
 
   exprWhereCond (EWhere _ b c) = Just (b, c)
   exprWhereCond _              = Nothing
+  exprAliasParts (AliasExpr b a) = Just (b, a)
+  exprAliasParts _               = Nothing
 
   exprAppliedArgs (Value _ _)               = []
   exprAppliedArgs CExpr{}                   = []
@@ -579,6 +586,9 @@ instance ExprClass Expr where
   exprVarArgs Value{} = H.empty
   exprVarArgs HoleExpr{} = H.empty
   exprVarArgs (AliasExpr base n) = H.insertWith (++) (TVArg $ inExprSingleton n) [(n, getExprMeta base)] (exprVarArgs base)
+  -- A guard matching an arrow's definition ('arrowDefGuardParts') binds what its pattern names.
+  exprVarArgs (EWhere _ base cond)
+    | Just (_, _, pat) <- arrowDefGuardParts cond = H.unionWith (++) (exprVarArgs base) (bodyPatternVarArgs pat)
   exprVarArgs (EWhere _ base _) = exprVarArgs base
   -- For an alias destructure (@field@name@) the arg's value is matched by the field but bound
   -- under the alias name (the name the body references), so key the field's arr-meta by the alias
@@ -604,6 +614,12 @@ instance ExprClass Expr where
       aux CExpr{} = [H.empty]
       aux Value{} = [H.empty]
       aux HoleExpr{} = [H.empty]
+      -- A guard matching an arrow's definition ('arrowDefGuardParts') binds what its pattern says of
+      -- its variables, as a body pattern does: the definition is found where the arm is chosen.
+      aux (EWhere _ base cond)
+        | Just (_, _, pat) <- arrowDefGuardParts cond
+        = let patVars = H.map (\entries -> meetBind entries (getMetaType (snd (head entries)))) (bodyPatternVarArgs pat)
+          in map (`H.union` patVars) (exprVarArgsWithSrc typeEnv base src)
       aux (EWhere _ base cond) = case maybeExprPath cond of
         Just n | nameStr n == operatorHasArrow -> case (H.lookup (partialKey (mkName operatorArgL)) condArgs, H.lookup (partialKey (mkName operatorArgR)) condArgs) of
                   (Just (Just (_, Just l)), Just (Just (_, Just r))) -> case (getExprType $ exprPropagateTypes l, getExprType $ exprPropagateTypes r) of
@@ -892,6 +908,23 @@ bodyPatternVarArgs = go
       _                                      -> H.empty
     go _ = H.empty
 
+-- | A guard matching the definition an arrow reaches, @(obj \@-> T)\@pattern@ (as
+-- @(${fun}(x= x, params= params) \@-> Float)\@Some(value\@body)@): the arrow's input, its result
+-- type and the pattern. The arm applies when what @\@->@ answers matches the pattern — @Some@ of
+-- the one definition reached from the input by an arrow to the type, or @Nothing@ when there is
+-- none — and is chosen where it is built ('TreeBuild.BodyPattern'), as a body pattern is. A name
+-- the pattern gives the definition is the function it is ('Syntax.Ct.Desugarf.Expr.desArrowDefMatch').
+arrowDefGuardParts :: (ExprClass e, MetaDat m, Show m, Show (e m)) => e m -> Maybe (e m, e m, e m)
+arrowDefGuardParts cond
+  | Just (op, pat) <- exprAliasParts cond
+  , Just n <- maybeExprPath op
+  , nameStr n == operatorArrowDef
+  , Just (Just (_, Just l)) <- H.lookup (partialKey (mkName operatorArgL)) args
+  , Just (Just (_, Just r)) <- H.lookup (partialKey (mkName operatorArgR)) args
+  = Just (l, r, pat)
+  where args = maybe H.empty (exprAppliedArgsMap . fst) (exprAliasParts cond)
+arrowDefGuardParts _ = Nothing
+
 mkIOObjArr :: (MetaDat m, Show m) => Meta m -> ArgName -> Expr m -> ObjArr Expr m
 mkIOObjArr m argName argVal = ObjArr (Just (Value (emptyMetaT $ partialToTypeSingleton argName) (pkName argName))) ArgObj Nothing [] (Just (Just argVal, m))
 
@@ -1147,8 +1180,13 @@ filterObjectMap f (ObjectMapWith objMap setDecls) = ObjectMapWith (H.mapMaybe f'
 -- | Gets all recursive sub expression objects from an expression's arguments. Helper for 'getRecursiveObjs'
 getRecursiveObjsExpr :: (ExprClass e, MetaDat m, Show (e m), Show m) => e m -> [e m]
 getRecursiveObjsExpr expr | isNothing (maybeExprPath expr) = []
-getRecursiveObjsExpr expr = concat [varSubObjects, argSubObjects, recursedSubObjects]
+getRecursiveObjsExpr expr = concat [varSubObjects, argSubObjects, recursedSubObjects, guardSubObjects]
   where
+    -- A guard matching an arrow's definition ('arrowDefGuardParts') binds the definition as the
+    -- higher-order parameter it names, as a body pattern's sub-function variable is bound.
+    guardSubObjects = case exprWhereCond expr of
+      Just (_, cond) | Just (defInput, _, pat) <- arrowDefGuardParts cond -> bodyPatternSubFns defInput pat
+      _ -> []
     varSubObjects = map mkValue $ concatMap (varNamesWithPrefix . pkName . fst) $ exprAppliedOrdVars expr
     argSubObjects = concatMap (filter (isJust . maybeExprPath) . exprFromTupleArg) (exprAppliedArgs expr)
     -- A body pattern's value ('bodyPatternParts') is a pattern over a function's definition: what

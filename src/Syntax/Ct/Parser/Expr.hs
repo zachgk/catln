@@ -77,6 +77,7 @@ ops = [
     , InfixL (mkOp2 "^" <$ symbol "^")
     ],
     [ InfixL (mkOp2 "?->" <$ symbol "?->")
+    , InfixL (mkOp2 "@->" <$ symbol "@->")
     , InfixL (mkOp2 ":=" <$ symbol ":=")
     ],
     [ InfixL (RawWhere emptyMetaN <$ symbol "|") ]
@@ -220,6 +221,9 @@ data TermSuffix
   | VarsSuffix ParseMeta [PObjArr]
   | ContextSuffix ParseMeta [PObjArr]
   | AliasSuffix ParseMeta TypeName
+  -- | A pattern given as the alias (@(f(x) \@-> Float)\@Some(value\@body)@): the value is matched
+  -- against it rather than named. A name written there is an 'AliasSuffix'.
+  | AliasPatternSuffix PExpr
   | TypePropSuffix ParseMeta (TypeProperty RawExpr ParseMetaDat)
   deriving (Show)
 
@@ -282,9 +286,11 @@ pAliasSuffix :: Parser TermSuffix
 pAliasSuffix = do
   _ <- string "@"
   pos1 <- getSourcePos
-  aliasName <- identifier -- TODO Alias can be full term instead
+  alias <- term
   pos2 <- getSourcePos
-  return $ AliasSuffix (emptyMeta pos1 pos2) (mkName aliasName)
+  return $ case alias of
+    RawValue _ aliasName -> AliasSuffix (emptyMeta pos1 pos2) aliasName
+    _                    -> AliasPatternSuffix alias
 
 pTypePropRelSuffix :: Parser TermSuffix
 pTypePropRelSuffix = do
@@ -307,7 +313,7 @@ pTypePropProjSuffix = do
 
 
 pTermSuffix :: Parser TermSuffix
-pTermSuffix = pArgsSuffix <|> pVarsSuffix <|> pContextSuffix <|> pAliasSuffix <|> pTypePropRelSuffix <|> pTypePropProjSuffix
+pTermSuffix = pArgsSuffix <|> pVarsSuffix <|> pContextSuffix <|> try pAliasSuffix <|> pTypePropRelSuffix <|> pTypePropProjSuffix
 
 pFloat :: Parser PExpr
 pFloat = do
@@ -358,6 +364,7 @@ applyTermSuffix base (ArgsSuffix m args) = RawTupleApply m (emptyMetaE base, bas
 applyTermSuffix base (VarsSuffix m vars) = RawVarsApply m base vars
 applyTermSuffix base (ContextSuffix m args) = RawContextApply m (emptyMetaE base, base) args
 applyTermSuffix base (AliasSuffix m n) = RawAliasExpr base (RawValue m n)
+applyTermSuffix base (AliasPatternSuffix p) = RawAliasExpr base p
 applyTermSuffix base (TypePropSuffix m p) = RawTypeProp m base p
 
 term :: Parser PExpr

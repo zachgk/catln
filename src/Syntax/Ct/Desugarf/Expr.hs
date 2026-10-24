@@ -55,7 +55,10 @@ semiDesExpr :: SemiDesMode -> Maybe PObjExpr -> PExpr -> PSExpr
 semiDesExpr _ _ (RawCExpr m c) = CExpr m c
 semiDesExpr _ _ (RawValue m n) = Value m n
 semiDesExpr _ _ (RawHoleExpr m h) = HoleExpr m h
-semiDesExpr _ _ RawMacroValue{} = error "Not yet implemented"
+-- A value variable (@${fun}@) in a body pattern matches a name the body uses, and binds it. It is
+-- the alias of a hole, as every pattern variable is ('desBodyPattern'), with a name for its alias
+-- rather than a type for its hole, which is what tells it from a literal variable.
+semiDesExpr _ _ (RawMacroValue m n) = AliasExpr (HoleExpr (mWithType PTopType m) (HoleActive Nothing)) (Value (mWithType (relTypeVal n) m) n)
 semiDesExpr sdm@(SDInput True) obj (RawTheExpr t) = semiDesExpr sdm obj t
 semiDesExpr SDInput{} _ e@(RawTheExpr t) = Value (emptyMetaE e) tN
   where
@@ -79,6 +82,8 @@ semiDesExpr sdm obj (RawAliasExpr base alias) = AliasExpr (semiDesExpr sdm obj b
 -- forms below desugar to directly. Left as written, the name was a relative value name nothing
 -- resolved and the condition was never evaluated. A condition on a body or a pattern is over
 -- the scope's own arguments and keeps its names.
+semiDesExpr sdm obj (RawWhere m base (RawAliasExpr (RawParen defE@(RawTupleApply _ (_, RawValue _ opN) defArgs)) pat))
+  | nameStr opN == operatorArrowDef = EWhere m (semiDesExpr sdm obj base) (desArrowDefMatch obj defE defArgs pat)
 semiDesExpr sdm obj (RawWhere m base cond) = EWhere m (semiDesExpr sdm obj base) cond'
   where
     cond0 = semiDesExpr SDOutput obj cond
@@ -255,6 +260,36 @@ semiDesExpr sdm obj (RawMethod m base method) = (`setExprMeta` m) $ semiDesExpr 
 semiDesExpr sdm obj (RawList m []) = semiDesExpr sdm obj (RawValue m (mkName ctListNil))
 semiDesExpr sdm obj (RawList m (l:ls)) = semiDesExpr sdm obj (RawValue m (mkName ctListCons) `applyRawArgs` [(Just $ partialKey (mkName ctListConsHead), l), (Just $ partialKey (mkName ctListConsTail), RawList (emptyMetaM m) ls)])
 semiDesExpr _ _ e = error $ printf "Not yet implemented semiDesExpr for %s" (show e)
+
+-- | A guard matching the definition an arrow reaches (@(${fun}(x= x, params= params) \@-> Float)\@Some(value\@body)@,
+-- 'arrowDefGuardParts'). The pattern is read as a pattern is, and a name it gives the definition
+-- (@value\@body@) is the function the definition is: written in the shape of a higher-order
+-- parameter, of the parameters the arrow's input is given (@body(x, params)@) and with the arrow's
+-- result type for its result, as a body pattern's sub-function variable is ('bodyPatternSubFn').
+desArrowDefMatch :: Maybe PObjExpr -> PExpr -> [(Bool, PObjArr)] -> PExpr -> PSExpr
+desArrowDefMatch obj defE defArgs pat0 = AliasExpr defE' (bindDefs (semiDesExpr (SDInput False) obj pat))
+  where
+    -- A name written as the pattern (@\@Nothing@) is parsed as the name an alias gives, which has
+    -- no type; here it is a value to match, typed by its name as every value is.
+    pat = case pat0 of
+      RawValue m n | getMetaType m == PTopType -> RawValue (mWithType (relTypeVal n) m) n
+      _                                        -> pat0
+    defE' = semiDesExpr SDOutput obj defE
+    defInput = case H.lookup (partialKey (mkName operatorArgL)) (exprAppliedArgsMap defE') of
+      Just (Just (_, Just l)) -> l
+      _ -> error $ printf "The arrow definition guard %s has no input" (show defE')
+    resultType = case [ r | (_, RawObjArr{roaObj=Just (RawValue _ k), roaArr=Just (Just r, _)}) <- defArgs, nameStr k == operatorArgR ] of
+      [r] -> exprToType (mobjExprVaenv obj) r
+      _   -> error $ printf "The arrow definition guard %s has no result type" (show defE')
+    params = H.keys (exprAppliedArgsMap defInput)
+    bindDefs (TupleApply tm (bm, be) arg) = TupleApply tm (bm, bindDefs be) $ case arg of
+      EAppArg a@ObjArr{oaObj=Just (AliasExpr key@Value{} (Value vm n)), oaArr}
+        | maybe True (isNothing . fst) oaArr ->
+        EAppArg a{oaObj=Just key, oaArr=Just (Just (AliasExpr (HoleExpr (mWithType resultType emptyMetaN) (HoleActive Nothing)) (defFn vm n)), maybe emptyMetaN snd oaArr)}
+      EAppArg a -> EAppArg a{oaArr=fmap (first (fmap bindDefs)) (oaArr a)}
+      a -> a
+    bindDefs e = e
+    defFn vm n = foldl (\e k -> TupleApply emptyMetaN (getExprMeta e, e) (EAppArg (mkIObjArr emptyMetaN k))) (Value vm n) params
 
 -- | The expression with every value rewritten: the values applied, aliased, conditioned on and
 -- passed as argument values, not the names arguments are passed under.

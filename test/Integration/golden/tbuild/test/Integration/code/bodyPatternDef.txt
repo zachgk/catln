@@ -1,0 +1,312 @@
+Prgm
+    { prgmObjMap = ObjectMapWith
+        { omItems = fromList
+            [
+                ( "/two"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /two
+                            ( EAppArg { eaaArg = Value /a -> /In } ) -> ∀/R
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /two
+                            ( EAppArg { eaaArg = Value /a -> /In } ) -> ∀/R =
+                            ( /zero
+                                ( EAppArg
+                                    { eaaArg = Value /a -> TVArg /a = ( Value /a ↦ TVArg /a ) }
+                                ) ↦ ∀/R
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/idf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /idf
+                            ( EAppArg { eaaArg = Value /a -> /In } ) -> ∀/R
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /idf
+                            ( EAppArg { eaaArg = Value /a -> /In } ) -> ∀/R = ( Value /a ↦ ∀/R )
+                        ]
+                    }
+                )
+            ,
+                ( "/Data/Maybe/Nothing"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Maybe/Nothing ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/kind"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /kind
+                            ( EAppArg { eaaArg = Value /a -> /In } )
+                            ( EAppArg
+                                { eaaArg = /f
+                                    ( EAppArg { eaaArg = Value /a -> /In } ) -> ∀/R
+                                }
+                            ) -> ∀/R
+                        , /kind
+                            ( EAppArg { eaaArg = Value /a -> /In } )
+                            ( EAppArg
+                                { eaaArg = /f
+                                    ( EAppArg { eaaArg = Value /a -> /In } )= Value /Zr
+                                }
+                            ) -> /Zr
+                        , /kind
+                            ( EAppArg { eaaArg = Value /a -> /In } )
+                            ( EAppArg
+                                { eaaArg = /f
+                                    ( EAppArg { eaaArg = Value /a -> /In } )= ( Value /a ↦ TopType )
+                                }
+                            ) -> ∀/R
+                        , /kind
+                            ( EAppArg { eaaArg = Value /a -> /In } )
+                            ( EAppArg
+                                { eaaArg = /f
+                                    ( EAppArg { eaaArg = Value /a -> /In } )=
+                                    ( Hole TopType HoleActive { haName = Nothing }@Value /fun )
+                                    ( EAppArg
+                                        { eaaArg = Value /a= ( Value /a ↦ TopType ) }
+                                    )
+                                }
+                            ) | /operator@->
+                            ( EAppArg
+                                { eaaArg = Value /l=
+                                    ( Hole TopType HoleActive { haName = Nothing }@Value /fun )
+                                    ( EAppArg { eaaArg = Value /a= Value /a } )
+                                }
+                            )
+                            ( EAppArg { eaaArg = Value /r= Value /R } )@/Data/Maybe/Some
+                            ( EAppArg
+                                { eaaArg = Value /value= Hole ∀/R HoleActive { haName = Nothing }@/body
+                                    ( EAppArg { eaaArg = Value /a } )
+                                }
+                            ) -> ∀/R
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/#noCore"
+                , ObjectMapItem
+                    { omiDecls = [ Value /#noCore ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/#invalid"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/#invalid ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Maybe/Some"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Maybe/Some
+                            ( EAppArg { eaaArg = Value /value } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Lit"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Value /Lit
+                        , Value /Lit
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/viaTwo"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /viaTwo -> ∀/R =
+                            ( /kind
+                                ( EAppArg { eaaArg = Value /a -> /In = Value /In } )
+                                ( EAppArg
+                                    { eaaArg = /f
+                                        ( EAppArg { eaaArg = Value /a -> /In } ) -> ∀/R =
+                                        ( /two
+                                            ( EAppArg
+                                                { eaaArg = Value /a -> TVArg /a = ( Value /a ↦ TVArg /a ) }
+                                            ) ↦ ∀/R
+                                        )
+                                    }
+                                ) ↦ ∀/R
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Zr"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Value /Zr
+                        , Value /Zr
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Primitive/Integer"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/zero"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /zero
+                            ( EAppArg { eaaArg = Value /a -> /In } ) -> ∀/R
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /zero
+                            ( EAppArg { eaaArg = Value /a -> /In } ) -> /Zr = Value /Zr
+                        ]
+                    }
+                )
+            ,
+                ( "/viaZero"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /viaZero -> ∀/R =
+                            ( /kind
+                                ( EAppArg { eaaArg = Value /a -> /In = Value /In } )
+                                ( EAppArg
+                                    { eaaArg = /f
+                                        ( EAppArg { eaaArg = Value /a -> /In } ) -> ∀/R =
+                                        ( /zero
+                                            ( EAppArg
+                                                { eaaArg = Value /a -> TVArg /a = ( Value /a ↦ TVArg /a ) }
+                                            ) ↦ ∀/R
+                                        )
+                                    }
+                                ) ↦ ∀/R
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/In"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Value /In
+                        , Value /In
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/viaId"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /viaId -> ∀/R =
+                            ( /kind
+                                ( EAppArg { eaaArg = Value /a -> /In = Value /In } )
+                                ( EAppArg
+                                    { eaaArg = /f
+                                        ( EAppArg { eaaArg = Value /a -> /In } ) -> ∀/R =
+                                        ( /idf
+                                            ( EAppArg
+                                                { eaaArg = Value /a -> TVArg /a = ( Value /a ↦ TVArg /a ) }
+                                            ) ↦ ∀/R
+                                        )
+                                    }
+                                ) ↦ ∀/R
+                            )
+                        ]
+                    }
+                )
+            ]
+        , omDecls = []
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /R
+            , cgcExtends =
+                [ /In
+                , /Zr
+                , /Lit
+                ]
+            , cgcDoc = Just ""
+            }
+        ]
+    , prgmAnnots =
+        [ Value /#noCore
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text -> /Catln/CStr = "Arms that look into the definition of a function the body calls.
+                A value variable (@${fun}@) in a body pattern binds the name the body calls, and a guard
+                @(${fun}(a= a) \@-> R)\@Some(value\@body)@ asks for the definition an arrow reaches from that
+                name given the arm's own [a]: [body] is then the function the definition is, of the callee's
+                parameters with the definition's body as its body. The arm passes [body] on, so the arm chosen
+                next is chosen by the callee's definition, and a definition calling a further function is looked
+                into the same way. A guard matching @Nothing@ instead holds for a name with no definition to
+                look into, such as a runtime primitive. Written without the core library, which has no such
+                primitive to call; `bodyPatternRun.ct` runs the chain rule." }
+            )
+        ]
+    }

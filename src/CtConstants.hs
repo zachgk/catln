@@ -26,9 +26,13 @@ operatorArgR = "/r"
 operatorName :: String -> String
 operatorName n = operatorPrefix ++ n
 
-operatorType, operatorHasArrow, operatorEq :: String
+operatorType, operatorHasArrow, operatorArrowDef, operatorEq :: String
 operatorType = operatorName ":"
 operatorHasArrow = operatorName "?->"
+-- | @obj \@-> T@: the definition reached from @obj@ by an arrow to @T@, as @Some@ of the function
+-- it is, or @Nothing@. Written in a guard and matched there (@(obj \@-> T)\@Some(value\@body)@),
+-- and answered where the arm is chosen ('TreeBuild.BodyPattern').
+operatorArrowDef = operatorName "@->"
 operatorEq = operatorName "=="
 
 intPrim, floatPrim, truePrim, falsePrim, strPrim, charPrim, ioPrim :: String

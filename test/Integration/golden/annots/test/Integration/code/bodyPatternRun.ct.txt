@@ -7,8 +7,16 @@
         parts is the sum or product rule over the slopes of the parts. The parts are the sub-function
         variables [g] and [h], each a function of the same input with its part of the body as its body, so
         the rules recurse into them until the body is a constant or the input.
+        A call of a named function is the chain rule: [fun] is the name called and [g] its input, and the
+        guard asks for [fun]'s definition (@\@->@), which is [fd]. The slope of the call is the slope of
+        [fd] at what [g] gives, times the slope of [g].
         No definition covers every function, which is what [#invalid] says of the declaration: a function
         whose body is none of these shapes has no slope here. `bodyPattern.ct` has the same shapes
         without the core library." )
+    )
+,
+    ( "/Catln/#md"
+    , TupleVal /Catln/Doc/Show/MD
+        ( /text = "[sq] is a named function for [slope] to look into: the chain rule above finds its definition." )
     )
 ]

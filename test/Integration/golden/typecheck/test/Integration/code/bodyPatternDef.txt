@@ -1,0 +1,229 @@
+Prgm
+    { prgmObjMap = ObjectMapWith
+        { omItems = fromList
+            [
+                ( "/two"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /two( Value /a -> /In ) -> ∀/R ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /two( Value /a -> /In ) -> ∀/R = /zero( Value /a -> TVArg /a = Value /a ) ]
+                    }
+                )
+            ,
+                ( "/idf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /idf( Value /a -> /In ) -> ∀/R ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /idf( Value /a -> /In ) -> ∀/R = Value /a ]
+                    }
+                )
+            ,
+                ( "/Data/Maybe/Nothing"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Maybe/Nothing ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/kind"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /kind( Value /a -> /In )
+                            ( /f( Value /a -> /In ) -> ∀/R ) -> ∀/R
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /kind( Value /a -> /In )
+                            ( /f( Value /a -> /In )= Value /Zr ) -> /Zr = Value /Zr
+                        , /kind( Value /a -> /In )
+                            ( /f( Value /a -> /In )= Value /a ) -> ∀/R = Value /a
+                        , /kind( Value /a -> /In )
+                            ( /f( Value /a -> /In )=
+                                ( Hole TopType HoleActive { haName = Nothing }@Value /fun )( Value /a= Value /a )
+                            ) | /operator@->
+                            ( Value /l=
+                                ( Hole TopType HoleActive { haName = Nothing }@Value /fun )( Value /a= Value /a )
+                            )( Value /r= Value /R )@/Data/Maybe/Some
+                            ( Value /value= Hole ∀/R HoleActive { haName = Nothing }@/body( Value /a ) ) -> ∀/R = /kind( Value /a -> TVArg /a = Value /a )
+                            ( /f( Value /a -> /In ) -> ∀/R = /body( Value /a -> TVArg /a = Value /a ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/#noCore"
+                , ObjectMapItem
+                    { omiDecls = [ Value /#noCore ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Catln/#invalid"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Catln/#invalid ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Maybe/Some"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Data/Maybe/Some( Value /value ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Lit"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Value /Lit
+                        , Value /Lit
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/viaTwo"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /viaTwo -> ∀/R = /kind( Value /a -> /In = Value /In )
+                            ( /f( Value /a -> /In ) -> ∀/R = /two( Value /a -> TVArg /a = Value /a ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Zr"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Value /Zr
+                        , Value /Zr
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/Data/Primitive/Integer"
+                , ObjectMapItem
+                    { omiDecls = [ Value /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/zero"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /zero( Value /a -> /In ) -> ∀/R ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /zero( Value /a -> /In ) -> /Zr = Value /Zr ]
+                    }
+                )
+            ,
+                ( "/viaZero"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /viaZero -> ∀/R = /kind( Value /a -> /In = Value /In )
+                            ( /f( Value /a -> /In ) -> ∀/R = /zero( Value /a -> TVArg /a = Value /a ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/In"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Value /In
+                        , Value /In
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/viaId"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ Value /viaId -> ∀/R = /kind( Value /a -> /In = Value /In )
+                            ( /f( Value /a -> /In ) -> ∀/R = /idf( Value /a -> TVArg /a = Value /a ) )
+                        ]
+                    }
+                )
+            ]
+        , omDecls = []
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /R
+            , cgcExtends =
+                [ /In
+                , /Zr
+                , /Lit
+                ]
+            , cgcDoc = Just ""
+            }
+        ]
+    , prgmAnnots =
+        [ Value /#noCore
+        , /Catln/#md
+            ( Value /text -> /Catln/CStr = CStr
+                { csValue = "Arms that look into the definition of a function the body calls.
+                A value variable (@${fun}@) in a body pattern binds the name the body calls, and a guard
+                @(${fun}(a= a) \@-> R)\@Some(value\@body)@ asks for the definition an arrow reaches from that
+                name given the arm's own [a]: [body] is then the function the definition is, of the callee's
+                parameters with the definition's body as its body. The arm passes [body] on, so the arm chosen
+                next is chosen by the callee's definition, and a definition calling a further function is looked
+                into the same way. A guard matching @Nothing@ instead holds for a name with no definition to
+                look into, such as a runtime primitive. Written without the core library, which has no such
+                primitive to call; `bodyPatternRun.ct` runs the chain rule." }
+            )
+        ]
+    }

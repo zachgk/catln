@@ -149,6 +149,17 @@ fromExpr est (AliasExpr base alias) = do
   alias' <- fromExpr est alias
   modify $ addConstraints [BoundedByKnown 6 (getExprMeta base') (TypeVar (TVArg $ inExprSingleton alias) TVInt PTopType)]
   return $ AliasExpr base' alias'
+-- A guard matching an arrow's definition ('arrowDefGuardParts') is answered where the arm is chosen,
+-- from the definitions there are, so it is encoded as written ('fromInertExpr'): nothing flows into
+-- it, and it is not a 'Boolean' to evaluate. The name it gives the definition is the higher-order
+-- parameter it binds, of the parameters the arrow's input is given.
+fromExpr est (EWhere m base cond)
+  | Just (defInput, _, _) <- arrowDefGuardParts cond = do
+  m' <- fromMeta BAct est m (printf "Where %s | %s" (show base) (show cond))
+  base' <- fromExpr est base
+  cond' <- fromInertExpr defInput cond
+  modify $ addConstraints [EqPoints 30 (getExprMeta base') m']
+  return $ EWhere m' base' cond'
 fromExpr est (EWhere m base cond) = do
   m' <- fromMeta BAct est m (printf "Where %s | %s" (show base) (show cond))
   base' <- fromExpr est base
