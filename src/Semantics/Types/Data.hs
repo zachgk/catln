@@ -561,7 +561,19 @@ data TypeVarLoc
   = TVInt
   | TVParent
   | TVExt
-  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
+  deriving (Eq, Ord, Show, Generic, ToJSON)
+
+-- | Written out rather than derived through 'Generic', and equal to the derived hash (the
+-- constructor's index, then the unit an argument-less constructor hashes as), so every map keyed
+-- by one keeps its order. Every lookup in a 'TypeVarArgEnv' hashes one ('VarKey'), and the
+-- derived instance walked the generic representation each time.
+instance Hashable TypeVarLoc where
+  hashWithSalt s loc = s `hashWithSalt` index loc `hashWithSalt` ()
+    where
+      index :: TypeVarLoc -> Int
+      index TVInt    = 0
+      index TVParent = 1
+      index TVExt    = 2
 
 -- | Whether a reference looks OUTSIDE the partial it sits on — at the nearest enclosing partial
 -- ('TVParent') or at the ambient object scope ('TVExt'). Used by the sites that treat every
@@ -643,7 +655,14 @@ data TypeVarAux
   = TVVar { tvvName :: TypeVarName } -- ^ A type variable stored from the 'PartialType' ptVars
   | TVArg { tvaName :: ArgName } -- ^ A type variable referring to an arguments type
   | TVApplied { tvpBase :: TypeVarAux, tvpVars :: !(H.HashMap TypeVarName Type) } -- ^ A type variable re-applied with new parameter bindings (@$F[$T -> $_B]@): whatever the base variable resolves to, with the named parameter slots rebound ('applyTypeVarOverrides')
-  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON, ToJSONKey)
+  deriving (Eq, Ord, Show, Generic, ToJSON, ToJSONKey)
+
+-- | Equal to the derived hash (the constructor's index, then its fields), written out for the
+-- reason 'TypeVarLoc''s is.
+instance Hashable TypeVarAux where
+  hashWithSalt s (TVVar n)       = s `hashWithSalt` (0 :: Int) `hashWithSalt` n
+  hashWithSalt s (TVArg n)       = s `hashWithSalt` (1 :: Int) `hashWithSalt` n
+  hashWithSalt s (TVApplied b m) = s `hashWithSalt` (2 :: Int) `hashWithSalt` b `hashWithSalt` m
 
 -- | Which type variable a 'TypeVar' is, read as a Catln type.
 instance CtType TypeVarAux where
@@ -939,7 +958,12 @@ type TypeIOVarArgEnv = H.HashMap TypeVarAux (Type, Type)
 
 -- | A 'TypeVarArgEnv' key: the variable and the location a reference to it reads.
 data VarKey = VarKey { vkLoc :: !TypeVarLoc, vkVar :: !TypeVarAux }
-  deriving (Eq, Ord, Generic, Hashable)
+  deriving (Eq, Ord, Generic)
+
+-- | Equal to the derived hash (its two fields in order), written out for the reason
+-- 'TypeVarLoc''s is.
+instance Hashable VarKey where
+  hashWithSalt s (VarKey loc v) = s `hashWithSalt` loc `hashWithSalt` v
 
 instance Show VarKey where
   show (VarKey TVExt v)    = show v
