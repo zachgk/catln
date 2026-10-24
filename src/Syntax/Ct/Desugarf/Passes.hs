@@ -275,15 +275,19 @@ linkClassMethodReceivers (Prgm _ (ClassGraph fullCg) _) (Prgm om@(ObjectMap objM
 -- return that is nothing but a variable (@-> $_B@) bounds nothing and is not copied.
 -- A definition with its own authored return annotation is left untouched, and multiple
 -- declarations contribute the union of their returns (the body's own arrow narrows it further).
+-- A declaration is a definition's when it declares the same function ('oaPrecedenceName'): every
+-- function in a context is kept under the one name @/ContextIn@, and each is declared apart, so a
+-- context definition takes only the declarations of the function it holds.
 seedDefResultTypes :: DesPrgm -> DesPrgm -> DesPrgm
 seedDefResultTypes fullPrgm@(Prgm (ObjectMap fullObjMap) _ _) (Prgm om@(ObjectMap objMap) classGraph annots) =
     Prgm om{omItems = objMap'} classGraph annots
   where
     typeEnv = mkTypeEnv fullPrgm
     objMap' = H.mapWithKey seedItem objMap
-    declReturn name = case [ t
+    declReturn name def = case [ t
                            | ObjectMapItem{omiDecls} <- maybeToList (H.lookup name fullObjMap)
                            , oa <- omiDecls
+                           , oaPrecedenceName oa == oaPrecedenceName def
                            , Just (_, dm) <- [oaArr oa]
                            , let t = freeTVExtToTopDeep H.empty (getMetaType dm)
                            , t /= PTopType
@@ -292,7 +296,7 @@ seedDefResultTypes fullPrgm@(Prgm (ObjectMap fullObjMap) _ _) (Prgm om@(ObjectMa
       ts -> Just $ unionAllTypes typeEnv ts
     seedItem name (ObjectMapItem ds rs rfs defs) = ObjectMapItem ds rs rfs (map (seedDef name) defs)
     seedDef name oa@ObjArr{oaArr=Just (e, m)}
-      | getMetaType m == PTopType, Just t <- declReturn name = oa{oaArr=Just (e, mWithType t m)}
+      | getMetaType m == PTopType, Just t <- declReturn name oa = oa{oaArr=Just (e, mWithType t m)}
     seedDef _ oa = oa
 
 -- | Types a sub function's captured parent arguments as the enclosing argument is typed.

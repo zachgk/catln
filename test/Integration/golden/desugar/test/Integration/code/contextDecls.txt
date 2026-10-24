@@ -1,0 +1,170 @@
+Prgm
+    { prgmObjMap = ObjectMapWith
+        { omItems = fromList
+            [
+                ( "/Counter"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Counter( Value /i -> /Data/Primitive/Integer ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /ContextIn( Value /value= Value total )
+                            ( Value /ctx= /
+                                ( Value counter= Counter( Value i )@Value counter )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=/Data/Primitive/Integer
+                            , /ctx=( /counter=/Counter.. )..
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn( Value /value= Value bump )
+                            ( Value /ctx= /
+                                ( Value counter= Counter( Value i )@Value counter )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Context( Value /value= Value / )
+                            ( Value /ctx= /
+                                ( Value counter= Counter
+                                    ( /operator+( Value /l= Value i )
+                                        ( Value /r= CInt
+                                            { ciValue = 1 }
+                                        )
+                                    )
+                                )
+                            )
+                        , /ContextIn( Value /value= Value total )
+                            ( Value /ctx= /
+                                ( Value counter= Counter( Value i )@Value counter )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=/Data/Primitive/Integer
+                            , /ctx=( /counter=/Counter.. )..
+                            ) = /Data/bindap
+                            ( Value m= /ContextIn( Value value= Value bump )
+                                ( Value ctx= /( Value counter= Value counter ) )
+                            )
+                            ( fn( Value v )= total.$c55c11( Value $c55c11-arg= Value v )
+                                ( Value $c55c11-states= /( Value counter= Value counter ) )
+                            )
+                        , /ContextIn( Value /value= Value peek )
+                            ( Value /ctx= /
+                                ( Value counter= Counter( Value i )@Value counter )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Context( Value /value= Value i )
+                            ( Value /ctx= /
+                                ( Value counter= Counter( Value i ) )
+                            )
+                        , /ContextIn( Value /value= Value main )
+                            ( Value /ctx= /( Value io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=()
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= exit
+                                    ( Value val= /operator-
+                                        ( Value /l= /Data/Context/unwrap
+                                            ( Value this= /ContextIn( Value value= Value total )
+                                                ( Value ctx= /
+                                                    ( Value counter= Counter
+                                                        ( Value i= CInt
+                                                            { ciValue = 0 }
+                                                        )
+                                                    )
+                                                )
+                                            )
+                                        )
+                                        ( Value /r= CInt
+                                            { ciValue = 1 }
+                                        )
+                                    )
+                                )
+                                ( Value ctx= /( Value io= Value io ) )
+                            )
+                            ( fn( Value v )= main.$247c0d
+                                ( Value $247c0d-arg= Value v )
+                                ( Value $247c0d-states= /( Value io= Value io ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/total.$c55c11"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ total.$c55c11
+                            ( Value $c55c11-arg= /Context( Value value )( Value ctx@Value $c55c11-ctx ) )( Value $c55c11-states )= /Data/bindap
+                            ( Value m= /ContextIn( Value value= Value peek )
+                                ( Value ctx= /( ..Value $c55c11-states )( ..Value $c55c11-ctx ) )
+                            )
+                            ( fn( Value v )= total.$c55c11.$eb7f1d( Value $eb7f1d-arg= Value v )
+                                ( Value $eb7f1d-states= /( ..Value $c55c11-states )( ..Value $c55c11-ctx ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$247c0d"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$247c0d
+                            ( Value $247c0d-arg= /Context( Value value )
+                                ( Value ctx@Value $247c0d-ctx )
+                            )
+                            ( Value $247c0d-states )= /Context( Value value= Value / )
+                            ( Value ctx= /
+                                ( ..Value $247c0d-states )
+                                ( ..Value $247c0d-ctx )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/total.$c55c11.$eb7f1d"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ total.$c55c11.$eb7f1d
+                            ( Value $eb7f1d-arg= /Context( Value value@Value n )( Value ctx@Value $eb7f1d-ctx ) )( Value $eb7f1d-states )= /Context( Value value= Value n )
+                            ( Value ctx= /( ..Value $eb7f1d-states )( ..Value $eb7f1d-ctx ) )
+                        ]
+                    }
+                )
+            ]
+        , omDecls = []
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr
+                { csValue = "Tests functions in a context written with and without a declaration in the same program. Each
+                function in a context is kept under the one name [ContextIn], so a declaration's result must be
+                given only to the definitions of the function it declares: [total] declares an [Integer] result,
+                while [bump] answers with nothing and [peek] with an [Integer] it was never declared to." }
+            )
+        ]
+    }

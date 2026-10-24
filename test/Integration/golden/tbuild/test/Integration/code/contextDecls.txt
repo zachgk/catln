@@ -1,0 +1,543 @@
+Prgm
+    { prgmObjMap = ObjectMapWith
+        { omItems = fromList
+            [
+                ( "/Counter"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Counter
+                            ( EAppArg { eaaArg = Value /i -> /Data/Primitive/Integer } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /total = Value /total } )
+                            ( EAppArg
+                                { eaaArg = Value /ctx ->
+                                    ( /counter=/Counter( /i=/Data/Primitive/Integer ) ).. = /
+                                    ( EAppArg
+                                        { eaaArg = Value /counter -> /Counter( /i=/Data/Primitive/Integer ) = /Counter
+                                            ( EAppArg { eaaArg = Value /i -> /Data/Primitive/Integer } )@Value /counter
+                                        }
+                                    )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )
+                                }
+                            ) -> /Context
+                            ( /value=/Data/Primitive/Integer
+                            , /ctx=( /counter=/Counter.. )..
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /bump = Value /bump } )
+                            ( EAppArg
+                                { eaaArg = Value /ctx ->
+                                    ( /counter=/Counter( /i=/Data/Primitive/Integer ) ).. = /
+                                    ( EAppArg
+                                        { eaaArg = Value /counter -> /Counter( /i=/Data/Primitive/Integer ) = /Counter
+                                            ( EAppArg { eaaArg = Value /i -> /Data/Primitive/Integer } )@Value /counter
+                                        }
+                                    )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )
+                                }
+                            ) -> /Context
+                            ( /value=()
+                            , /ctx=
+                                ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                            ) = /Context
+                            ( EAppArg
+                                { eaaArg = Value /value -> () = Value / }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /ctx ->
+                                    ( /counter=/Counter( /i=/Data/Primitive/Integer ) ) = /
+                                    ( EAppArg
+                                        { eaaArg = Value /counter -> /Counter( /i=/Data/Primitive/Integer ) = /Counter
+                                            ( EAppArg
+                                                { eaaArg = Value /i -> /Data/Primitive/Integer =
+                                                    ( /operator+
+                                                        ( EAppArg
+                                                            { eaaArg = Value /l -> TVArg /i = ( Value /i ↦ TVArg /i ) }
+                                                        )
+                                                        ( EAppArg
+                                                            { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                                        ) ↦ /Data/Primitive/Integer
+                                                    )
+                                                }
+                                            )
+                                        }
+                                    )
+                                }
+                            )
+                        , /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /total = Value /total } )
+                            ( EAppArg
+                                { eaaArg = Value /ctx ->
+                                    ( /counter=/Counter( /i=/Data/Primitive/Integer ) ).. = /
+                                    ( EAppArg
+                                        { eaaArg = Value /counter -> /Counter( /i=/Data/Primitive/Integer ) = /Counter
+                                            ( EAppArg { eaaArg = Value /i -> /Data/Primitive/Integer } )@Value /counter
+                                        }
+                                    )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )
+                                }
+                            ) -> /Context[ /V=/Data/Primitive/Integer ]
+                            ( /value=/Data/Primitive/Integer
+                            , /ctx=
+                                ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                            ) =
+                            ( /Data/bindap
+                                ( EAppArg
+                                    { eaaArg = Value /m -> /Context
+                                        [ /V=() ]
+                                        ( /value=()
+                                        , /ctx=
+                                            ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                                        ) =
+                                        ( /ContextIn
+                                            ( EAppArg { eaaArg = Value /value -> /bump = Value /bump } )
+                                            ( EAppArg
+                                                { eaaArg = Value /ctx ->
+                                                    ( /counter=/Counter( /i=/Data/Primitive/Integer ) ) = /
+                                                    ( EAppArg
+                                                        { eaaArg = Value /counter -> TVArg /counter = ( Value /counter ↦ TVArg /counter ) }
+                                                    )
+                                                }
+                                            ) ↦ /Context
+                                            [ /V=() ]
+                                            ( /value=()
+                                            , /ctx=
+                                                ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                                            )
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = /fn
+                                        ( EAppArg
+                                            { eaaArg = Value /v -> /Context
+                                                [ /V=() ]
+                                                ( /value=()
+                                                , /ctx=
+                                                    ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                                                )
+                                            }
+                                        ) -> /Context[ /V=/Data/Primitive/Integer ]
+                                        ( /value=/Data/Primitive/Integer
+                                        , /ctx=
+                                            ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                                        ) =
+                                        ( /total.$c55c11
+                                            ( EAppArg
+                                                { eaaArg = Value /$c55c11-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /$c55c11-states ->
+                                                    ( /counter=/Counter( /i=/Data/Primitive/Integer ) ) = /
+                                                    ( EAppArg
+                                                        { eaaArg = Value /counter -> TVArg /counter = ( Value /counter ↦ TVArg /counter ) }
+                                                    )
+                                                }
+                                            ) ↦ /Context[ /V=/Data/Primitive/Integer ]
+                                            ( /value=/Data/Primitive/Integer
+                                            , /ctx=
+                                                ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                                            )
+                                        )
+                                    }
+                                ) ↦ /Context[ /V=/Data/Primitive/Integer ]
+                                ( /value=/Data/Primitive/Integer
+                                , /ctx=
+                                    ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                                )
+                            )
+                        , /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /peek = Value /peek } )
+                            ( EAppArg
+                                { eaaArg = Value /ctx ->
+                                    ( /counter=/Counter( /i=/Data/Primitive/Integer ) ).. = /
+                                    ( EAppArg
+                                        { eaaArg = Value /counter -> /Counter( /i=/Data/Primitive/Integer ) = /Counter
+                                            ( EAppArg { eaaArg = Value /i -> /Data/Primitive/Integer } )@Value /counter
+                                        }
+                                    )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )
+                                }
+                            ) -> /Context
+                            ( /value=/Data/Primitive/Integer
+                            , /ctx=
+                                ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                            ) = /Context
+                            ( EAppArg
+                                { eaaArg = Value /value -> TVArg /i = ( Value /i ↦ TVArg /i ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /ctx ->
+                                    ( /counter=/Counter( /i=/Data/Primitive/Integer ) ) = /
+                                    ( EAppArg
+                                        { eaaArg = Value /counter -> /Counter( /i=/Data/Primitive/Integer ) = /Counter
+                                            ( EAppArg
+                                                { eaaArg = Value /i -> TVArg /i = ( Value /i ↦ TVArg /i ) }
+                                            )
+                                        }
+                                    )
+                                }
+                            )
+                        , /ContextIn
+                            ( EAppArg { eaaArg = Value /value -> /main = Value /main } )
+                            ( EAppArg
+                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ).. = /
+                                    ( EAppArg { eaaArg = Value /io -> /Catln/IO } )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )
+                                }
+                            ) -> /Context
+                            ( /value=()
+                            , /ctx=( /io=/Catln/IO )..
+                            ) =
+                            ( /Data/bindap
+                                ( EAppArg
+                                    { eaaArg = Value /m -> /Context
+                                        [ /V=() ]
+                                        ( /value=()
+                                        , /ctx=( /io=/Catln/IO )..
+                                        ) =
+                                        ( /ContextIn
+                                            ( EAppArg
+                                                { eaaArg = Value /value -> /Catln/exit( /val=/Data/Primitive/Integer ) = /Catln/exit
+                                                    ( EAppArg
+                                                        { eaaArg = Value /val -> /Data/Primitive/Integer =
+                                                            ( /operator-
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /l -> /Data/Primitive/Integer =
+                                                                        ( /Data/Context/unwrap
+                                                                            ( EAppArg
+                                                                                { eaaArg = Value /this -> /Context
+                                                                                    ( /value=/Data/Primitive/Integer
+                                                                                    , /ctx=( /counter=/Counter.. )..
+                                                                                    ) =
+                                                                                    ( /ContextIn
+                                                                                        ( EAppArg { eaaArg = Value /value -> /total = Value /total } )
+                                                                                        ( EAppArg
+                                                                                            { eaaArg = Value /ctx ->
+                                                                                                ( /counter=/Counter( /i=/Data/Primitive/Integer ) ) = /
+                                                                                                ( EAppArg
+                                                                                                    { eaaArg = Value /counter -> /Counter( /i=/Data/Primitive/Integer ) = /Counter
+                                                                                                        ( EAppArg
+                                                                                                            { eaaArg = Value /i -> /Data/Primitive/Integer = 0 }
+                                                                                                        )
+                                                                                                    }
+                                                                                                )
+                                                                                            }
+                                                                                        ) ↦ /Context
+                                                                                        ( /value=/Data/Primitive/Integer
+                                                                                        , /ctx=( /counter=/Counter.. )..
+                                                                                        )
+                                                                                    )
+                                                                                }
+                                                                            ) ↦ /Data/Primitive/Integer
+                                                                        )
+                                                                    }
+                                                                )
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /r -> /Data/Primitive/Integer = 1 }
+                                                                ) ↦ /Data/Primitive/Integer
+                                                            )
+                                                        }
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ) = /
+                                                    ( EAppArg
+                                                        { eaaArg = Value /io -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                                    )
+                                                }
+                                            ) ↦ /Context
+                                            [ /V=() ]
+                                            ( /value=()
+                                            , /ctx=( /io=/Catln/IO )..
+                                            )
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = /fn
+                                        ( EAppArg
+                                            { eaaArg = Value /v -> /Context
+                                                [ /V=() ]
+                                                ( /value=()
+                                                , /ctx=( /io=/Catln/IO )..
+                                                )
+                                            }
+                                        ) -> /Context
+                                        ( /value=()
+                                        , /ctx=( /io=/Catln/IO )..
+                                        ) =
+                                        ( /main.$247c0d
+                                            ( EAppArg
+                                                { eaaArg = Value /$247c0d-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /$247c0d-states -> ( /io=/Catln/IO ) = /
+                                                    ( EAppArg
+                                                        { eaaArg = Value /io -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                                    )
+                                                }
+                                            ) ↦ /Context
+                                            ( /value=()
+                                            , /ctx=( /io=/Catln/IO )..
+                                            )
+                                        )
+                                    }
+                                ) ↦ /Context
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/total.$c55c11"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /total.$c55c11
+                            ( EAppArg
+                                { eaaArg = Value /$c55c11-arg -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /ctx=
+                                        ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                                    ) = /Context
+                                    ( EAppArg
+                                        { eaaArg = Value /value -> () }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /ctx@Value /$c55c11-ctx ->
+                                            ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                                        }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /$c55c11-states ->
+                                    ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                                }
+                            ) -> /Context[ /V=/Data/Primitive/Integer ]
+                            ( /value=/Data/Primitive/Integer
+                            , /ctx=
+                                ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                            ) =
+                            ( /Data/bindap
+                                ( EAppArg
+                                    { eaaArg = Value /m -> /Context[ /V=/Data/Primitive/Integer ]
+                                        ( /value=/Data/Primitive/Integer
+                                        , /ctx=
+                                            ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                                        ) =
+                                        ( /ContextIn
+                                            ( EAppArg { eaaArg = Value /value -> /peek = Value /peek } )
+                                            ( EAppArg
+                                                { eaaArg = Value /ctx ->
+                                                    ( /counter=/Counter( /i=/Data/Primitive/Integer ) ) = /
+                                                    ( EAppSpread
+                                                        { easExpr = ( Value /$c55c11-states ↦ TopType ) }
+                                                    )
+                                                    ( EAppSpread
+                                                        { easExpr = ( Value /$c55c11-ctx ↦ TopType ) }
+                                                    )
+                                                }
+                                            ) ↦ /Context[ /V=/Data/Primitive/Integer ]
+                                            ( /value=/Data/Primitive/Integer
+                                            , /ctx=
+                                                ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                                            )
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = /fn
+                                        ( EAppArg
+                                            { eaaArg = Value /v -> /Context[ /V=/Data/Primitive/Integer ]
+                                                ( /value=/Data/Primitive/Integer
+                                                , /ctx=
+                                                    ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                                                )
+                                            }
+                                        ) -> /Context[ /V=/Data/Primitive/Integer ]
+                                        ( /value=/Data/Primitive/Integer
+                                        , /ctx=
+                                            ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                                        ) =
+                                        ( /total.$c55c11.$eb7f1d
+                                            ( EAppArg
+                                                { eaaArg = Value /$eb7f1d-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /$eb7f1d-states ->
+                                                    ( /counter=/Counter( /i=/Data/Primitive/Integer ) ) = /
+                                                    ( EAppSpread
+                                                        { easExpr = ( Value /$c55c11-states ↦ TopType ) }
+                                                    )
+                                                    ( EAppSpread
+                                                        { easExpr = ( Value /$c55c11-ctx ↦ TopType ) }
+                                                    )
+                                                }
+                                            ) ↦ /Context[ /V=/Data/Primitive/Integer ]
+                                            ( /value=/Data/Primitive/Integer
+                                            , /ctx=
+                                                ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                                            )
+                                        )
+                                    }
+                                ) ↦ /Context[ /V=/Data/Primitive/Integer ]
+                                ( /value=/Data/Primitive/Integer
+                                , /ctx=
+                                    ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$247c0d"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$247c0d
+                            ( EAppArg
+                                { eaaArg = Value /$247c0d-arg -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /ctx=( /io=/Catln/IO )..
+                                    ) = /Context
+                                    ( EAppArg
+                                        { eaaArg = Value /value -> () }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /ctx@Value /$247c0d-ctx -> ( /io=/Catln/IO ).. }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /$247c0d-states -> ( /io=/Catln/IO ) }
+                            ) -> /Context
+                            ( /value=()
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Context
+                            ( EAppArg
+                                { eaaArg = Value /value -> () = Value / }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ).. = /
+                                    ( EAppSpread
+                                        { easExpr =
+                                            ( Value /$247c0d-states ↦ TopType )
+                                        }
+                                    )
+                                    ( EAppSpread
+                                        { easExpr =
+                                            ( Value /$247c0d-ctx ↦ TopType )
+                                        }
+                                    )
+                                }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/total.$c55c11.$eb7f1d"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /total.$c55c11.$eb7f1d
+                            ( EAppArg
+                                { eaaArg = Value /$eb7f1d-arg -> /Context[ /V=/Data/Primitive/Integer ]
+                                    ( /value=/Data/Primitive/Integer
+                                    , /ctx=
+                                        ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                                    ) = /Context
+                                    ( EAppArg { eaaArg = Value /value@Value /n -> /Data/Primitive/Integer } )
+                                    ( EAppArg
+                                        { eaaArg = Value /ctx@Value /$eb7f1d-ctx ->
+                                            ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                                        }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /$eb7f1d-states ->
+                                    ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                                }
+                            ) -> /Context
+                            ( /value=/Data/Primitive/Integer
+                            , /ctx=
+                                ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                            ) = /Context
+                            ( EAppArg
+                                { eaaArg = Value /value -> TVArg /n = ( Value /n ↦ TVArg /n ) }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /ctx ->
+                                    ( /counter=/Counter( /i=/Data/Primitive/Integer ) ) = /
+                                    ( EAppSpread
+                                        { easExpr = ( Value /$eb7f1d-states ↦ TopType ) }
+                                    )
+                                    ( EAppSpread
+                                        { easExpr = ( Value /$eb7f1d-ctx ↦ TopType ) }
+                                    )
+                                }
+                            )
+                        ]
+                    }
+                )
+            ]
+        , omDecls = []
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "Tests functions in a context written with and without a declaration in the same program. Each
+                  function in a context is kept under the one name [ContextIn], so a declaration's result must be
+                  given only to the definitions of the function it declares: [total] declares an [Integer] result,
+                  while [bump] answers with nothing and [peek] with an [Integer] it was never declared to."
+                }
+            )
+        ]
+    }

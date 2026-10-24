@@ -1,0 +1,22 @@
+import "core"
+
+
+# Tests functions in a context written with and without a declaration in the same program. Each
+  function in a context is kept under the one name [ContextIn], so a declaration's result must be
+  given only to the definitions of the function it declares: [total] declares an [Integer] result,
+  while [bump] answers with nothing and [peek] with an [Integer] it was never declared to.
+data(Counter(i -> Integer))
+
+bump{Counter(i)}= (){Counter(i + 1)}
+
+total{Counter(i)} -> Integer{counter -> Counter..}
+total{Counter(i)} =
+  _<- bump
+  n<- peek
+  n
+
+peek{Counter(i)}= i{Counter(i)}
+
+main{io -> IO} -> (){IO} =
+  _<- exit(val= /Data/Context/unwrap(this= /ContextIn(value= total, ctx= (counter= Counter(i= 0)))) - 1)
+  ()
