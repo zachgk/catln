@@ -128,7 +128,7 @@ and it is not always this one.
 | `... :: ACT TopType` (where you expected a concrete type) | Inference never narrowed the point — a variable or argument failed to propagate/bind. |
 | `Scheme failed check at setScheme ... ACT ∅` / `Actual type contains bottomType` | The point collapsed to empty: an intersection/bound had nothing in common. Often a *consequence* of a var staying `TopType` (so `concrete ∩ <something built from Top> = ∅`), or a genuine type error. |
 | `buildCallTree from top type` (`TreeBuild.hs`) | Type-checked to `TopType`, then TreeBuild can't pick an arrow for `Top`. Root cause is upstream in TypeCheck — fix the `TopType`, not TreeBuild. |
-| `Failed to get singleton for TopType` (`Types.hs`) | Code needed one concrete partial but got `Top`. Same root as above. |
+| `Failed to get singleton for TopType` (`Types/Construct.hs`) | Code needed one concrete partial but got `Top`. Same root as above. |
 | `Reached runConstraints limit` (≈15 epochs) | Non-convergence/oscillation. Classic case: a recursive type unrolls one level deeper each epoch (`Nil + Cons(tail = Nil + Cons(tail = …))`). Non-fatal warning but real. |
 | `verifySchemeActLowers` / "Grows by `<diff>`" | Monotonicity violation: a point's ACT *widened* between epochs (it must only narrow). Often two passes fighting (one narrows, one re-widens). |
 | `Multiple matches` / `Failed match in eval callTree` (`Eval.hs`) | Runtime dispatch (`TCMatch`/`TCCond`) found 0 or >1 arrows for a value — a value-vs-arrow keying mismatch, not necessarily a type error. |
@@ -207,7 +207,8 @@ why (what was intersected with what).
   arrow's object pattern against a source partial. This is **where type variables bind — or
   fail to.** Note: it special-cases a *bare* `TypeVar` argument type but matches structured arg
   types only structurally.
-- **`src/Semantics/Types.hs`** — `intersectTypesWithVarEnv` (structural intersection returning
+- **`src/Semantics/Types/`** (the type algebra; module map in the `type-set-algebra` skill) —
+  `intersectTypesWithVarEnv` (structural intersection returning
   `(TypeVarArgEnv, Type)` — records var bindings), `isSubtypeOfWithEnv`, `compactType`,
   `expandPredicates`. **Type shape:** `UnionType (Maybe (preds, negLeafs)) posLeafs consts`; a
   partial carries `ptArgs` (data fields) and `ptVars` (type parameters) **separately**, matched
@@ -250,6 +251,6 @@ reduces, or a spurious coverage error):
   intersected with a real class/type bound — a binding has leaked into a bound slot. A slot is
   one or the other: the matched binding (key side) or the declared bound (value side), never
   both. That signals mis-routed field↔param plumbing (`updateTypeProp` /
-  `intersectTypesWithVarEnv`, `Types.hs`). Relatedly, a declared field is completed with its type
-  parameter's *bound* (`completeDataPartials`, `Types.hs`); a value/definition is compared
+  `intersectTypesWithVarEnv`, `Types/Access.hs`, `Types/Algebra/SetOps.hs`). Relatedly, a declared field is completed with its type
+  parameter's *bound* (`completeDataPartials`); a value/definition is compared
   against that in the decl/def coverage check (`verifyObjMapItem`, `Decode.hs`).

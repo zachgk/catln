@@ -23,12 +23,12 @@
 
 module Semantics.Types.Instances where
 
-import           Data.Graph              (graphFromEdges, vertices)
-import qualified Data.HashMap.Strict     as H
-import qualified Data.HashSet            as S
-import qualified Data.List               as L
-import           Semantics.Types.Algebra
+import           Data.Graph           (graphFromEdges, vertices)
+import qualified Data.HashMap.Strict  as H
+import qualified Data.HashSet         as S
+import qualified Data.List            as L
 import           Semantics.Types.Data
+import           Semantics.Types.Ops
 import           Text.Printf
 
 

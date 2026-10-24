@@ -205,7 +205,7 @@ that takes a function.
 
 A call-site lambda's parameter is typed from the callee's declared input for that position, and
 **only when that type is fully concrete** (`TypeCheck/TypeUtils.hs`, `fnArgInputBound`, `guard
-(typeFullyConcrete inTy)`). `typeFullyConcrete` (`Semantics/Types.hs`) rejects a type variable
+(typeFullyConcrete inTy)`). `typeFullyConcrete` (`Semantics/Types/Construct.hs`) rejects a type variable
 *and* a class-predicate top — so `Boolean`, `/Data/List`, `/Data/Set`, `/Data/Maybe` all fail
 it. Only bare leaves like `Integer`, `String`, `True`, `Nil` pass.
 

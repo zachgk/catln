@@ -1,7 +1,7 @@
 ---
 name: type-set-algebra
 description: >
-  Use when working on the core type-set algebra in src/Semantics/Types.hs — union, intersect,
+  Use when working on the core type-set algebra in src/Semantics/Types/ (the Semantics.Types modules) — union, intersect,
   subset (isSubtypeOf), complement, difference, compactType, or the helpers they call
   (differencePartial, intersectPartialsBase, expandClassPartial, foldRecursiveType, predImplies,
   the satGoal engine) — or on test/Semantics/TypesTests.hs, or when a set-algebra LAW fails
@@ -12,7 +12,7 @@ description: >
 
 # Catln types as set algebra
 
-Catln types ARE sets of values, and `src/Semantics/Types.hs` is their Boolean algebra. This is
+Catln types ARE sets of values, and the `Semantics.Types` modules are their Boolean algebra. This is
 the layer *beneath* the constraint solver: `debug-typechecker` covers inference over points/epochs;
 this skill covers the set operations that inference (and TreeBuild, and Eval dispatch) calls into.
 `test/Semantics/TypesTests.hs` is the correctness contract for that algebra — property-based, over
@@ -41,7 +41,7 @@ difference/complement/predicate/mixed/var branches all get exercised. The driver
 
 ## The set-theoretic model
 
-### `Type` — the representation (`Types.hs` ~L237)
+### `Type` — the representation (`Types/Data.hs`)
 
 ```haskell
 data Type
@@ -196,6 +196,32 @@ wrong is the single most common source of a law failing in one direction only.**
 already be a fixed point, and re-compacting must not change it. Most "two equal types compare
 unequal" bugs are really a missing `compactType` reduction on one side.
 
+### Module map (`src/Semantics/Types/`)
+
+`Semantics.Types` is a facade re-exporting everything below; import it, not a submodule. Bottom to
+top (each imports only modules above it in this list):
+
+| Module | Holds |
+|---|---|
+| `Name` | `Name`, `NPath`, absolute/relative name and path helpers |
+| `Data` | `PartialType`, `Type` and its patterns, `TypePredicates`, var locations, `TypeGraph`, `TypeEnv`, `SatCache`, hashing/forcing/`Show` |
+| `Memo` | `InFlight`/`inFlightOn` cycle cuts, `ReadDeps` read frames, `memoReading` |
+| `Construct` | primitive leaves, singletons, split/join union types, `getSingleton`, `typeFullyConcrete` |
+| `Preds` | structural predicate ops, `predExprHoldsOn` |
+| `ArgModes` | `PtArgMode` required/optional args, overlap and cover |
+| `Vars` | non-algebra type-var scoping (outer/parent/sibling refs, self refs) |
+| `SatGoal` | `SatGoal`/`SatAtom` and their DNF |
+| `Algebra.Subst` → `Expand` → `Sat` → `Preds` → `Subtype` → `Compact` → `SetOps` | the mutually recursive algebra core (one ~6k-line SCC), split by area |
+| `Ops` | default-env wrappers (`unionTypes`, `intersectTypes`, `isSubtypeOf`, `isEqType`, …) |
+| `Access` | `typeGetArg`, `updateTypeProp` |
+| `Instances` | orphan `Semigroup`/`Monoid` for `ClassGraph`/`TypeEnv` (merging needs `unionTypes`) |
+
+The algebra core's back edges go through `{-# SOURCE #-}` imports of three boot files —
+`Algebra/SetOps.hs-boot`, `Algebra/Compact.hs-boot`, `Algebra/Subtype.hs-boot`. A lower algebra
+module calling a new function of a higher one must add its signature to that module's `.hs-boot`
+(GHC reports a missing boot export as "not in scope"). Placing a new helper: put it in the lowest
+module whose imports cover what it calls; a helper used by only one algebra module lives in it.
+
 ## Using TypesTests
 
 ### The laws (each is one `propXxx` in `TypesTests.hs`)
@@ -244,7 +270,7 @@ defaultMain (localOption (HedgehogTestLimit (Just 5000)) $
 Then reproduce the shrunk `Type`s directly in ghci — build them with `partialVal`, `singletonType`,
 `TopType`, `relTypeVal`, `PTopType`, `BottomType` and call `unionTypes`/`intersectTypes`/
 `differenceTypeEnv`/`complementTypeEnv`/`isSubtypeOf`/`isEqType`/`compactType`. Find the FIRST op that
-returns a wrong/inexact result, trace into `Types.hs`, fix the root.
+returns a wrong/inexact result, trace into `Semantics/Types/Algebra/`, fix the root.
 
 Harness gotchas:
 - tasty ERE `|` alternation matches 0 tests — run one pattern at a time.
@@ -301,6 +327,6 @@ uncovered means a missing generator input — add it.
    *outside* TypesTests may be WIP-broken — check TypesTests specifically, and confirm the Integration
    `.ct` failing set is byte-identical to baseline when a core op changes (open/closed-world flips
    and subtype changes affect real compilation).
-3. Core `Types.hs` edits churn many goldens (every file's `unionAllObjs` shifts) — regenerate with
+3. Core type-algebra edits churn many goldens (every file's `unionAllObjs` shifts) — regenerate with
    `GOLDEN_TEST_WRITE=1 stack test` and confirm it's churn, not breakage, by checking assertions.
 4. `make format`, then commit small (one law/branch per commit), and record the root cause in memory.
