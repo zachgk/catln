@@ -331,16 +331,16 @@ desStatement statementEnv@(inheritModule, inheritAnnots) (RawStatementTree state
 
 -- | Each node carries the name of the page it came from, which names the scope that page's
 -- synthesized metas are numbered in (see 'MetaIDScope').
-desFinalPasses :: [(DesPrgm, FileImport, [DesPrgm], [DesPrgm])] -> CRes [DesPrgm]
-desFinalPasses = mapM desFinalPass
+desFinalPasses :: MetaIDRoots -> [(DesPrgm, FileImport, [DesPrgm], [DesPrgm])] -> CRes [DesPrgm]
+desFinalPasses roots = mapM (desFinalPass roots)
 
 -- | One node's final passes. Rewriting a program is all this does — it reads no file and asks
 -- nothing of the world — so it is a function rather than an action, which is what lets a caller
 -- holding only the programs (such as the debugger's expression compile, @CtService.debugExprRun@)
 -- run it without an 'IO' to run it in. It fails where a name the class graph needs does not
 -- resolve to exactly one type or class ('resolveRelativeNames').
-desFinalPass :: (DesPrgm, FileImport, [DesPrgm], [DesPrgm]) -> CRes DesPrgm
-desFinalPass (prgm1, name, sccPeerDeps, myExtDeps) = do
+desFinalPass :: MetaIDRoots -> (DesPrgm, FileImport, [DesPrgm], [DesPrgm]) -> CRes DesPrgm
+desFinalPass roots (prgm1, name, sccPeerDeps, myExtDeps) = do
   -- This page's own names first, so a name it wrote is reported for it rather than for the program
   -- it is resolved within.
   prgm3 <- resolveRelativeNames fullPrgm2 prgm2
@@ -366,7 +366,7 @@ desFinalPass (prgm1, name, sccPeerDeps, myExtDeps) = do
   -- is, while the binder that gives it meaning is still lexically in view. Last, so it sees the
   -- annotations the passes above seed.
   let prgm6 = classifyParentVarRefs prgm5
-  return $ addPrgmMetaIDs (desugarMetaIDScope name) prgm6
+  return $ addPrgmMetaIDs (desugarMetaIDScope roots name) prgm6
   where
     fullPrgm1 = mconcat ([prgm1] ++ sccPeerDeps ++ myExtDeps)
     fullPrgm2 = removeClassInstanceObjects fullPrgm1 fullPrgm1
@@ -388,13 +388,13 @@ desPrgm (RawPrgm _ statements, name, imports) = do
 validPrgm :: PPrgm -> Bool
 validPrgm prgm = not $ rawPrgmHasAnnot prgm ctxAnnot
 
-desFiles :: PPrgmGraphData -> CResT IO DesPrgmGraphData
-desFiles prgms1 = do
+desFiles :: MetaIDRoots -> PPrgmGraphData -> CResT IO DesPrgmGraphData
+desFiles roots prgms1 = do
   -- initial desugar
   prgms2 <- asCResT $ mapM desPrgm (filter (validPrgm . fst3) $ graphToNodes prgms1)
   -- Each node travels with its own key, which 'mapGraphWithDeps' does not pass on and
   -- 'desFinalPasses' names its meta id scope by.
   let prgms3 = fmapGraphWithKey (\name prgm -> (prgm, name)) $ graphFromEdges prgms2
-  mapGraphWithDeps (asCResT . desFinalPasses . map withKey) prgms3
+  mapGraphWithDeps (asCResT . desFinalPasses roots . map withKey) prgms3
   where
     withKey ((prgm, name), sccPeerDeps, myExtDeps) = (prgm, name, map fst sccPeerDeps, myExtDeps)

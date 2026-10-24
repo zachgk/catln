@@ -54,7 +54,8 @@ import           Eval.Common                   (EvalMode, EvalSession (..),
                                                 newEvalService)
 import           Eval.Runtime.WebDocs          (sidebarOrder)
 import           MapMeta                       (interleaveMeta, interleavePrgm,
-                                                parseMetaIDScope, zip4MetaFun)
+                                                noMetaIDRoots, parseMetaIDScope,
+                                                zip4MetaFun)
 import           Network.HTTP.Types.Status     (notFound404)
 import           Semantics                     (buildCtssConfig)
 import           Semantics.Prgm
@@ -334,9 +335,9 @@ annotResp ctss scope' annot = do
       Left err     -> fail $ show $ errorBundlePretty err
       Right parsed -> return (RawPrgm [] [RawStatementTree (RawAnnot parsed) []])
     let annotName = desFileImport $ mkRawFileImport $ RawValue emptyMetaN "<annot>"
-    let rawPrgm' = addRawPrgmMetaIDs (parseMetaIDScope annotName) rawPrgm
+    let rawPrgm' = addRawPrgmMetaIDs (parseMetaIDScope noMetaIDRoots annotName) rawPrgm
     (annotDesPrgm, annotPrgmName, _) <- asCResT $ desPrgm (rawPrgm', annotName, [])
-    annotDesPrgm' <- asCResT $ desFinalPass (annotDesPrgm, annotPrgmName, [], [])
+    annotDesPrgm' <- asCResT $ desFinalPass noMetaIDRoots (annotDesPrgm, annotPrgmName, [], [])
     -- The pages of the scope which can be evaluated, with the rest reported rather than fatal. A
     -- page which did not typecheck used to take every annotation in the scope out with it, including
     -- a navigation that reads no program at all — see 'ctssEvaluableFrom' for why it cannot simply

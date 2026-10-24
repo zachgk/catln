@@ -21,11 +21,13 @@ import           Control.Monad.Trans.Writer (execWriter, tell)
 import qualified Data.ByteString            as B
 import qualified Data.ByteString.UTF8       as BSU
 import qualified Data.HashMap.Strict        as H
+import qualified Data.List                  as L
 import           Data.Maybe                 (fromMaybe)
 import qualified Data.UUID                  as UUID
 import qualified Data.UUID.V5               as UUID5
 import           Data.Word                  (Word64, Word8)
 import           Semantics.Prgm
+import           Semantics.Types            (Constant (..))
 import           Text.Printf
 
 data MetaLocation
@@ -115,20 +117,65 @@ utf8Bytes = B.unpack . BSU.fromString
 -- two pages the same ids and attribute one page's tests to the other.
 data MetaIDScope = MetaIDScope !String !Word64
 
--- | The scope a file's parse numbers its metas in.
+-- | The directories a page is named from in its meta-id scopes ('pageIDName'), each under a name of
+-- its own: the standard library's, and the one the compiler runs in.
 --
--- The import is named by its absolute expression, which is what 'AFileImport' compares by, so two
--- distinct files cannot share a name. That holds because every 'impAbs' is rebuilt by
--- 'Syntax.Parsers.canonicalImport' from an absolute path with position-less metas; an import form
--- which kept its parsed positions would break it, giving two files written alike the same ids.
-parseMetaIDScope :: FileImport -> MetaIDScope
-parseMetaIDScope imp = MetaIDScope ("parse:" ++ show imp) 0
+-- A page's ids are the same wherever the files sit. An id named from the page's absolute path made
+-- every id of a checkout differ from another checkout's, so a golden holding one (an annotation's
+-- value naming the expression it came from) held the path it was written under, though it is
+-- written with the path itself spelled as the fixed @/repo/dir@.
+newtype MetaIDRoots = MetaIDRoots [(String, FilePath)]
+
+-- | No directory to name pages from: for pages which name no file ('Syntax.Ct.Prgm.mkRawFileImport'
+-- of a bare name), whose import holds no path to be named.
+noMetaIDRoots :: MetaIDRoots
+noMetaIDRoots = MetaIDRoots []
+
+-- | What a page's meta-id scopes are named by: its absolute import expression, which is what
+-- 'AFileImport' compares by, with each path in it spelled from the root it sits under — the root's
+-- name, then the path within it — the longest root first. A path under no root stays as it is.
+--
+-- Two distinct files cannot share a name, as no two can share an absolute import: every 'impAbs' is
+-- rebuilt by 'Syntax.Parsers.canonicalImport' from an absolute path with position-less metas (an
+-- import form which kept its parsed positions would break that, giving two files written alike the
+-- same ids), and a path is spelled from one root, the same one, wherever the file was named from.
+pageIDName :: MetaIDRoots -> FileImport -> String
+pageIDName (MetaIDRoots roots) imp = show $ mapExprStrings fromRoot $ impAbs imp
+  where
+    longestFirst = L.sortOn (negate . length . snd) roots
+    fromRoot s = case [ name ++ ":" ++ rest | (name, root) <- longestFirst, Just rest <- [within root s] ] of
+      (named:_) -> named
+      []        -> s
+    within root s
+      | s == root = Just ""
+      | (root ++ "/") `L.isPrefixOf` s = Just (drop (length root + 1) s)
+      | otherwise = Nothing
+
+-- | An expression with each string constant in it rewritten.
+mapExprStrings :: (String -> String) -> Expr m -> Expr m
+mapExprStrings f = expr
+  where
+    expr (CExpr m (CStr s))       = CExpr m (CStr (f s))
+    expr e@CExpr{}                = e
+    expr e@Value{}                = e
+    expr e@HoleExpr{}             = e
+    expr (AliasExpr b a)          = AliasExpr (expr b) (expr a)
+    expr (EWhere m b c)           = EWhere m (expr b) (expr c)
+    expr (TupleApply m (bm, b) a) = TupleApply m (bm, expr b) (app a)
+    app (EAppArg oa)   = EAppArg (objArr oa)
+    app a@EAppVar{}    = a
+    app (EAppSpread e) = EAppSpread (expr e)
+    objArr oa@ObjArr{oaObj, oaArr} = oa{oaObj = fmap expr oaObj, oaArr = fmap (\(e, m) -> (fmap expr e, m)) oaArr}
+
+-- | The scope a file's parse numbers its metas in, named by 'pageIDName'.
+parseMetaIDScope :: MetaIDRoots -> FileImport -> MetaIDScope
+parseMetaIDScope roots imp = MetaIDScope ("parse:" ++ pageIDName roots imp) 0
 
 -- | The scope a file's desugar numbers its metas in: the ones desugar synthesizes, as those
 -- carried over from the parse already hold an id. Distinct from 'parseMetaIDScope' so the two
 -- passes over one file cannot hand out the same id twice.
-desugarMetaIDScope :: FileImport -> MetaIDScope
-desugarMetaIDScope imp = MetaIDScope ("des:" ++ show imp) 0
+desugarMetaIDScope :: MetaIDRoots -> FileImport -> MetaIDScope
+desugarMetaIDScope roots imp = MetaIDScope ("des:" ++ pageIDName roots imp) 0
 
 -- | Gives an id to a meta which has none, leaving one which already has an id alone. Both the
 -- parse and the desugar pass run over metas the other has already numbered.

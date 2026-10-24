@@ -22,7 +22,7 @@ import           CRes
 import           Data.Char               (isSpace)
 import           Data.Graph
 import           Data.List               (dropWhileEnd)
-import           MapMeta                 (parseMetaIDScope)
+import           MapMeta                 (noMetaIDRoots, parseMetaIDScope)
 import           Semantics.Prgm
 import           Semantics.Types         (mkName)
 import           Syntax.Ct.Desugarf      (desFinalPass, desPrgm)
@@ -68,12 +68,12 @@ compileStatementsIn :: String -> [TPrgmNode] -> [PS.PStatementTree] -> (PPrgm ->
 compileStatementsIn name scope statements adjust = do
   let rawPrgm = RawPrgm [] statements
   let pageName = desFileImport $ mkRawFileImport $ RawValue emptyMetaN (mkName name)
-  let rawPrgm' = addRawPrgmMetaIDs (parseMetaIDScope pageName) rawPrgm
+  let rawPrgm' = addRawPrgmMetaIDs (parseMetaIDScope noMetaIDRoots pageName) rawPrgm
   (desP, desName, _) <- desPrgm (rawPrgm', pageName, [])
   -- Adjusted before the final pass, which is what reads a page's declarations into its definitions
   -- ('Syntax.Ct.Desugarf.seedDefResultTypes'),
   -- so that a declaration the adjustment adds holds the definitions it declares.
-  adjusted <- adjust desP >>= \p -> desFinalPass (p, desName, [], [])
+  adjusted <- adjust desP >>= \p -> desFinalPass noMetaIDRoots (p, desName, [], [])
   -- Failing on an error note, as a page's typecheck does ('TypeCheck.typecheckPrgm'): some errors,
   -- such as a definition answering more than it is declared to ('ResultNotGuaranteed'), are noted
   -- beside a typed page rather than in place of one.

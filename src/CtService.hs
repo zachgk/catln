@@ -80,7 +80,7 @@ import           Syntax.Ct.MapRawMeta    (rawStatementExprIds)
 import           Syntax.Ct.Parser.Syntax
 import           Syntax.Ct.Prgm
 import           Syntax.Ct.Results       (setAnnotsById)
-import           Syntax.InferImport      (findImportPath)
+import           Syntax.InferImport      (findImportPath, metaIDRoots)
 import           Syntax.Native.Parser    (isNativeImport)
 import           Syntax.Parsers
 import           System.Directory        (createDirectoryIfMissing)
@@ -907,7 +907,7 @@ ctssBuildSCC ctss@(CTSS ssmv _) sccNodes allPages = do
         -- The epoch tally is handed in rather than read back off the service, because this is
         -- inside the lock the service is held under: a pipeline reading the 'MVar' it is being run
         -- from would wait for itself.
-        p <- runCResT $ buildSCCPipeline ctss ctssData sccNamesSet currentSCCNodes pages (ctssInstrument sccFileNames) ctssEpochs
+        p <- runCResT $ buildSCCPipeline ctss (ctssConfig ctssdat) ctssData sccNamesSet currentSCCNodes pages (ctssInstrument sccFileNames) ctssEpochs
         let quiet = all (maybe False (ctssQuietPage (ctssConfig ctssdat)) . impDisp) sccFileNames
         let report notes = unless (null notes || quiet) $ putStrLn $ prettyCNotes notes
         case p of
@@ -934,10 +934,10 @@ ctssBuildSCC ctss@(CTSS ssmv _) sccNodes allPages = do
 
 -- | Run the full pipeline (desugar → typecheck → build → annotate) for a single SCC.
 -- Returns a map of updated SSFs for the SCC members.
-buildSCCPipeline :: CTSS -> GraphData SSF FileImport -> S.HashSet FileImport
+buildSCCPipeline :: CTSS -> CTSSConfig -> GraphData SSF FileImport -> S.HashSet FileImport
                  -> [(SSF, FileImport, [FileImport])] -> GraphData SSF FileImport
                  -> [AnyInstrument] -> TVar [(FileImport, (Integer, Integer))] -> CResT IO (H.HashMap FileImport SSF)
-buildSCCPipeline ctss ctssData sccNamesSet sccNodes pages instruments epochsVar = do
+buildSCCPipeline ctss config ctssData sccNamesSet sccNodes pages instruments epochsVar = do
   -- Get raw programs for all SCC members
   rawPrgms <- forM sccNodes $ \(ssf, name, deps) -> do
     -- Read by whoever asked for the build ('ctssLoadOf'), so a page still unread here is a build of
@@ -970,7 +970,8 @@ buildSCCPipeline ctss ctssData sccNamesSet sccNodes pages instruments epochsVar 
       let desNodesForFinal = [(des, name, peerDes, extDepDes)
             | (des, name, _) <- desResults
             , let peerDes = [d | (d, n, _) <- desResults, n /= name]]
-      finalDes <- asCResT $ desFinalPasses desNodesForFinal
+      roots <- lift $ metaIDRoots config
+      finalDes <- asCResT $ desFinalPasses roots desNodesForFinal
 
       -- Step 4: Collect typechecked data from already-built dependencies
       -- Which of them those are is written down beside them, because a page's inference is read by

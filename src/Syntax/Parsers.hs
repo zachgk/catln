@@ -35,7 +35,8 @@ import           Data.Maybe               (fromMaybe, isJust, isNothing,
                                            listToMaybe, mapMaybe)
 import qualified Data.Sequence            as Sq
 import           Data.Time.Clock          (UTCTime, getCurrentTime)
-import           MapMeta                  (MetaLocation (ImportMeta), mapMeta,
+import           MapMeta                  (MetaIDRoots,
+                                           MetaLocation (ImportMeta), mapMeta,
                                            parseMetaIDScope)
 import           Semantics
 import           Semantics.Prgm
@@ -52,8 +53,9 @@ import           Syntax.HsBuiltins.Parser (hsBuiltins, hsBuiltinsSyntax, hsPrgm,
                                            hsPrgmSyntax, hsRawPrgm,
                                            hsRawPrgmSyntax)
 import           Syntax.InferImport       (dirSyntax, findImportPath,
-                                           inferRawImportStrMaybe, parserImport,
-                                           resolveImportPath, stackPath)
+                                           inferRawImportStrMaybe, metaIDRoots,
+                                           parserImport, resolveImportPath,
+                                           stackPath)
 import           Syntax.Md.Parser         (mdSyntax)
 import           Syntax.Native.Parser     (nativeImportExpr, nativeReference,
                                            nativeSyntax)
@@ -643,8 +645,8 @@ pageImports imp prgm imports
 -- reads none from the program), so writing the given ones into the program only made it say
 -- something its source does not: every page shown, formatted or written back from it gained an
 -- @import "core"@ it never wrote.
-pagePrgm :: FileImport -> RawPrgm () -> RawPrgm ()
-pagePrgm imp = addRawPrgmMetaIDs (parseMetaIDScope imp)
+pagePrgm :: MetaIDRoots -> FileImport -> RawPrgm () -> RawPrgm ()
+pagePrgm roots imp = addRawPrgmMetaIDs (parseMetaIDScope roots imp)
 
 -- | The page a preload found: where it sits in the graph, and the program it holds where the
 -- preload had to read it.
@@ -656,14 +658,16 @@ preloadPage config importers imp PreloadImport{plImports, plExtraImports, plPars
   -- the notes of a vault — so none of them is written above any other and there is no order for one
   -- to see the others in.
   extras' <- mapM (canonicalImport config (pageImportCtx importers imp)) plExtraImports
-  return $ ReadPage (pagePrgm imp . piPrgm <$> plParsed) (piSource =<< plParsed) imports' extras' Nothing []
+  roots <- metaIDRoots config
+  return $ ReadPage (pagePrgm roots imp . piPrgm <$> plParsed) (piSource =<< plParsed) imports' extras' Nothing []
 
 -- | What a parse gives a page: the program as the page holds it, and the edges that program writes.
 parsedPage :: CTSSConfig -> ImporterEnv -> FileImport -> ParsedImport -> IO (RawPrgm (), [FileImport])
 parsedPage config importers imp ParsedImport{piPrgm=prgm@(RawPrgm rawImports _)} = do
   let imports = pageImports imp (Just prgm) rawImports
   imports' <- canonicalImports config importers (Just imp) imports
-  return (pagePrgm imp prgm, imports')
+  roots <- metaIDRoots config
+  return (pagePrgm roots imp prgm, imports')
 
 -- | Read one page as its program, on its own and out of no record. What a caller which is to work
 -- with a page's program rather than with a graph of them wants: the formatter, and the goldens.

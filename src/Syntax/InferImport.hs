@@ -17,6 +17,7 @@ import qualified Data.HashMap.Strict    as H
 import           Data.List
 import           Data.List.Split
 import           Data.Maybe
+import           MapMeta                (MetaIDRoots (..))
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
@@ -24,7 +25,8 @@ import           Syntax.Ct.Builder
 import           Syntax.Ct.Prgm
 import           Syntax.Obsidian.Parser (noteVault, obsidian, obsidianConfigDir)
 import           System.Directory
-import           System.FilePath        (isAbsolute, joinPath, (</>))
+import           System.FilePath        (dropTrailingPathSeparator, isAbsolute,
+                                         joinPath, (</>))
 import           Text.Printf
 
 -- | The parser each file extension is read with, before where the file is is taken into account by
@@ -152,6 +154,15 @@ stackPath config name = case joinPath [ctssStackPath config, name] of
     homeDir <- getHomeDirectory
     return $ joinPath [homeDir, p]
   p -> return p
+
+-- | The directories pages are named from in their meta-id scopes ('MapMeta.pageIDName'): the
+-- standard library, and the directory the compiler runs in. Made absolute as an import's path is
+-- ('findExistingPath'), so a page's path is spelled from them however it was named.
+metaIDRoots :: CTSSConfig -> IO MetaIDRoots
+metaIDRoots config = do
+  lib <- makeAbsolute =<< stackPath config ""
+  dir <- getCurrentDirectory
+  return $ MetaIDRoots [("lib", dropTrailingPathSeparator lib), ("dir", dropTrailingPathSeparator dir)]
 
 -- | The places an import of @name@ could be: beside the file which wrote it, then in the standard
 -- library.
