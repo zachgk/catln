@@ -104,6 +104,45 @@ Prgm
                     }
                 )
             ,
+                ( "/Llm/llm.$b0b33b.$a41629.$c66a50"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/llm.$b0b33b.$a41629.$c66a50( Value /input -> ∀/Data/String )( Value /base )( Value /model )
+                            ( Value $c66a50-arg= /Context( Value value@Value key )( Value ctx@Value $c66a50-ctx ) )( Value $c66a50-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= llmWith( Value input= Value input )( Value base= Value base )( Value model= Value model )( Value key= Value key ) )
+                                ( Value ctx= /( ..Value $c66a50-states )( ..Value $c66a50-ctx ) )
+                            )
+                            ( fn( Value v )= /Llm/llm.$b0b33b.$a41629.$c66a50.$3fb3ee
+                                ( Value $3fb3ee-arg= Value v )
+                                ( Value $3fb3ee-states= /( ..Value $c66a50-states )( ..Value $c66a50-ctx ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/llm.$b0b33b.$a41629.$c66a50.$3fb3ee"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/llm.$b0b33b.$a41629.$c66a50.$3fb3ee
+                            ( Value $3fb3ee-arg= /Context( Value value@Value reply )
+                                ( Value ctx@Value $3fb3ee-ctx )
+                            )
+                            ( Value $3fb3ee-states )= /Context( Value value= Value reply )
+                            ( Value ctx= /
+                                ( ..Value $3fb3ee-states )
+                                ( ..Value $3fb3ee-ctx )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Llm/llmSent"
                 , ObjectMapItem
                     { omiDecls =
@@ -132,6 +171,29 @@ Prgm
                             , /E=∀/Llm/LlmErr
                             ] = llmReply
                             ( Value response= /Data/jsonParse( Value text= Value value ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/llm.$b0b33b.$a41629"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/llm.$b0b33b.$a41629( Value /input -> ∀/Data/String )( Value /base )
+                            ( Value $a41629-arg= /Context( Value value@Value model )( Value ctx@Value $a41629-ctx ) )( Value $a41629-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= /System/env
+                                    ( Value name= CStr
+                                        { csValue = "OPENAI_API_KEY" }
+                                    )
+                                )
+                                ( Value ctx= /( ..Value $a41629-states )( ..Value $a41629-ctx ) )
+                            )
+                            ( fn( Value v )= /Llm/llm.$b0b33b.$a41629.$c66a50( Value /input= Value /input )( Value /base= Value /base )( Value /model= Value /model )( Value $c66a50-arg= Value v )
+                                ( Value $c66a50-states= /( ..Value $a41629-states )( ..Value $a41629-ctx ) )
+                            )
                         ]
                     }
                 )
@@ -188,8 +250,8 @@ Prgm
                                 )
                                 ( Value ctx= /( Value io= Value io ) )
                             )
-                            ( fn( Value v )= /Llm/llm.$ad0f0c( Value /input= Value /input )( Value $ad0f0c-arg= Value v )
-                                ( Value $ad0f0c-states= /( Value io= Value io ) )
+                            ( fn( Value v )= /Llm/llm.$b0b33b( Value /input= Value /input )( Value $b0b33b-arg= Value v )
+                                ( Value $b0b33b-states= /( Value io= Value io ) )
                             )
                         , /ContextIn
                             ( Value /value= /Llm/llmWith( Value input )( Value base= Value /Data/Maybe/Nothing )( Value model )( Value key ) )
@@ -257,8 +319,8 @@ Prgm
                                 )
                                 ( Value ctx= /( Value io= Value io ) )
                             )
-                            ( fn( Value v )= /Llm/llmWith.$a45a5a( Value $a45a5a-arg= Value v )
-                                ( Value $a45a5a-states= /( Value io= Value io ) )
+                            ( fn( Value v )= /Llm/llmWith.$a87281( Value $a87281-arg= Value v )
+                                ( Value $a87281-states= /( Value io= Value io ) )
                             )
                         ]
                     }
@@ -300,34 +362,24 @@ Prgm
                     }
                 )
             ,
-                ( "/Llm/llmWith.$a45a5a"
+                ( "/Llm/llm.$b0b33b"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Llm/llmWith.$a45a5a
-                            ( Value $a45a5a-arg= /Context( Value value@Value response )( Value ctx@Value $a45a5a-ctx ) )( Value $a45a5a-states )= /Context
-                            ( Value value= llmSent( Value response= Value response ) )
-                            ( Value ctx= /( ..Value $a45a5a-states )( ..Value $a45a5a-ctx ) )
-                        ]
-                    }
-                )
-            ,
-                ( "/Llm/llm.$ad0f0c.$a07c6b.$e5c534"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Llm/llm.$ad0f0c.$a07c6b.$e5c534( Value /input -> ∀/Data/String )( Value /base )( Value /model )
-                            ( Value $e5c534-arg= /Context( Value value@Value key )( Value ctx@Value $e5c534-ctx ) )( Value $e5c534-states )= /Data/bindap
+                        [ /Llm/llm.$b0b33b( Value /input -> ∀/Data/String )
+                            ( Value $b0b33b-arg= /Context( Value value@Value base )( Value ctx@Value $b0b33b-ctx ) )( Value $b0b33b-states )= /Data/bindap
                             ( Value m= /ContextIn
-                                ( Value value= llmWith( Value input= Value input )( Value base= Value base )( Value model= Value model )( Value key= Value key ) )
-                                ( Value ctx= /( ..Value $e5c534-states )( ..Value $e5c534-ctx ) )
+                                ( Value value= /System/env
+                                    ( Value name= CStr
+                                        { csValue = "OPENAI_MODEL" }
+                                    )
+                                )
+                                ( Value ctx= /( ..Value $b0b33b-states )( ..Value $b0b33b-ctx ) )
                             )
-                            ( fn( Value v )= /Llm/llm.$ad0f0c.$a07c6b.$e5c534.$d20a74( Value $d20a74-arg= Value v )
-                                ( Value $d20a74-states= /( ..Value $e5c534-states )( ..Value $e5c534-ctx ) )
+                            ( fn( Value v )= /Llm/llm.$b0b33b.$a41629( Value /input= Value /input )( Value /base= Value /base )( Value $a41629-arg= Value v )
+                                ( Value $a41629-states= /( ..Value $b0b33b-states )( ..Value $b0b33b-ctx ) )
                             )
                         ]
                     }
@@ -534,19 +586,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Llm/llm.$ad0f0c.$a07c6b.$e5c534.$d20a74"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Llm/llm.$ad0f0c.$a07c6b.$e5c534.$d20a74
-                            ( Value $d20a74-arg= /Context( Value value@Value reply )( Value ctx@Value $d20a74-ctx ) )( Value $d20a74-states )= /Context( Value value= Value reply )
-                            ( Value ctx= /( ..Value $d20a74-states )( ..Value $d20a74-ctx ) )
-                        ]
-                    }
-                )
-            ,
                 ( "/Llm/llmRequest"
                 , ObjectMapItem
                     { omiDecls =
@@ -602,48 +641,16 @@ Prgm
                     }
                 )
             ,
-                ( "/Llm/llm.$ad0f0c.$a07c6b"
+                ( "/Llm/llmWith.$a87281"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Llm/llm.$ad0f0c.$a07c6b( Value /input -> ∀/Data/String )( Value /base )
-                            ( Value $a07c6b-arg= /Context( Value value@Value model )( Value ctx@Value $a07c6b-ctx ) )( Value $a07c6b-states )= /Data/bindap
-                            ( Value m= /ContextIn
-                                ( Value value= /System/env
-                                    ( Value name= CStr
-                                        { csValue = "OPENAI_API_KEY" }
-                                    )
-                                )
-                                ( Value ctx= /( ..Value $a07c6b-states )( ..Value $a07c6b-ctx ) )
-                            )
-                            ( fn( Value v )= /Llm/llm.$ad0f0c.$a07c6b.$e5c534( Value /input= Value /input )( Value /base= Value /base )( Value /model= Value /model )( Value $e5c534-arg= Value v )
-                                ( Value $e5c534-states= /( ..Value $a07c6b-states )( ..Value $a07c6b-ctx ) )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/Llm/llm.$ad0f0c"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Llm/llm.$ad0f0c( Value /input -> ∀/Data/String )
-                            ( Value $ad0f0c-arg= /Context( Value value@Value base )( Value ctx@Value $ad0f0c-ctx ) )( Value $ad0f0c-states )= /Data/bindap
-                            ( Value m= /ContextIn
-                                ( Value value= /System/env
-                                    ( Value name= CStr
-                                        { csValue = "OPENAI_MODEL" }
-                                    )
-                                )
-                                ( Value ctx= /( ..Value $ad0f0c-states )( ..Value $ad0f0c-ctx ) )
-                            )
-                            ( fn( Value v )= /Llm/llm.$ad0f0c.$a07c6b( Value /input= Value /input )( Value /base= Value /base )( Value $a07c6b-arg= Value v )
-                                ( Value $a07c6b-states= /( ..Value $ad0f0c-states )( ..Value $ad0f0c-ctx ) )
-                            )
+                        [ /Llm/llmWith.$a87281
+                            ( Value $a87281-arg= /Context( Value value@Value response )( Value ctx@Value $a87281-ctx ) )( Value $a87281-states )= /Context
+                            ( Value value= llmSent( Value response= Value response ) )
+                            ( Value ctx= /( ..Value $a87281-states )( ..Value $a87281-ctx ) )
                         ]
                     }
                 )

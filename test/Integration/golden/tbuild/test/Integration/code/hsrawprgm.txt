@@ -563,15 +563,15 @@ Prgm
                     }
                 )
             ,
-                ( "/main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0"
+                ( "/main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700.$276e12.$cde263.$428388.$3ebdef.$729ed2.$1db409"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0
+                        [ /main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700.$276e12.$cde263.$428388.$3ebdef.$729ed2.$1db409
                             ( EAppArg
-                                { eaaArg = Value /$d4a4c0-arg -> /Context
+                                { eaaArg = Value /$1db409-arg -> /Context
                                     [ /V=() ]
                                     ( /value=()
                                     , /ctx=( /io=/Catln/IO )..
@@ -580,124 +580,32 @@ Prgm
                                         { eaaArg = Value /value -> () }
                                     )
                                     ( EAppArg
-                                        { eaaArg = Value /ctx@Value /$d4a4c0-ctx -> ( /io=/Catln/IO ).. }
+                                        { eaaArg = Value /ctx@Value /$1db409-ctx -> ( /io=/Catln/IO ).. }
                                     )
                                 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /$d4a4c0-states -> ( /io=/Catln/IO ).. }
+                                { eaaArg = Value /$1db409-states -> ( /io=/Catln/IO ).. }
                             ) -> /Context
                             ( /value=()
                             , /ctx=( /io=/Catln/IO )..
-                            ) =
-                            ( /Data/bindap
-                                ( EAppArg
-                                    { eaaArg = Value /m -> /Context
-                                        [ /V=() ]
-                                        ( /value=()
-                                        , /ctx=( /io=/Catln/IO )..
-                                        ) =
-                                        ( /ContextIn
-                                            ( EAppArg
-                                                { eaaArg = Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
-                                                    ( EAppArg
-                                                        { eaaArg = Value /msg -> /Catln/CStr =
-                                                            ( /Test/objArrName
-                                                                ( EAppArg
-                                                                    { eaaArg = Value /oa -> /Catln/RawObjArr
-                                                                        ( /arr=∀/Data/Maybe
-                                                                            [ /T=/Catln/Pair
-                                                                                [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                                                , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                                                ]..
-                                                                            ]
-                                                                        , /obj=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                                        , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
-                                                                        , /doc=∀/Data/Maybe[ /T=∀/Data/String ]
-                                                                        , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                                        , /basis=∀/Catln/ObjectBasis
-                                                                        ) =
-                                                                        ( /Test/emptyObjArr
-                                                                            ( EAppArg
-                                                                                { eaaArg = Value /name ->
-                                                                                    ( /Data/String/Text
-                                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
-                                                                                    ) = "myFn"
-                                                                                }
-                                                                            ) ↦ /Catln/RawObjArr
-                                                                            ( /arr=∀/Data/Maybe
-                                                                                [ /T=/Catln/Pair
-                                                                                    [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                                                    , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                                                    ]..
-                                                                                ]
-                                                                            , /obj=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                                            , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
-                                                                            , /doc=∀/Data/Maybe[ /T=∀/Data/String ]
-                                                                            , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                                            , /basis=∀/Catln/ObjectBasis
-                                                                            )
-                                                                        )
-                                                                    }
-                                                                ) ↦ /Catln/CStr
-                                                            )
-                                                        }
-                                                    )
-                                                }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ).. = /
-                                                    ( EAppSpread
-                                                        { easExpr = ( Value /$d4a4c0-states ↦ TopType ) }
-                                                    )
-                                                    ( EAppSpread
-                                                        { easExpr = ( Value /$d4a4c0-ctx ↦ TopType ) }
-                                                    )
-                                                }
-                                            ) ↦ /Context
-                                            [ /V=() ]
-                                            ( /value=()
-                                            , /ctx=( /io=/Catln/IO )..
-                                            )
-                                        )
-                                    }
-                                )
-                                ( EAppArg
-                                    { eaaArg = /fn
-                                        ( EAppArg
-                                            { eaaArg = Value /v -> /Context
-                                                [ /V=() ]
-                                                ( /value=()
-                                                , /ctx=( /io=/Catln/IO )..
-                                                )
-                                            }
-                                        ) -> /Context
-                                        ( /value=()
-                                        , /ctx=( /io=/Catln/IO )..
-                                        ) =
-                                        ( /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62
-                                            ( EAppArg
-                                                { eaaArg = Value /$5f4b62-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /$5f4b62-states -> ( /io=/Catln/IO ).. = /
-                                                    ( EAppSpread
-                                                        { easExpr = ( Value /$d4a4c0-states ↦ TopType ) }
-                                                    )
-                                                    ( EAppSpread
-                                                        { easExpr = ( Value /$d4a4c0-ctx ↦ TopType ) }
-                                                    )
-                                                }
-                                            ) ↦ /Context
-                                            ( /value=()
-                                            , /ctx=( /io=/Catln/IO )..
-                                            )
-                                        )
-                                    }
-                                ) ↦ /Context
-                                ( /value=()
-                                , /ctx=( /io=/Catln/IO )..
-                                )
+                            ) = /Context
+                            ( EAppArg
+                                { eaaArg = Value /value -> () = Value / }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ).. = /
+                                    ( EAppSpread
+                                        { easExpr =
+                                            ( Value /$1db409-states ↦ TopType )
+                                        }
+                                    )
+                                    ( EAppSpread
+                                        { easExpr =
+                                            ( Value /$1db409-ctx ↦ TopType )
+                                        }
+                                    )
+                                }
                             )
                         ]
                     }
@@ -739,6 +647,167 @@ Prgm
                                 }
                             )
                             ( EAppArg { eaaArg = Value /dat -> /Catln/Unit = Value /Catln/Unit } )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$feb9e5.$660041.$795ec3"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$feb9e5.$660041.$795ec3
+                            ( EAppArg
+                                { eaaArg = Value /$795ec3-arg -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /ctx=( /io=/Catln/IO )..
+                                    ) = /Context
+                                    ( EAppArg
+                                        { eaaArg = Value /value -> () }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /ctx@Value /$795ec3-ctx -> ( /io=/Catln/IO ).. }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /$795ec3-states -> ( /io=/Catln/IO ).. }
+                            ) -> /Context
+                            ( /value=()
+                            , /ctx=( /io=/Catln/IO )..
+                            ) =
+                            ( /Data/bindap
+                                ( EAppArg
+                                    { eaaArg = Value /m -> /Context
+                                        [ /V=() ]
+                                        ( /value=()
+                                        , /ctx=( /io=/Catln/IO )..
+                                        ) =
+                                        ( /ContextIn
+                                            ( EAppArg
+                                                { eaaArg = Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
+                                                    ( EAppArg
+                                                        { eaaArg = Value /msg -> /Catln/CStr =
+                                                            ( /Test/rawValueName
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /e -> /Catln/RawExpr/RawValue
+                                                                        ( /name=( /Data/String/Text.. + /Catln/CStr )
+                                                                        , /meta=/Catln/Meta
+                                                                            ( /type=∀/Catln/Type
+                                                                            , /dat=/Catln/Unit..
+                                                                            , /id=∀/Data/String
+                                                                            , /pos=∀/Data/Maybe
+                                                                                [ /T=/Catln/Pair
+                                                                                    [ /B=/Catln/SourcePos..
+                                                                                    , /A=/Catln/SourcePos..
+                                                                                    ]..
+                                                                                ]
+                                                                            )..
+                                                                        ) = /Catln/RawExpr/RawValue
+                                                                        ( EAppArg
+                                                                            { eaaArg = Value /meta -> /Catln/Meta
+                                                                                ( /type=∀/Catln/Type
+                                                                                , /dat=/Catln/Unit..
+                                                                                , /id=∀/Data/String
+                                                                                , /pos=∀/Data/Maybe
+                                                                                    [ /T=/Catln/Pair
+                                                                                        [ /B=/Catln/SourcePos..
+                                                                                        , /A=/Catln/SourcePos..
+                                                                                        ]..
+                                                                                    ]
+                                                                                ).. =
+                                                                                ( Value /Test/noMeta ↦ /Catln/Meta
+                                                                                    ( /type=∀/Catln/Type
+                                                                                    , /dat=/Catln/Unit..
+                                                                                    , /id=∀/Data/String
+                                                                                    , /pos=∀/Data/Maybe
+                                                                                        [ /T=/Catln/Pair
+                                                                                            [ /B=/Catln/SourcePos..
+                                                                                            , /A=/Catln/SourcePos..
+                                                                                            ]..
+                                                                                        ]
+                                                                                    )..
+                                                                                )
+                                                                            }
+                                                                        )
+                                                                        ( EAppArg
+                                                                            { eaaArg = Value /name ->
+                                                                                ( /Data/String/Text
+                                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                                ) = "foo"
+                                                                            }
+                                                                        )
+                                                                    }
+                                                                ) ↦ /Catln/CStr
+                                                            )
+                                                        }
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ).. = /
+                                                    ( EAppSpread
+                                                        { easExpr =
+                                                            ( Value /$795ec3-states ↦ TopType )
+                                                        }
+                                                    )
+                                                    ( EAppSpread
+                                                        { easExpr =
+                                                            ( Value /$795ec3-ctx ↦ TopType )
+                                                        }
+                                                    )
+                                                }
+                                            ) ↦ /Context
+                                            [ /V=() ]
+                                            ( /value=()
+                                            , /ctx=( /io=/Catln/IO )..
+                                            )
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = /fn
+                                        ( EAppArg
+                                            { eaaArg = Value /v -> /Context
+                                                [ /V=() ]
+                                                ( /value=()
+                                                , /ctx=( /io=/Catln/IO )..
+                                                )
+                                            }
+                                        ) -> /Context
+                                        ( /value=()
+                                        , /ctx=( /io=/Catln/IO )..
+                                        ) =
+                                        ( /main.$feb9e5.$660041.$795ec3.$9e3f16
+                                            ( EAppArg
+                                                { eaaArg = Value /$9e3f16-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /$9e3f16-states -> ( /io=/Catln/IO ).. = /
+                                                    ( EAppSpread
+                                                        { easExpr =
+                                                            ( Value /$795ec3-states ↦ TopType )
+                                                        }
+                                                    )
+                                                    ( EAppSpread
+                                                        { easExpr =
+                                                            ( Value /$795ec3-ctx ↦ TopType )
+                                                        }
+                                                    )
+                                                }
+                                            ) ↦ /Context
+                                            ( /value=()
+                                            , /ctx=( /io=/Catln/IO )..
+                                            )
+                                        )
+                                    }
+                                ) ↦ /Context
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                )
+                            )
                         ]
                     }
                 )
@@ -819,14 +888,169 @@ Prgm
                                         ( /value=()
                                         , /ctx=( /io=/Catln/IO )..
                                         ) =
-                                        ( /main.$13df36
+                                        ( /main.$feb9e5
                                             ( EAppArg
-                                                { eaaArg = Value /$13df36-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                                { eaaArg = Value /$feb9e5-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /$13df36-states -> ( /io=/Catln/IO ) = /
+                                                { eaaArg = Value /$feb9e5-states -> ( /io=/Catln/IO ) = /
                                                     ( EAppArg
                                                         { eaaArg = Value /io -> TVArg /io = ( Value /io ↦ TVArg /io ) }
+                                                    )
+                                                }
+                                            ) ↦ /Context
+                                            ( /value=()
+                                            , /ctx=( /io=/Catln/IO )..
+                                            )
+                                        )
+                                    }
+                                ) ↦ /Context
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$feb9e5.$660041.$795ec3.$9e3f16"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$feb9e5.$660041.$795ec3.$9e3f16
+                            ( EAppArg
+                                { eaaArg = Value /$9e3f16-arg -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /ctx=( /io=/Catln/IO )..
+                                    ) = /Context
+                                    ( EAppArg
+                                        { eaaArg = Value /value -> () }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /ctx@Value /$9e3f16-ctx -> ( /io=/Catln/IO ).. }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /$9e3f16-states -> ( /io=/Catln/IO ).. }
+                            ) -> /Context
+                            ( /value=()
+                            , /ctx=( /io=/Catln/IO )..
+                            ) =
+                            ( /Data/bindap
+                                ( EAppArg
+                                    { eaaArg = Value /m -> /Context
+                                        [ /V=() ]
+                                        ( /value=()
+                                        , /ctx=( /io=/Catln/IO )..
+                                        ) =
+                                        ( /ContextIn
+                                            ( EAppArg
+                                                { eaaArg = Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
+                                                    ( EAppArg
+                                                        { eaaArg = Value /msg -> /Catln/CStr =
+                                                            ( /Test/exprKind
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /e -> /Catln/RawExpr/RawList
+                                                                        ( /values=/Data/List/Nil
+                                                                        , /meta=/Catln/Meta
+                                                                            ( /type=∀/Catln/Type
+                                                                            , /dat=/Catln/Unit..
+                                                                            , /id=∀/Data/String
+                                                                            , /pos=∀/Data/Maybe
+                                                                                [ /T=/Catln/Pair
+                                                                                    [ /B=/Catln/SourcePos..
+                                                                                    , /A=/Catln/SourcePos..
+                                                                                    ]..
+                                                                                ]
+                                                                            )..
+                                                                        ) = /Catln/RawExpr/RawList
+                                                                        ( EAppArg
+                                                                            { eaaArg = Value /meta -> /Catln/Meta
+                                                                                ( /type=∀/Catln/Type
+                                                                                , /dat=/Catln/Unit..
+                                                                                , /id=∀/Data/String
+                                                                                , /pos=∀/Data/Maybe
+                                                                                    [ /T=/Catln/Pair
+                                                                                        [ /B=/Catln/SourcePos..
+                                                                                        , /A=/Catln/SourcePos..
+                                                                                        ]..
+                                                                                    ]
+                                                                                ).. =
+                                                                                ( Value /Test/noMeta ↦ /Catln/Meta
+                                                                                    ( /type=∀/Catln/Type
+                                                                                    , /dat=/Catln/Unit..
+                                                                                    , /id=∀/Data/String
+                                                                                    , /pos=∀/Data/Maybe
+                                                                                        [ /T=/Catln/Pair
+                                                                                            [ /B=/Catln/SourcePos..
+                                                                                            , /A=/Catln/SourcePos..
+                                                                                            ]..
+                                                                                        ]
+                                                                                    )..
+                                                                                )
+                                                                            }
+                                                                        )
+                                                                        ( EAppArg { eaaArg = Value /values -> /Data/List/Nil = Value /Data/List/Nil } )
+                                                                    }
+                                                                ) ↦ /Catln/CStr
+                                                            )
+                                                        }
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ).. = /
+                                                    ( EAppSpread
+                                                        { easExpr =
+                                                            ( Value /$9e3f16-states ↦ TopType )
+                                                        }
+                                                    )
+                                                    ( EAppSpread
+                                                        { easExpr =
+                                                            ( Value /$9e3f16-ctx ↦ TopType )
+                                                        }
+                                                    )
+                                                }
+                                            ) ↦ /Context
+                                            [ /V=() ]
+                                            ( /value=()
+                                            , /ctx=( /io=/Catln/IO )..
+                                            )
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = /fn
+                                        ( EAppArg
+                                            { eaaArg = Value /v -> /Context
+                                                [ /V=() ]
+                                                ( /value=()
+                                                , /ctx=( /io=/Catln/IO )..
+                                                )
+                                            }
+                                        ) -> /Context
+                                        ( /value=()
+                                        , /ctx=( /io=/Catln/IO )..
+                                        ) =
+                                        ( /main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700
+                                            ( EAppArg
+                                                { eaaArg = Value /$f57700-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /$f57700-states -> ( /io=/Catln/IO ).. = /
+                                                    ( EAppSpread
+                                                        { easExpr =
+                                                            ( Value /$9e3f16-states ↦ TopType )
+                                                        }
+                                                    )
+                                                    ( EAppSpread
+                                                        { easExpr =
+                                                            ( Value /$9e3f16-ctx ↦ TopType )
+                                                        }
                                                     )
                                                 }
                                             ) ↦ /Context
@@ -1060,407 +1284,6 @@ Prgm
                     }
                 )
             ,
-                ( "/main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f
-                            ( EAppArg
-                                { eaaArg = Value /$ad3f7f-arg -> /Context
-                                    [ /V=() ]
-                                    ( /value=()
-                                    , /ctx=( /io=/Catln/IO )..
-                                    ) = /Context
-                                    ( EAppArg
-                                        { eaaArg = Value /value -> () }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /ctx@Value /$ad3f7f-ctx -> ( /io=/Catln/IO ).. }
-                                    )
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /$ad3f7f-states -> ( /io=/Catln/IO ).. }
-                            ) -> /Context
-                            ( /value=()
-                            , /ctx=( /io=/Catln/IO )..
-                            ) =
-                            ( /Data/bindap
-                                ( EAppArg
-                                    { eaaArg = Value /m -> /Context
-                                        [ /V=() ]
-                                        ( /value=()
-                                        , /ctx=( /io=/Catln/IO )..
-                                        ) =
-                                        ( /ContextIn
-                                            ( EAppArg
-                                                { eaaArg = Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
-                                                    ( EAppArg
-                                                        { eaaArg = Value /msg -> /Catln/CStr =
-                                                            ( /Data/toString
-                                                                ( EAppArg
-                                                                    { eaaArg = Value /this -> /Data/Primitive/Integer =
-                                                                        ( /Test/resultDeclCount
-                                                                            ( EAppArg
-                                                                                { eaaArg = Value /r -> /Catln/ImportResult
-                                                                                    ( /prgm=/Catln/RawPrgm..
-                                                                                    , /reads=∀/Data/Maybe
-                                                                                        [ /T=∀/Data/List[ /T=∀/Catln/ReadPath ] ]
-                                                                                    , /source=∀/Data/Maybe[ /T=∀/Data/String ]
-                                                                                    ) =
-                                                                                    ( /Test/oneResult
-                                                                                        ( EAppArg
-                                                                                            { eaaArg = Value /name ->
-                                                                                                ( /Data/String/Text
-                                                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
-                                                                                                ) = "myFn"
-                                                                                            }
-                                                                                        ) ↦ /Catln/ImportResult
-                                                                                        ( /prgm=/Catln/RawPrgm..
-                                                                                        , /reads=∀/Data/Maybe
-                                                                                            [ /T=∀/Data/List[ /T=∀/Catln/ReadPath ] ]
-                                                                                        , /source=∀/Data/Maybe[ /T=∀/Data/String ]
-                                                                                        )
-                                                                                    )
-                                                                                }
-                                                                            ) ↦ /Data/Primitive/Integer
-                                                                        )
-                                                                    }
-                                                                ) ↦ /Catln/CStr
-                                                            )
-                                                        }
-                                                    )
-                                                }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ).. = /
-                                                    ( EAppSpread
-                                                        { easExpr = ( Value /$ad3f7f-states ↦ TopType ) }
-                                                    )
-                                                    ( EAppSpread
-                                                        { easExpr = ( Value /$ad3f7f-ctx ↦ TopType ) }
-                                                    )
-                                                }
-                                            ) ↦ /Context
-                                            [ /V=() ]
-                                            ( /value=()
-                                            , /ctx=( /io=/Catln/IO )..
-                                            )
-                                        )
-                                    }
-                                )
-                                ( EAppArg
-                                    { eaaArg = /fn
-                                        ( EAppArg
-                                            { eaaArg = Value /v -> /Context
-                                                [ /V=() ]
-                                                ( /value=()
-                                                , /ctx=( /io=/Catln/IO )..
-                                                )
-                                            }
-                                        ) -> /Context
-                                        ( /value=()
-                                        , /ctx=( /io=/Catln/IO )..
-                                        ) =
-                                        ( /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f.$4e2f62
-                                            ( EAppArg
-                                                { eaaArg = Value /$4e2f62-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /$4e2f62-states -> ( /io=/Catln/IO ).. = /
-                                                    ( EAppSpread
-                                                        { easExpr = ( Value /$ad3f7f-states ↦ TopType ) }
-                                                    )
-                                                    ( EAppSpread
-                                                        { easExpr = ( Value /$ad3f7f-ctx ↦ TopType ) }
-                                                    )
-                                                }
-                                            ) ↦ /Context
-                                            ( /value=()
-                                            , /ctx=( /io=/Catln/IO )..
-                                            )
-                                        )
-                                    }
-                                ) ↦ /Context
-                                ( /value=()
-                                , /ctx=( /io=/Catln/IO )..
-                                )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/main.$13df36.$5a9cdd"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /main.$13df36.$5a9cdd
-                            ( EAppArg
-                                { eaaArg = Value /$5a9cdd-arg -> /Context
-                                    [ /V=() ]
-                                    ( /value=()
-                                    , /ctx=( /io=/Catln/IO )..
-                                    ) = /Context
-                                    ( EAppArg
-                                        { eaaArg = Value /value -> () }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /ctx@Value /$5a9cdd-ctx -> ( /io=/Catln/IO ).. }
-                                    )
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /$5a9cdd-states -> ( /io=/Catln/IO ).. }
-                            ) -> /Context
-                            ( /value=()
-                            , /ctx=( /io=/Catln/IO )..
-                            ) =
-                            ( /Data/bindap
-                                ( EAppArg
-                                    { eaaArg = Value /m -> /Context
-                                        [ /V=() ]
-                                        ( /value=()
-                                        , /ctx=( /io=/Catln/IO )..
-                                        ) =
-                                        ( /ContextIn
-                                            ( EAppArg
-                                                { eaaArg = Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
-                                                    ( EAppArg
-                                                        { eaaArg = Value /msg -> /Catln/CStr =
-                                                            ( /Test/exprKind
-                                                                ( EAppArg
-                                                                    { eaaArg = Value /e -> /Catln/RawExpr/RawValue
-                                                                        ( /name=( /Data/String/Text.. + /Catln/CStr )
-                                                                        , /meta=/Catln/Meta
-                                                                            ( /type=∀/Catln/Type
-                                                                            , /dat=/Catln/Unit..
-                                                                            , /id=∀/Data/String
-                                                                            , /pos=∀/Data/Maybe
-                                                                                [ /T=/Catln/Pair
-                                                                                    [ /B=/Catln/SourcePos..
-                                                                                    , /A=/Catln/SourcePos..
-                                                                                    ]..
-                                                                                ]
-                                                                            )..
-                                                                        ) = /Catln/RawExpr/RawValue
-                                                                        ( EAppArg
-                                                                            { eaaArg = Value /meta -> /Catln/Meta
-                                                                                ( /type=∀/Catln/Type
-                                                                                , /dat=/Catln/Unit..
-                                                                                , /id=∀/Data/String
-                                                                                , /pos=∀/Data/Maybe
-                                                                                    [ /T=/Catln/Pair
-                                                                                        [ /B=/Catln/SourcePos..
-                                                                                        , /A=/Catln/SourcePos..
-                                                                                        ]..
-                                                                                    ]
-                                                                                ).. =
-                                                                                ( Value /Test/noMeta ↦ /Catln/Meta
-                                                                                    ( /type=∀/Catln/Type
-                                                                                    , /dat=/Catln/Unit..
-                                                                                    , /id=∀/Data/String
-                                                                                    , /pos=∀/Data/Maybe
-                                                                                        [ /T=/Catln/Pair
-                                                                                            [ /B=/Catln/SourcePos..
-                                                                                            , /A=/Catln/SourcePos..
-                                                                                            ]..
-                                                                                        ]
-                                                                                    )..
-                                                                                )
-                                                                            }
-                                                                        )
-                                                                        ( EAppArg
-                                                                            { eaaArg = Value /name ->
-                                                                                ( /Data/String/Text
-                                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
-                                                                                ) = "foo"
-                                                                            }
-                                                                        )
-                                                                    }
-                                                                ) ↦ /Catln/CStr
-                                                            )
-                                                        }
-                                                    )
-                                                }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ).. = /
-                                                    ( EAppSpread
-                                                        { easExpr =
-                                                            ( Value /$5a9cdd-states ↦ TopType )
-                                                        }
-                                                    )
-                                                    ( EAppSpread
-                                                        { easExpr =
-                                                            ( Value /$5a9cdd-ctx ↦ TopType )
-                                                        }
-                                                    )
-                                                }
-                                            ) ↦ /Context
-                                            [ /V=() ]
-                                            ( /value=()
-                                            , /ctx=( /io=/Catln/IO )..
-                                            )
-                                        )
-                                    }
-                                )
-                                ( EAppArg
-                                    { eaaArg = /fn
-                                        ( EAppArg
-                                            { eaaArg = Value /v -> /Context
-                                                [ /V=() ]
-                                                ( /value=()
-                                                , /ctx=( /io=/Catln/IO )..
-                                                )
-                                            }
-                                        ) -> /Context
-                                        ( /value=()
-                                        , /ctx=( /io=/Catln/IO )..
-                                        ) =
-                                        ( /main.$13df36.$5a9cdd.$e3172c
-                                            ( EAppArg
-                                                { eaaArg = Value /$e3172c-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /$e3172c-states -> ( /io=/Catln/IO ).. = /
-                                                    ( EAppSpread
-                                                        { easExpr =
-                                                            ( Value /$5a9cdd-states ↦ TopType )
-                                                        }
-                                                    )
-                                                    ( EAppSpread
-                                                        { easExpr =
-                                                            ( Value /$5a9cdd-ctx ↦ TopType )
-                                                        }
-                                                    )
-                                                }
-                                            ) ↦ /Context
-                                            ( /value=()
-                                            , /ctx=( /io=/Catln/IO )..
-                                            )
-                                        )
-                                    }
-                                ) ↦ /Context
-                                ( /value=()
-                                , /ctx=( /io=/Catln/IO )..
-                                )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f.$4e2f62.$4ed8f8"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f.$4e2f62.$4ed8f8
-                            ( EAppArg
-                                { eaaArg = Value /$4ed8f8-arg -> /Context
-                                    [ /V=() ]
-                                    ( /value=()
-                                    , /ctx=( /io=/Catln/IO )..
-                                    ) = /Context
-                                    ( EAppArg
-                                        { eaaArg = Value /value -> () }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /ctx@Value /$4ed8f8-ctx -> ( /io=/Catln/IO ).. }
-                                    )
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /$4ed8f8-states -> ( /io=/Catln/IO ).. }
-                            ) -> /Context
-                            ( /value=()
-                            , /ctx=( /io=/Catln/IO )..
-                            ) =
-                            ( /Data/bindap
-                                ( EAppArg
-                                    { eaaArg = Value /m -> /Context
-                                        [ /V=() ]
-                                        ( /value=()
-                                        , /ctx=( /io=/Catln/IO )..
-                                        ) =
-                                        ( /ContextIn
-                                            ( EAppArg
-                                                { eaaArg = Value /value -> /Catln/exit( /val=/Data/Primitive/Integer ) = /Catln/exit
-                                                    ( EAppArg
-                                                        { eaaArg = Value /val -> /Data/Primitive/Integer = 0 }
-                                                    )
-                                                }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ).. = /
-                                                    ( EAppSpread
-                                                        { easExpr =
-                                                            ( Value /$4ed8f8-states ↦ TopType )
-                                                        }
-                                                    )
-                                                    ( EAppSpread
-                                                        { easExpr =
-                                                            ( Value /$4ed8f8-ctx ↦ TopType )
-                                                        }
-                                                    )
-                                                }
-                                            ) ↦ /Context
-                                            [ /V=() ]
-                                            ( /value=()
-                                            , /ctx=( /io=/Catln/IO )..
-                                            )
-                                        )
-                                    }
-                                )
-                                ( EAppArg
-                                    { eaaArg = /fn
-                                        ( EAppArg
-                                            { eaaArg = Value /v -> /Context
-                                                [ /V=() ]
-                                                ( /value=()
-                                                , /ctx=( /io=/Catln/IO )..
-                                                )
-                                            }
-                                        ) -> /Context
-                                        ( /value=()
-                                        , /ctx=( /io=/Catln/IO )..
-                                        ) =
-                                        ( /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f.$4e2f62.$4ed8f8.$620336
-                                            ( EAppArg
-                                                { eaaArg = Value /$620336-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /$620336-states -> ( /io=/Catln/IO ).. = /
-                                                    ( EAppSpread
-                                                        { easExpr =
-                                                            ( Value /$4ed8f8-states ↦ TopType )
-                                                        }
-                                                    )
-                                                    ( EAppSpread
-                                                        { easExpr =
-                                                            ( Value /$4ed8f8-ctx ↦ TopType )
-                                                        }
-                                                    )
-                                                }
-                                            ) ↦ /Context
-                                            ( /value=()
-                                            , /ctx=( /io=/Catln/IO )..
-                                            )
-                                        )
-                                    }
-                                ) ↦ /Context
-                                ( /value=()
-                                , /ctx=( /io=/Catln/IO )..
-                                )
-                            )
-                        ]
-                    }
-                )
-            ,
                 ( "/Test/emptyPrgm"
                 , ObjectMapItem
                     { omiDecls = [ Value /Test/emptyPrgm -> /Catln/RawPrgm.. ]
@@ -1590,15 +1413,15 @@ Prgm
                     }
                 )
             ,
-                ( "/main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62"
+                ( "/main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700.$276e12.$cde263.$428388.$3ebdef"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62
+                        [ /main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700.$276e12.$cde263.$428388.$3ebdef
                             ( EAppArg
-                                { eaaArg = Value /$5f4b62-arg -> /Context
+                                { eaaArg = Value /$3ebdef-arg -> /Context
                                     [ /V=() ]
                                     ( /value=()
                                     , /ctx=( /io=/Catln/IO )..
@@ -1607,12 +1430,12 @@ Prgm
                                         { eaaArg = Value /value -> () }
                                     )
                                     ( EAppArg
-                                        { eaaArg = Value /ctx@Value /$5f4b62-ctx -> ( /io=/Catln/IO ).. }
+                                        { eaaArg = Value /ctx@Value /$3ebdef-ctx -> ( /io=/Catln/IO ).. }
                                     )
                                 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /$5f4b62-states -> ( /io=/Catln/IO ).. }
+                                { eaaArg = Value /$3ebdef-states -> ( /io=/Catln/IO ).. }
                             ) -> /Context
                             ( /value=()
                             , /ctx=( /io=/Catln/IO )..
@@ -1629,59 +1452,33 @@ Prgm
                                                 { eaaArg = Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
                                                     ( EAppArg
                                                         { eaaArg = Value /msg -> /Catln/CStr =
-                                                            ( /Test/statementKind
+                                                            ( /Data/toString
                                                                 ( EAppArg
-                                                                    { eaaArg = Value /s -> /Catln/RawStatement/RawDeclStatement
-                                                                        ( /objArr=/Catln/RawObjArr
-                                                                            ( /arr=∀/Data/Maybe
-                                                                                [ /T=/Catln/Pair
-                                                                                    [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                                                    , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                                                    ]..
-                                                                                ]
-                                                                            , /obj=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                                            , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
-                                                                            , /doc=∀/Data/Maybe[ /T=∀/Data/String ]
-                                                                            , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                                            , /basis=∀/Catln/ObjectBasis
-                                                                            )..
-                                                                        ) = /Catln/RawStatement/RawDeclStatement
-                                                                        ( EAppArg
-                                                                            { eaaArg = Value /objArr -> /Catln/RawObjArr
-                                                                                ( /arr=∀/Data/Maybe
-                                                                                    [ /T=/Catln/Pair
-                                                                                        [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                                                        , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                                                        ]..
-                                                                                    ]
-                                                                                , /obj=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                                                , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
-                                                                                , /doc=∀/Data/Maybe[ /T=∀/Data/String ]
-                                                                                , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                                                , /basis=∀/Catln/ObjectBasis
-                                                                                ).. =
-                                                                                ( /Test/emptyObjArr
-                                                                                    ( EAppArg
-                                                                                        { eaaArg = Value /name ->
-                                                                                            ( /Data/String/Text
-                                                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
-                                                                                            ) = "myFn"
-                                                                                        }
-                                                                                    ) ↦ /Catln/RawObjArr
-                                                                                    ( /arr=∀/Data/Maybe
-                                                                                        [ /T=/Catln/Pair
-                                                                                            [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                                                            , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                                                            ]..
-                                                                                        ]
-                                                                                    , /obj=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                                                    , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
-                                                                                    , /doc=∀/Data/Maybe[ /T=∀/Data/String ]
-                                                                                    , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                                                    , /basis=∀/Catln/ObjectBasis
-                                                                                    )..
-                                                                                )
-                                                                            }
+                                                                    { eaaArg = Value /this -> /Data/Primitive/Integer =
+                                                                        ( /Test/readsCount
+                                                                            ( EAppArg
+                                                                                { eaaArg = Value /r -> /Catln/ImportResult
+                                                                                    ( /prgm=/Catln/RawPrgm..
+                                                                                    , /reads=∀/Data/Maybe
+                                                                                        [ /T=∀/Data/List[ /T=∀/Catln/ReadPath ] ]
+                                                                                    , /source=∀/Data/Maybe[ /T=∀/Data/String ]
+                                                                                    ) =
+                                                                                    ( /Test/oneResult
+                                                                                        ( EAppArg
+                                                                                            { eaaArg = Value /name ->
+                                                                                                ( /Data/String/Text
+                                                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                                                ) = "myFn"
+                                                                                            }
+                                                                                        ) ↦ /Catln/ImportResult
+                                                                                        ( /prgm=/Catln/RawPrgm..
+                                                                                        , /reads=∀/Data/Maybe
+                                                                                            [ /T=∀/Data/List[ /T=∀/Catln/ReadPath ] ]
+                                                                                        , /source=∀/Data/Maybe[ /T=∀/Data/String ]
+                                                                                        )
+                                                                                    )
+                                                                                }
+                                                                            ) ↦ /Data/Primitive/Integer
                                                                         )
                                                                     }
                                                                 ) ↦ /Catln/CStr
@@ -1694,12 +1491,12 @@ Prgm
                                                 { eaaArg = Value /ctx -> ( /io=/Catln/IO ).. = /
                                                     ( EAppSpread
                                                         { easExpr =
-                                                            ( Value /$5f4b62-states ↦ TopType )
+                                                            ( Value /$3ebdef-states ↦ TopType )
                                                         }
                                                     )
                                                     ( EAppSpread
                                                         { easExpr =
-                                                            ( Value /$5f4b62-ctx ↦ TopType )
+                                                            ( Value /$3ebdef-ctx ↦ TopType )
                                                         }
                                                     )
                                                 }
@@ -1724,20 +1521,20 @@ Prgm
                                         ( /value=()
                                         , /ctx=( /io=/Catln/IO )..
                                         ) =
-                                        ( /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b
+                                        ( /main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700.$276e12.$cde263.$428388.$3ebdef.$729ed2
                                             ( EAppArg
-                                                { eaaArg = Value /$57841b-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                                { eaaArg = Value /$729ed2-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /$57841b-states -> ( /io=/Catln/IO ).. = /
+                                                { eaaArg = Value /$729ed2-states -> ( /io=/Catln/IO ).. = /
                                                     ( EAppSpread
                                                         { easExpr =
-                                                            ( Value /$5f4b62-states ↦ TopType )
+                                                            ( Value /$3ebdef-states ↦ TopType )
                                                         }
                                                     )
                                                     ( EAppSpread
                                                         { easExpr =
-                                                            ( Value /$5f4b62-ctx ↦ TopType )
+                                                            ( Value /$3ebdef-ctx ↦ TopType )
                                                         }
                                                     )
                                                 }
@@ -1756,15 +1553,15 @@ Prgm
                     }
                 )
             ,
-                ( "/main.$13df36"
+                ( "/main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700.$276e12.$cde263.$428388"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /main.$13df36
+                        [ /main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700.$276e12.$cde263.$428388
                             ( EAppArg
-                                { eaaArg = Value /$13df36-arg -> /Context
+                                { eaaArg = Value /$428388-arg -> /Context
                                     [ /V=() ]
                                     ( /value=()
                                     , /ctx=( /io=/Catln/IO )..
@@ -1773,12 +1570,12 @@ Prgm
                                         { eaaArg = Value /value -> () }
                                     )
                                     ( EAppArg
-                                        { eaaArg = Value /ctx@Value /$13df36-ctx -> ( /io=/Catln/IO ).. }
+                                        { eaaArg = Value /ctx@Value /$428388-ctx -> ( /io=/Catln/IO ).. }
                                     )
                                 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /$13df36-states -> ( /io=/Catln/IO ) }
+                                { eaaArg = Value /$428388-states -> ( /io=/Catln/IO ).. }
                             ) -> /Context
                             ( /value=()
                             , /ctx=( /io=/Catln/IO )..
@@ -1795,16 +1592,33 @@ Prgm
                                                 { eaaArg = Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
                                                     ( EAppArg
                                                         { eaaArg = Value /msg -> /Catln/CStr =
-                                                            ( /Test/readKind
+                                                            ( /Data/toString
                                                                 ( EAppArg
-                                                                    { eaaArg = Value /r -> /Catln/ReadPath/ReadDir
-                                                                        ( /path=( /Data/String/Text.. + /Catln/CStr ) ) = /Catln/ReadPath/ReadDir
-                                                                        ( EAppArg
-                                                                            { eaaArg = Value /path ->
-                                                                                ( /Data/String/Text
-                                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
-                                                                                ) = "src"
-                                                                            }
+                                                                    { eaaArg = Value /this -> /Data/Primitive/Integer =
+                                                                        ( /Test/resultDeclCount
+                                                                            ( EAppArg
+                                                                                { eaaArg = Value /r -> /Catln/ImportResult
+                                                                                    ( /prgm=/Catln/RawPrgm..
+                                                                                    , /reads=∀/Data/Maybe
+                                                                                        [ /T=∀/Data/List[ /T=∀/Catln/ReadPath ] ]
+                                                                                    , /source=∀/Data/Maybe[ /T=∀/Data/String ]
+                                                                                    ) =
+                                                                                    ( /Test/oneResult
+                                                                                        ( EAppArg
+                                                                                            { eaaArg = Value /name ->
+                                                                                                ( /Data/String/Text
+                                                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                                                ) = "myFn"
+                                                                                            }
+                                                                                        ) ↦ /Catln/ImportResult
+                                                                                        ( /prgm=/Catln/RawPrgm..
+                                                                                        , /reads=∀/Data/Maybe
+                                                                                            [ /T=∀/Data/List[ /T=∀/Catln/ReadPath ] ]
+                                                                                        , /source=∀/Data/Maybe[ /T=∀/Data/String ]
+                                                                                        )
+                                                                                    )
+                                                                                }
+                                                                            ) ↦ /Data/Primitive/Integer
                                                                         )
                                                                     }
                                                                 ) ↦ /Catln/CStr
@@ -1817,12 +1631,12 @@ Prgm
                                                 { eaaArg = Value /ctx -> ( /io=/Catln/IO ).. = /
                                                     ( EAppSpread
                                                         { easExpr =
-                                                            ( Value /$13df36-states ↦ TopType )
+                                                            ( Value /$428388-states ↦ TopType )
                                                         }
                                                     )
                                                     ( EAppSpread
                                                         { easExpr =
-                                                            ( Value /$13df36-ctx ↦ TopType )
+                                                            ( Value /$428388-ctx ↦ TopType )
                                                         }
                                                     )
                                                 }
@@ -1847,168 +1661,21 @@ Prgm
                                         ( /value=()
                                         , /ctx=( /io=/Catln/IO )..
                                         ) =
-                                        ( /main.$13df36.$5a9cdd
+                                        ( /main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700.$276e12.$cde263.$428388.$3ebdef
                                             ( EAppArg
-                                                { eaaArg = Value /$5a9cdd-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                                { eaaArg = Value /$3ebdef-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /$5a9cdd-states -> ( /io=/Catln/IO ).. = /
+                                                { eaaArg = Value /$3ebdef-states -> ( /io=/Catln/IO ).. = /
                                                     ( EAppSpread
                                                         { easExpr =
-                                                            ( Value /$13df36-states ↦ TopType )
+                                                            ( Value /$428388-states ↦ TopType )
                                                         }
                                                     )
                                                     ( EAppSpread
                                                         { easExpr =
-                                                            ( Value /$13df36-ctx ↦ TopType )
+                                                            ( Value /$428388-ctx ↦ TopType )
                                                         }
-                                                    )
-                                                }
-                                            ) ↦ /Context
-                                            ( /value=()
-                                            , /ctx=( /io=/Catln/IO )..
-                                            )
-                                        )
-                                    }
-                                ) ↦ /Context
-                                ( /value=()
-                                , /ctx=( /io=/Catln/IO )..
-                                )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/main.$13df36.$5a9cdd.$e3172c.$d86d4b"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /main.$13df36.$5a9cdd.$e3172c.$d86d4b
-                            ( EAppArg
-                                { eaaArg = Value /$d86d4b-arg -> /Context
-                                    [ /V=() ]
-                                    ( /value=()
-                                    , /ctx=( /io=/Catln/IO )..
-                                    ) = /Context
-                                    ( EAppArg
-                                        { eaaArg = Value /value -> () }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /ctx@Value /$d86d4b-ctx -> ( /io=/Catln/IO ).. }
-                                    )
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /$d86d4b-states -> ( /io=/Catln/IO ).. }
-                            ) -> /Context
-                            ( /value=()
-                            , /ctx=( /io=/Catln/IO )..
-                            ) =
-                            ( /Data/bindap
-                                ( EAppArg
-                                    { eaaArg = Value /m -> /Context
-                                        [ /V=() ]
-                                        ( /value=()
-                                        , /ctx=( /io=/Catln/IO )..
-                                        ) =
-                                        ( /ContextIn
-                                            ( EAppArg
-                                                { eaaArg = Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
-                                                    ( EAppArg
-                                                        { eaaArg = Value /msg -> /Catln/CStr =
-                                                            ( /Test/exprKind
-                                                                ( EAppArg
-                                                                    { eaaArg = Value /e -> /Catln/RawExpr/RawList
-                                                                        ( /values=/Data/List/Nil
-                                                                        , /meta=/Catln/Meta
-                                                                            ( /type=∀/Catln/Type
-                                                                            , /dat=/Catln/Unit..
-                                                                            , /id=∀/Data/String
-                                                                            , /pos=∀/Data/Maybe
-                                                                                [ /T=/Catln/Pair
-                                                                                    [ /B=/Catln/SourcePos..
-                                                                                    , /A=/Catln/SourcePos..
-                                                                                    ]..
-                                                                                ]
-                                                                            )..
-                                                                        ) = /Catln/RawExpr/RawList
-                                                                        ( EAppArg
-                                                                            { eaaArg = Value /meta -> /Catln/Meta
-                                                                                ( /type=∀/Catln/Type
-                                                                                , /dat=/Catln/Unit..
-                                                                                , /id=∀/Data/String
-                                                                                , /pos=∀/Data/Maybe
-                                                                                    [ /T=/Catln/Pair
-                                                                                        [ /B=/Catln/SourcePos..
-                                                                                        , /A=/Catln/SourcePos..
-                                                                                        ]..
-                                                                                    ]
-                                                                                ).. =
-                                                                                ( Value /Test/noMeta ↦ /Catln/Meta
-                                                                                    ( /type=∀/Catln/Type
-                                                                                    , /dat=/Catln/Unit..
-                                                                                    , /id=∀/Data/String
-                                                                                    , /pos=∀/Data/Maybe
-                                                                                        [ /T=/Catln/Pair
-                                                                                            [ /B=/Catln/SourcePos..
-                                                                                            , /A=/Catln/SourcePos..
-                                                                                            ]..
-                                                                                        ]
-                                                                                    )..
-                                                                                )
-                                                                            }
-                                                                        )
-                                                                        ( EAppArg { eaaArg = Value /values -> /Data/List/Nil = Value /Data/List/Nil } )
-                                                                    }
-                                                                ) ↦ /Catln/CStr
-                                                            )
-                                                        }
-                                                    )
-                                                }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ).. = /
-                                                    ( EAppSpread
-                                                        { easExpr = ( Value /$d86d4b-states ↦ TopType ) }
-                                                    )
-                                                    ( EAppSpread
-                                                        { easExpr = ( Value /$d86d4b-ctx ↦ TopType ) }
-                                                    )
-                                                }
-                                            ) ↦ /Context
-                                            [ /V=() ]
-                                            ( /value=()
-                                            , /ctx=( /io=/Catln/IO )..
-                                            )
-                                        )
-                                    }
-                                )
-                                ( EAppArg
-                                    { eaaArg = /fn
-                                        ( EAppArg
-                                            { eaaArg = Value /v -> /Context
-                                                [ /V=() ]
-                                                ( /value=()
-                                                , /ctx=( /io=/Catln/IO )..
-                                                )
-                                            }
-                                        ) -> /Context
-                                        ( /value=()
-                                        , /ctx=( /io=/Catln/IO )..
-                                        ) =
-                                        ( /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0
-                                            ( EAppArg
-                                                { eaaArg = Value /$d4a4c0-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /$d4a4c0-states -> ( /io=/Catln/IO ).. = /
-                                                    ( EAppSpread
-                                                        { easExpr = ( Value /$d86d4b-states ↦ TopType ) }
-                                                    )
-                                                    ( EAppSpread
-                                                        { easExpr = ( Value /$d86d4b-ctx ↦ TopType ) }
                                                     )
                                                 }
                                             ) ↦ /Context
@@ -2059,6 +1726,435 @@ Prgm
                                     ( EAppArg { eaaArg = Value /path -> ∀/Data/String } )
                                 }
                             ) -> ( /Data/String/Text.. + /Catln/CStr ) = "tree"
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700
+                            ( EAppArg
+                                { eaaArg = Value /$f57700-arg -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /ctx=( /io=/Catln/IO )..
+                                    ) = /Context
+                                    ( EAppArg
+                                        { eaaArg = Value /value -> () }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /ctx@Value /$f57700-ctx -> ( /io=/Catln/IO ).. }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /$f57700-states -> ( /io=/Catln/IO ).. }
+                            ) -> /Context
+                            ( /value=()
+                            , /ctx=( /io=/Catln/IO )..
+                            ) =
+                            ( /Data/bindap
+                                ( EAppArg
+                                    { eaaArg = Value /m -> /Context
+                                        [ /V=() ]
+                                        ( /value=()
+                                        , /ctx=( /io=/Catln/IO )..
+                                        ) =
+                                        ( /ContextIn
+                                            ( EAppArg
+                                                { eaaArg = Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
+                                                    ( EAppArg
+                                                        { eaaArg = Value /msg -> /Catln/CStr =
+                                                            ( /Test/objArrName
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /oa -> /Catln/RawObjArr
+                                                                        ( /arr=∀/Data/Maybe
+                                                                            [ /T=/Catln/Pair
+                                                                                [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                                                , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                                                ]..
+                                                                            ]
+                                                                        , /obj=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                                        , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
+                                                                        , /doc=∀/Data/Maybe[ /T=∀/Data/String ]
+                                                                        , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                                        , /basis=∀/Catln/ObjectBasis
+                                                                        ) =
+                                                                        ( /Test/emptyObjArr
+                                                                            ( EAppArg
+                                                                                { eaaArg = Value /name ->
+                                                                                    ( /Data/String/Text
+                                                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                                    ) = "myFn"
+                                                                                }
+                                                                            ) ↦ /Catln/RawObjArr
+                                                                            ( /arr=∀/Data/Maybe
+                                                                                [ /T=/Catln/Pair
+                                                                                    [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                                                    , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                                                    ]..
+                                                                                ]
+                                                                            , /obj=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                                            , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
+                                                                            , /doc=∀/Data/Maybe[ /T=∀/Data/String ]
+                                                                            , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                                            , /basis=∀/Catln/ObjectBasis
+                                                                            )
+                                                                        )
+                                                                    }
+                                                                ) ↦ /Catln/CStr
+                                                            )
+                                                        }
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ).. = /
+                                                    ( EAppSpread
+                                                        { easExpr = ( Value /$f57700-states ↦ TopType ) }
+                                                    )
+                                                    ( EAppSpread
+                                                        { easExpr = ( Value /$f57700-ctx ↦ TopType ) }
+                                                    )
+                                                }
+                                            ) ↦ /Context
+                                            [ /V=() ]
+                                            ( /value=()
+                                            , /ctx=( /io=/Catln/IO )..
+                                            )
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = /fn
+                                        ( EAppArg
+                                            { eaaArg = Value /v -> /Context
+                                                [ /V=() ]
+                                                ( /value=()
+                                                , /ctx=( /io=/Catln/IO )..
+                                                )
+                                            }
+                                        ) -> /Context
+                                        ( /value=()
+                                        , /ctx=( /io=/Catln/IO )..
+                                        ) =
+                                        ( /main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700.$276e12
+                                            ( EAppArg
+                                                { eaaArg = Value /$276e12-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /$276e12-states -> ( /io=/Catln/IO ).. = /
+                                                    ( EAppSpread
+                                                        { easExpr = ( Value /$f57700-states ↦ TopType ) }
+                                                    )
+                                                    ( EAppSpread
+                                                        { easExpr = ( Value /$f57700-ctx ↦ TopType ) }
+                                                    )
+                                                }
+                                            ) ↦ /Context
+                                            ( /value=()
+                                            , /ctx=( /io=/Catln/IO )..
+                                            )
+                                        )
+                                    }
+                                ) ↦ /Context
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700.$276e12.$cde263"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700.$276e12.$cde263
+                            ( EAppArg
+                                { eaaArg = Value /$cde263-arg -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /ctx=( /io=/Catln/IO )..
+                                    ) = /Context
+                                    ( EAppArg
+                                        { eaaArg = Value /value -> () }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /ctx@Value /$cde263-ctx -> ( /io=/Catln/IO ).. }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /$cde263-states -> ( /io=/Catln/IO ).. }
+                            ) -> /Context
+                            ( /value=()
+                            , /ctx=( /io=/Catln/IO )..
+                            ) =
+                            ( /Data/bindap
+                                ( EAppArg
+                                    { eaaArg = Value /m -> /Context
+                                        [ /V=() ]
+                                        ( /value=()
+                                        , /ctx=( /io=/Catln/IO )..
+                                        ) =
+                                        ( /ContextIn
+                                            ( EAppArg
+                                                { eaaArg = Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
+                                                    ( EAppArg
+                                                        { eaaArg = Value /msg -> /Catln/CStr =
+                                                            ( /Data/toString
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /this -> /Data/Primitive/Integer =
+                                                                        ( /Test/declCount
+                                                                            ( EAppArg
+                                                                                { eaaArg = Value /p -> /Catln/RawPrgm
+                                                                                    ( /statements=∀/Data/List[ /T=/Catln/RawStatementTree.. ]
+                                                                                    , /imports=∀/Data/List[ /T=/Catln/AFileImport.. ]
+                                                                                    ) =
+                                                                                    ( /Test/onePrgm
+                                                                                        ( EAppArg
+                                                                                            { eaaArg = Value /name ->
+                                                                                                ( /Data/String/Text
+                                                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                                                ) = "myFn"
+                                                                                            }
+                                                                                        ) ↦ /Catln/RawPrgm
+                                                                                        ( /statements=∀/Data/List[ /T=/Catln/RawStatementTree.. ]
+                                                                                        , /imports=∀/Data/List[ /T=/Catln/AFileImport.. ]
+                                                                                        )
+                                                                                    )
+                                                                                }
+                                                                            ) ↦ /Data/Primitive/Integer
+                                                                        )
+                                                                    }
+                                                                ) ↦ /Catln/CStr
+                                                            )
+                                                        }
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ).. = /
+                                                    ( EAppSpread
+                                                        { easExpr = ( Value /$cde263-states ↦ TopType ) }
+                                                    )
+                                                    ( EAppSpread
+                                                        { easExpr = ( Value /$cde263-ctx ↦ TopType ) }
+                                                    )
+                                                }
+                                            ) ↦ /Context
+                                            [ /V=() ]
+                                            ( /value=()
+                                            , /ctx=( /io=/Catln/IO )..
+                                            )
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = /fn
+                                        ( EAppArg
+                                            { eaaArg = Value /v -> /Context
+                                                [ /V=() ]
+                                                ( /value=()
+                                                , /ctx=( /io=/Catln/IO )..
+                                                )
+                                            }
+                                        ) -> /Context
+                                        ( /value=()
+                                        , /ctx=( /io=/Catln/IO )..
+                                        ) =
+                                        ( /main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700.$276e12.$cde263.$428388
+                                            ( EAppArg
+                                                { eaaArg = Value /$428388-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /$428388-states -> ( /io=/Catln/IO ).. = /
+                                                    ( EAppSpread
+                                                        { easExpr = ( Value /$cde263-states ↦ TopType ) }
+                                                    )
+                                                    ( EAppSpread
+                                                        { easExpr = ( Value /$cde263-ctx ↦ TopType ) }
+                                                    )
+                                                }
+                                            ) ↦ /Context
+                                            ( /value=()
+                                            , /ctx=( /io=/Catln/IO )..
+                                            )
+                                        )
+                                    }
+                                ) ↦ /Context
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$feb9e5.$660041"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$feb9e5.$660041
+                            ( EAppArg
+                                { eaaArg = Value /$660041-arg -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /ctx=( /io=/Catln/IO )..
+                                    ) = /Context
+                                    ( EAppArg
+                                        { eaaArg = Value /value -> () }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /ctx@Value /$660041-ctx -> ( /io=/Catln/IO ).. }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /$660041-states -> ( /io=/Catln/IO ).. }
+                            ) -> /Context
+                            ( /value=()
+                            , /ctx=( /io=/Catln/IO )..
+                            ) =
+                            ( /Data/bindap
+                                ( EAppArg
+                                    { eaaArg = Value /m -> /Context
+                                        [ /V=() ]
+                                        ( /value=()
+                                        , /ctx=( /io=/Catln/IO )..
+                                        ) =
+                                        ( /ContextIn
+                                            ( EAppArg
+                                                { eaaArg = Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
+                                                    ( EAppArg
+                                                        { eaaArg = Value /msg -> /Catln/CStr =
+                                                            ( /Test/exprKind
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /e -> /Catln/RawExpr/RawValue
+                                                                        ( /name=( /Data/String/Text.. + /Catln/CStr )
+                                                                        , /meta=/Catln/Meta
+                                                                            ( /type=∀/Catln/Type
+                                                                            , /dat=/Catln/Unit..
+                                                                            , /id=∀/Data/String
+                                                                            , /pos=∀/Data/Maybe
+                                                                                [ /T=/Catln/Pair
+                                                                                    [ /B=/Catln/SourcePos..
+                                                                                    , /A=/Catln/SourcePos..
+                                                                                    ]..
+                                                                                ]
+                                                                            )..
+                                                                        ) = /Catln/RawExpr/RawValue
+                                                                        ( EAppArg
+                                                                            { eaaArg = Value /meta -> /Catln/Meta
+                                                                                ( /type=∀/Catln/Type
+                                                                                , /dat=/Catln/Unit..
+                                                                                , /id=∀/Data/String
+                                                                                , /pos=∀/Data/Maybe
+                                                                                    [ /T=/Catln/Pair
+                                                                                        [ /B=/Catln/SourcePos..
+                                                                                        , /A=/Catln/SourcePos..
+                                                                                        ]..
+                                                                                    ]
+                                                                                ).. =
+                                                                                ( Value /Test/noMeta ↦ /Catln/Meta
+                                                                                    ( /type=∀/Catln/Type
+                                                                                    , /dat=/Catln/Unit..
+                                                                                    , /id=∀/Data/String
+                                                                                    , /pos=∀/Data/Maybe
+                                                                                        [ /T=/Catln/Pair
+                                                                                            [ /B=/Catln/SourcePos..
+                                                                                            , /A=/Catln/SourcePos..
+                                                                                            ]..
+                                                                                        ]
+                                                                                    )..
+                                                                                )
+                                                                            }
+                                                                        )
+                                                                        ( EAppArg
+                                                                            { eaaArg = Value /name ->
+                                                                                ( /Data/String/Text
+                                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                                ) = "foo"
+                                                                            }
+                                                                        )
+                                                                    }
+                                                                ) ↦ /Catln/CStr
+                                                            )
+                                                        }
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ).. = /
+                                                    ( EAppSpread
+                                                        { easExpr =
+                                                            ( Value /$660041-states ↦ TopType )
+                                                        }
+                                                    )
+                                                    ( EAppSpread
+                                                        { easExpr =
+                                                            ( Value /$660041-ctx ↦ TopType )
+                                                        }
+                                                    )
+                                                }
+                                            ) ↦ /Context
+                                            [ /V=() ]
+                                            ( /value=()
+                                            , /ctx=( /io=/Catln/IO )..
+                                            )
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = /fn
+                                        ( EAppArg
+                                            { eaaArg = Value /v -> /Context
+                                                [ /V=() ]
+                                                ( /value=()
+                                                , /ctx=( /io=/Catln/IO )..
+                                                )
+                                            }
+                                        ) -> /Context
+                                        ( /value=()
+                                        , /ctx=( /io=/Catln/IO )..
+                                        ) =
+                                        ( /main.$feb9e5.$660041.$795ec3
+                                            ( EAppArg
+                                                { eaaArg = Value /$795ec3-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /$795ec3-states -> ( /io=/Catln/IO ).. = /
+                                                    ( EAppSpread
+                                                        { easExpr =
+                                                            ( Value /$660041-states ↦ TopType )
+                                                        }
+                                                    )
+                                                    ( EAppSpread
+                                                        { easExpr =
+                                                            ( Value /$660041-ctx ↦ TopType )
+                                                        }
+                                                    )
+                                                }
+                                            ) ↦ /Context
+                                            ( /value=()
+                                            , /ctx=( /io=/Catln/IO )..
+                                            )
+                                        )
+                                    }
+                                ) ↦ /Context
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                )
+                            )
                         ]
                     }
                 )
@@ -2316,15 +2412,15 @@ Prgm
                     }
                 )
             ,
-                ( "/main.$13df36.$5a9cdd.$e3172c"
+                ( "/main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700.$276e12.$cde263.$428388.$3ebdef.$729ed2"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /main.$13df36.$5a9cdd.$e3172c
+                        [ /main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700.$276e12.$cde263.$428388.$3ebdef.$729ed2
                             ( EAppArg
-                                { eaaArg = Value /$e3172c-arg -> /Context
+                                { eaaArg = Value /$729ed2-arg -> /Context
                                     [ /V=() ]
                                     ( /value=()
                                     , /ctx=( /io=/Catln/IO )..
@@ -2333,12 +2429,12 @@ Prgm
                                         { eaaArg = Value /value -> () }
                                     )
                                     ( EAppArg
-                                        { eaaArg = Value /ctx@Value /$e3172c-ctx -> ( /io=/Catln/IO ).. }
+                                        { eaaArg = Value /ctx@Value /$729ed2-ctx -> ( /io=/Catln/IO ).. }
                                     )
                                 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /$e3172c-states -> ( /io=/Catln/IO ).. }
+                                { eaaArg = Value /$729ed2-states -> ( /io=/Catln/IO ).. }
                             ) -> /Context
                             ( /value=()
                             , /ctx=( /io=/Catln/IO )..
@@ -2352,72 +2448,23 @@ Prgm
                                         ) =
                                         ( /ContextIn
                                             ( EAppArg
-                                                { eaaArg = Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
+                                                { eaaArg = Value /value -> /Catln/exit( /val=/Data/Primitive/Integer ) = /Catln/exit
                                                     ( EAppArg
-                                                        { eaaArg = Value /msg -> /Catln/CStr =
-                                                            ( /Test/rawValueName
-                                                                ( EAppArg
-                                                                    { eaaArg = Value /e -> /Catln/RawExpr/RawValue
-                                                                        ( /name=( /Data/String/Text.. + /Catln/CStr )
-                                                                        , /meta=/Catln/Meta
-                                                                            ( /type=∀/Catln/Type
-                                                                            , /dat=/Catln/Unit..
-                                                                            , /id=∀/Data/String
-                                                                            , /pos=∀/Data/Maybe
-                                                                                [ /T=/Catln/Pair
-                                                                                    [ /B=/Catln/SourcePos..
-                                                                                    , /A=/Catln/SourcePos..
-                                                                                    ]..
-                                                                                ]
-                                                                            )..
-                                                                        ) = /Catln/RawExpr/RawValue
-                                                                        ( EAppArg
-                                                                            { eaaArg = Value /meta -> /Catln/Meta
-                                                                                ( /type=∀/Catln/Type
-                                                                                , /dat=/Catln/Unit..
-                                                                                , /id=∀/Data/String
-                                                                                , /pos=∀/Data/Maybe
-                                                                                    [ /T=/Catln/Pair
-                                                                                        [ /B=/Catln/SourcePos..
-                                                                                        , /A=/Catln/SourcePos..
-                                                                                        ]..
-                                                                                    ]
-                                                                                ).. =
-                                                                                ( Value /Test/noMeta ↦ /Catln/Meta
-                                                                                    ( /type=∀/Catln/Type
-                                                                                    , /dat=/Catln/Unit..
-                                                                                    , /id=∀/Data/String
-                                                                                    , /pos=∀/Data/Maybe
-                                                                                        [ /T=/Catln/Pair
-                                                                                            [ /B=/Catln/SourcePos..
-                                                                                            , /A=/Catln/SourcePos..
-                                                                                            ]..
-                                                                                        ]
-                                                                                    )..
-                                                                                )
-                                                                            }
-                                                                        )
-                                                                        ( EAppArg
-                                                                            { eaaArg = Value /name ->
-                                                                                ( /Data/String/Text
-                                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
-                                                                                ) = "foo"
-                                                                            }
-                                                                        )
-                                                                    }
-                                                                ) ↦ /Catln/CStr
-                                                            )
-                                                        }
+                                                        { eaaArg = Value /val -> /Data/Primitive/Integer = 0 }
                                                     )
                                                 }
                                             )
                                             ( EAppArg
                                                 { eaaArg = Value /ctx -> ( /io=/Catln/IO ).. = /
                                                     ( EAppSpread
-                                                        { easExpr = ( Value /$e3172c-states ↦ TopType ) }
+                                                        { easExpr =
+                                                            ( Value /$729ed2-states ↦ TopType )
+                                                        }
                                                     )
                                                     ( EAppSpread
-                                                        { easExpr = ( Value /$e3172c-ctx ↦ TopType ) }
+                                                        { easExpr =
+                                                            ( Value /$729ed2-ctx ↦ TopType )
+                                                        }
                                                     )
                                                 }
                                             ) ↦ /Context
@@ -2441,17 +2488,21 @@ Prgm
                                         ( /value=()
                                         , /ctx=( /io=/Catln/IO )..
                                         ) =
-                                        ( /main.$13df36.$5a9cdd.$e3172c.$d86d4b
+                                        ( /main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700.$276e12.$cde263.$428388.$3ebdef.$729ed2.$1db409
                                             ( EAppArg
-                                                { eaaArg = Value /$d86d4b-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                                { eaaArg = Value /$1db409-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /$d86d4b-states -> ( /io=/Catln/IO ).. = /
+                                                { eaaArg = Value /$1db409-states -> ( /io=/Catln/IO ).. = /
                                                     ( EAppSpread
-                                                        { easExpr = ( Value /$e3172c-states ↦ TopType ) }
+                                                        { easExpr =
+                                                            ( Value /$729ed2-states ↦ TopType )
+                                                        }
                                                     )
                                                     ( EAppSpread
-                                                        { easExpr = ( Value /$e3172c-ctx ↦ TopType ) }
+                                                        { easExpr =
+                                                            ( Value /$729ed2-ctx ↦ TopType )
+                                                        }
                                                     )
                                                 }
                                             ) ↦ /Context
@@ -2500,15 +2551,15 @@ Prgm
                     }
                 )
             ,
-                ( "/main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f.$4e2f62"
+                ( "/main.$feb9e5"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f.$4e2f62
+                        [ /main.$feb9e5
                             ( EAppArg
-                                { eaaArg = Value /$4e2f62-arg -> /Context
+                                { eaaArg = Value /$feb9e5-arg -> /Context
                                     [ /V=() ]
                                     ( /value=()
                                     , /ctx=( /io=/Catln/IO )..
@@ -2517,12 +2568,12 @@ Prgm
                                         { eaaArg = Value /value -> () }
                                     )
                                     ( EAppArg
-                                        { eaaArg = Value /ctx@Value /$4e2f62-ctx -> ( /io=/Catln/IO ).. }
+                                        { eaaArg = Value /ctx@Value /$feb9e5-ctx -> ( /io=/Catln/IO ).. }
                                     )
                                 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /$4e2f62-states -> ( /io=/Catln/IO ).. }
+                                { eaaArg = Value /$feb9e5-states -> ( /io=/Catln/IO ) }
                             ) -> /Context
                             ( /value=()
                             , /ctx=( /io=/Catln/IO )..
@@ -2539,33 +2590,174 @@ Prgm
                                                 { eaaArg = Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
                                                     ( EAppArg
                                                         { eaaArg = Value /msg -> /Catln/CStr =
-                                                            ( /Data/toString
+                                                            ( /Test/readKind
                                                                 ( EAppArg
-                                                                    { eaaArg = Value /this -> /Data/Primitive/Integer =
-                                                                        ( /Test/readsCount
-                                                                            ( EAppArg
-                                                                                { eaaArg = Value /r -> /Catln/ImportResult
-                                                                                    ( /prgm=/Catln/RawPrgm..
-                                                                                    , /reads=∀/Data/Maybe
-                                                                                        [ /T=∀/Data/List[ /T=∀/Catln/ReadPath ] ]
-                                                                                    , /source=∀/Data/Maybe[ /T=∀/Data/String ]
-                                                                                    ) =
-                                                                                    ( /Test/oneResult
-                                                                                        ( EAppArg
-                                                                                            { eaaArg = Value /name ->
-                                                                                                ( /Data/String/Text
-                                                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
-                                                                                                ) = "myFn"
-                                                                                            }
-                                                                                        ) ↦ /Catln/ImportResult
-                                                                                        ( /prgm=/Catln/RawPrgm..
-                                                                                        , /reads=∀/Data/Maybe
-                                                                                            [ /T=∀/Data/List[ /T=∀/Catln/ReadPath ] ]
-                                                                                        , /source=∀/Data/Maybe[ /T=∀/Data/String ]
-                                                                                        )
-                                                                                    )
-                                                                                }
-                                                                            ) ↦ /Data/Primitive/Integer
+                                                                    { eaaArg = Value /r -> /Catln/ReadPath/ReadDir
+                                                                        ( /path=( /Data/String/Text.. + /Catln/CStr ) ) = /Catln/ReadPath/ReadDir
+                                                                        ( EAppArg
+                                                                            { eaaArg = Value /path ->
+                                                                                ( /Data/String/Text
+                                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                                ) = "src"
+                                                                            }
+                                                                        )
+                                                                    }
+                                                                ) ↦ /Catln/CStr
+                                                            )
+                                                        }
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ).. = /
+                                                    ( EAppSpread
+                                                        { easExpr = ( Value /$feb9e5-states ↦ TopType ) }
+                                                    )
+                                                    ( EAppSpread
+                                                        { easExpr = ( Value /$feb9e5-ctx ↦ TopType ) }
+                                                    )
+                                                }
+                                            ) ↦ /Context
+                                            [ /V=() ]
+                                            ( /value=()
+                                            , /ctx=( /io=/Catln/IO )..
+                                            )
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = /fn
+                                        ( EAppArg
+                                            { eaaArg = Value /v -> /Context
+                                                [ /V=() ]
+                                                ( /value=()
+                                                , /ctx=( /io=/Catln/IO )..
+                                                )
+                                            }
+                                        ) -> /Context
+                                        ( /value=()
+                                        , /ctx=( /io=/Catln/IO )..
+                                        ) =
+                                        ( /main.$feb9e5.$660041
+                                            ( EAppArg
+                                                { eaaArg = Value /$660041-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /$660041-states -> ( /io=/Catln/IO ).. = /
+                                                    ( EAppSpread
+                                                        { easExpr = ( Value /$feb9e5-states ↦ TopType ) }
+                                                    )
+                                                    ( EAppSpread
+                                                        { easExpr = ( Value /$feb9e5-ctx ↦ TopType ) }
+                                                    )
+                                                }
+                                            ) ↦ /Context
+                                            ( /value=()
+                                            , /ctx=( /io=/Catln/IO )..
+                                            )
+                                        )
+                                    }
+                                ) ↦ /Context
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700.$276e12"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700.$276e12
+                            ( EAppArg
+                                { eaaArg = Value /$276e12-arg -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /ctx=( /io=/Catln/IO )..
+                                    ) = /Context
+                                    ( EAppArg
+                                        { eaaArg = Value /value -> () }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /ctx@Value /$276e12-ctx -> ( /io=/Catln/IO ).. }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /$276e12-states -> ( /io=/Catln/IO ).. }
+                            ) -> /Context
+                            ( /value=()
+                            , /ctx=( /io=/Catln/IO )..
+                            ) =
+                            ( /Data/bindap
+                                ( EAppArg
+                                    { eaaArg = Value /m -> /Context
+                                        [ /V=() ]
+                                        ( /value=()
+                                        , /ctx=( /io=/Catln/IO )..
+                                        ) =
+                                        ( /ContextIn
+                                            ( EAppArg
+                                                { eaaArg = Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
+                                                    ( EAppArg
+                                                        { eaaArg = Value /msg -> /Catln/CStr =
+                                                            ( /Test/statementKind
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /s -> /Catln/RawStatement/RawDeclStatement
+                                                                        ( /objArr=/Catln/RawObjArr
+                                                                            ( /arr=∀/Data/Maybe
+                                                                                [ /T=/Catln/Pair
+                                                                                    [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                                                    , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                                                    ]..
+                                                                                ]
+                                                                            , /obj=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                                            , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
+                                                                            , /doc=∀/Data/Maybe[ /T=∀/Data/String ]
+                                                                            , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                                            , /basis=∀/Catln/ObjectBasis
+                                                                            )..
+                                                                        ) = /Catln/RawStatement/RawDeclStatement
+                                                                        ( EAppArg
+                                                                            { eaaArg = Value /objArr -> /Catln/RawObjArr
+                                                                                ( /arr=∀/Data/Maybe
+                                                                                    [ /T=/Catln/Pair
+                                                                                        [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                                                        , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                                                        ]..
+                                                                                    ]
+                                                                                , /obj=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                                                , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
+                                                                                , /doc=∀/Data/Maybe[ /T=∀/Data/String ]
+                                                                                , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                                                , /basis=∀/Catln/ObjectBasis
+                                                                                ).. =
+                                                                                ( /Test/emptyObjArr
+                                                                                    ( EAppArg
+                                                                                        { eaaArg = Value /name ->
+                                                                                            ( /Data/String/Text
+                                                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                                            ) = "myFn"
+                                                                                        }
+                                                                                    ) ↦ /Catln/RawObjArr
+                                                                                    ( /arr=∀/Data/Maybe
+                                                                                        [ /T=/Catln/Pair
+                                                                                            [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                                                            , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                                                            ]..
+                                                                                        ]
+                                                                                    , /obj=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                                                    , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
+                                                                                    , /doc=∀/Data/Maybe[ /T=∀/Data/String ]
+                                                                                    , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                                                    , /basis=∀/Catln/ObjectBasis
+                                                                                    )..
+                                                                                )
+                                                                            }
                                                                         )
                                                                     }
                                                                 ) ↦ /Catln/CStr
@@ -2578,12 +2770,12 @@ Prgm
                                                 { eaaArg = Value /ctx -> ( /io=/Catln/IO ).. = /
                                                     ( EAppSpread
                                                         { easExpr =
-                                                            ( Value /$4e2f62-states ↦ TopType )
+                                                            ( Value /$276e12-states ↦ TopType )
                                                         }
                                                     )
                                                     ( EAppSpread
                                                         { easExpr =
-                                                            ( Value /$4e2f62-ctx ↦ TopType )
+                                                            ( Value /$276e12-ctx ↦ TopType )
                                                         }
                                                     )
                                                 }
@@ -2608,20 +2800,20 @@ Prgm
                                         ( /value=()
                                         , /ctx=( /io=/Catln/IO )..
                                         ) =
-                                        ( /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f.$4e2f62.$4ed8f8
+                                        ( /main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700.$276e12.$cde263
                                             ( EAppArg
-                                                { eaaArg = Value /$4ed8f8-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                                { eaaArg = Value /$cde263-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /$4ed8f8-states -> ( /io=/Catln/IO ).. = /
+                                                { eaaArg = Value /$cde263-states -> ( /io=/Catln/IO ).. = /
                                                     ( EAppSpread
                                                         { easExpr =
-                                                            ( Value /$4e2f62-states ↦ TopType )
+                                                            ( Value /$276e12-states ↦ TopType )
                                                         }
                                                     )
                                                     ( EAppSpread
                                                         { easExpr =
-                                                            ( Value /$4e2f62-ctx ↦ TopType )
+                                                            ( Value /$276e12-ctx ↦ TopType )
                                                         }
                                                     )
                                                 }
@@ -2635,190 +2827,6 @@ Prgm
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
                                 )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b
-                            ( EAppArg
-                                { eaaArg = Value /$57841b-arg -> /Context
-                                    [ /V=() ]
-                                    ( /value=()
-                                    , /ctx=( /io=/Catln/IO )..
-                                    ) = /Context
-                                    ( EAppArg
-                                        { eaaArg = Value /value -> () }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /ctx@Value /$57841b-ctx -> ( /io=/Catln/IO ).. }
-                                    )
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /$57841b-states -> ( /io=/Catln/IO ).. }
-                            ) -> /Context
-                            ( /value=()
-                            , /ctx=( /io=/Catln/IO )..
-                            ) =
-                            ( /Data/bindap
-                                ( EAppArg
-                                    { eaaArg = Value /m -> /Context
-                                        [ /V=() ]
-                                        ( /value=()
-                                        , /ctx=( /io=/Catln/IO )..
-                                        ) =
-                                        ( /ContextIn
-                                            ( EAppArg
-                                                { eaaArg = Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
-                                                    ( EAppArg
-                                                        { eaaArg = Value /msg -> /Catln/CStr =
-                                                            ( /Data/toString
-                                                                ( EAppArg
-                                                                    { eaaArg = Value /this -> /Data/Primitive/Integer =
-                                                                        ( /Test/declCount
-                                                                            ( EAppArg
-                                                                                { eaaArg = Value /p -> /Catln/RawPrgm
-                                                                                    ( /statements=∀/Data/List[ /T=/Catln/RawStatementTree.. ]
-                                                                                    , /imports=∀/Data/List[ /T=/Catln/AFileImport.. ]
-                                                                                    ) =
-                                                                                    ( /Test/onePrgm
-                                                                                        ( EAppArg
-                                                                                            { eaaArg = Value /name ->
-                                                                                                ( /Data/String/Text
-                                                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
-                                                                                                ) = "myFn"
-                                                                                            }
-                                                                                        ) ↦ /Catln/RawPrgm
-                                                                                        ( /statements=∀/Data/List[ /T=/Catln/RawStatementTree.. ]
-                                                                                        , /imports=∀/Data/List[ /T=/Catln/AFileImport.. ]
-                                                                                        )
-                                                                                    )
-                                                                                }
-                                                                            ) ↦ /Data/Primitive/Integer
-                                                                        )
-                                                                    }
-                                                                ) ↦ /Catln/CStr
-                                                            )
-                                                        }
-                                                    )
-                                                }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ).. = /
-                                                    ( EAppSpread
-                                                        { easExpr =
-                                                            ( Value /$57841b-states ↦ TopType )
-                                                        }
-                                                    )
-                                                    ( EAppSpread
-                                                        { easExpr =
-                                                            ( Value /$57841b-ctx ↦ TopType )
-                                                        }
-                                                    )
-                                                }
-                                            ) ↦ /Context
-                                            [ /V=() ]
-                                            ( /value=()
-                                            , /ctx=( /io=/Catln/IO )..
-                                            )
-                                        )
-                                    }
-                                )
-                                ( EAppArg
-                                    { eaaArg = /fn
-                                        ( EAppArg
-                                            { eaaArg = Value /v -> /Context
-                                                [ /V=() ]
-                                                ( /value=()
-                                                , /ctx=( /io=/Catln/IO )..
-                                                )
-                                            }
-                                        ) -> /Context
-                                        ( /value=()
-                                        , /ctx=( /io=/Catln/IO )..
-                                        ) =
-                                        ( /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f
-                                            ( EAppArg
-                                                { eaaArg = Value /$ad3f7f-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /$ad3f7f-states -> ( /io=/Catln/IO ).. = /
-                                                    ( EAppSpread
-                                                        { easExpr =
-                                                            ( Value /$57841b-states ↦ TopType )
-                                                        }
-                                                    )
-                                                    ( EAppSpread
-                                                        { easExpr =
-                                                            ( Value /$57841b-ctx ↦ TopType )
-                                                        }
-                                                    )
-                                                }
-                                            ) ↦ /Context
-                                            ( /value=()
-                                            , /ctx=( /io=/Catln/IO )..
-                                            )
-                                        )
-                                    }
-                                ) ↦ /Context
-                                ( /value=()
-                                , /ctx=( /io=/Catln/IO )..
-                                )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f.$4e2f62.$4ed8f8.$620336"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f.$4e2f62.$4ed8f8.$620336
-                            ( EAppArg
-                                { eaaArg = Value /$620336-arg -> /Context
-                                    [ /V=() ]
-                                    ( /value=()
-                                    , /ctx=( /io=/Catln/IO )..
-                                    ) = /Context
-                                    ( EAppArg
-                                        { eaaArg = Value /value -> () }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /ctx@Value /$620336-ctx -> ( /io=/Catln/IO ).. }
-                                    )
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /$620336-states -> ( /io=/Catln/IO ).. }
-                            ) -> /Context
-                            ( /value=()
-                            , /ctx=( /io=/Catln/IO )..
-                            ) = /Context
-                            ( EAppArg
-                                { eaaArg = Value /value -> () = Value / }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ).. = /
-                                    ( EAppSpread
-                                        { easExpr =
-                                            ( Value /$620336-states ↦ TopType )
-                                        }
-                                    )
-                                    ( EAppSpread
-                                        { easExpr =
-                                            ( Value /$620336-ctx ↦ TopType )
-                                        }
-                                    )
-                                }
                             )
                         ]
                     }

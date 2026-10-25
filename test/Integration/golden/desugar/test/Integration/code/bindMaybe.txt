@@ -10,9 +10,7 @@ Prgm
                     , omiDefs =
                         [ maybeBind
                             ( Value m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = /Data/bindap( Value m= Value m )
-                            ( fn( Value v )= maybeBind.$9471e8
-                                ( Value $9471e8-arg= Value v )
-                            )
+                            ( fn( Value v )= maybeBind.$cf89ec( Value $cf89ec-arg= Value v ) )
                         ]
                     }
                 )
@@ -32,14 +30,13 @@ Prgm
                     }
                 )
             ,
-                ( "/maybeBind.$9471e8"
+                ( "/maybeBind.$cf89ec"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ maybeBind.$9471e8
-                            ( Value $9471e8-arg@Value x )= /Data/Maybe/Some
+                        [ maybeBind.$cf89ec( Value $cf89ec-arg@Value x )= /Data/Maybe/Some
                             ( Value value= /operator+( Value /l= Value x )
                                 ( Value /r= CInt
                                     { ciValue = 1 }

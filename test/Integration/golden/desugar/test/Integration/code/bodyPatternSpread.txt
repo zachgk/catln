@@ -43,20 +43,20 @@ Prgm
                     }
                 )
             ,
-                ( "/main.$88336f"
+                ( "/tallied.$32a59f.$e740fd.$8b85f7"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ main.$88336f
-                            ( Value $88336f-arg= /Context( Value value )
-                                ( Value ctx@Value $88336f-ctx )
+                        [ tallied.$32a59f.$e740fd.$8b85f7
+                            ( Value $8b85f7-arg= /Context( Value value@Value total )
+                                ( Value ctx@Value $8b85f7-ctx )
                             )
-                            ( Value $88336f-states )= /Context( Value value= Value / )
+                            ( Value $8b85f7-states )= /Context( Value value= Value total )
                             ( Value ctx= /
-                                ( ..Value $88336f-states )
-                                ( ..Value $88336f-ctx )
+                                ( ..Value $8b85f7-states )
+                                ( ..Value $8b85f7-ctx )
                             )
                         ]
                     }
@@ -84,6 +84,19 @@ Prgm
                             ( Value /r= kind
                                 ( f( Value ..ps )= b( Value ..ps= Value ..ps ) )
                             )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$d52604"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$d52604
+                            ( Value $d52604-arg= /Context( Value value )( Value ctx@Value $d52604-ctx ) )( Value $d52604-states )= /Context( Value value= Value / )
+                            ( Value ctx= /( ..Value $d52604-states )( ..Value $d52604-ctx ) )
                         ]
                     }
                 )
@@ -151,10 +164,9 @@ Prgm
                                 )
                                 ( Value ctx= /( Value tally= Value tally ) )
                             )
-                            ( fn( Value v )= addConst.$6b39ef
-                                ( /b( Value /..ps )= /b( Value /..ps= Value /..ps ) )
-                                ( Value $6b39ef-arg= Value v )
-                                ( Value $6b39ef-states= /( Value tally= Value tally ) )
+                            ( fn( Value v )= addConst.$bb3c9e
+                                ( /b( Value /..ps )= /b( Value /..ps= Value /..ps ) )( Value $bb3c9e-arg= Value v )
+                                ( Value $bb3c9e-states= /( Value tally= Value tally ) )
                             )
                         , /ContextIn( Value /value= Value tallyValue )
                             ( Value /ctx= /
@@ -183,10 +195,10 @@ Prgm
                                 )
                                 ( Value ctx= /( Value tally= Value tally ) )
                             )
-                            ( fn( Value v )= tallied.$6ab200
+                            ( fn( Value v )= tallied.$32a59f
                                 ( /body( Value /..ps )= /body( Value /..ps= Value /..ps ) )
-                                ( Value $6ab200-arg= Value v )
-                                ( Value $6ab200-states= /( Value tally= Value tally ) )
+                                ( Value $32a59f-arg= Value v )
+                                ( Value $32a59f-states= /( Value tally= Value tally ) )
                             )
                         , /ContextIn( Value /value= Value main )
                             ( Value /ctx= /( Value io -> /Catln/IO )
@@ -229,28 +241,8 @@ Prgm
                                 )
                                 ( Value ctx= /( Value io= Value io ) )
                             )
-                            ( fn( Value v )= main.$88336f
-                                ( Value $88336f-arg= Value v )
-                                ( Value $88336f-states= /( Value io= Value io ) )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/addConst.$6b39ef.$2fb251"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ addConst.$6b39ef.$2fb251
-                            ( Value $2fb251-arg= /Context( Value value )
-                                ( Value ctx@Value $2fb251-ctx )
-                            )
-                            ( Value $2fb251-states )= /Context( Value value= Value / )
-                            ( Value ctx= /
-                                ( ..Value $2fb251-states )
-                                ( ..Value $2fb251-ctx )
+                            ( fn( Value v )= main.$d52604( Value $d52604-arg= Value v )
+                                ( Value $d52604-states= /( Value io= Value io ) )
                             )
                         ]
                     }
@@ -272,33 +264,6 @@ Prgm
                     }
                 )
             ,
-                ( "/tallied.$6ab200.$6ab200"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ tallied.$6ab200.$6ab200
-                            ( Value $6ab200-arg= /Context( Value value )
-                                ( Value ctx@Value $6ab200-ctx )
-                            )
-                            ( Value $6ab200-states )= /Data/bindap
-                            ( Value m= /ContextIn( Value value= Value tallyValue )
-                                ( Value ctx= /
-                                    ( ..Value $6ab200-states )
-                                    ( ..Value $6ab200-ctx )
-                                )
-                            )
-                            ( fn( Value v )= tallied.$6ab200.$6ab200.$e4b5d2( Value $e4b5d2-arg= Value v )
-                                ( Value $e4b5d2-states= /
-                                    ( ..Value $6ab200-states )
-                                    ( ..Value $6ab200-ctx )
-                                )
-                            )
-                        ]
-                    }
-                )
-            ,
                 ( "/Named"
                 , ObjectMapItem
                     { omiDecls =
@@ -309,79 +274,94 @@ Prgm
                     }
                 )
             ,
-                ( "/addConst.$6b39ef"
+                ( "/tallied.$32a59f.$e740fd"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ addConst.$6b39ef
-                            ( /b( Value /..ps ) )
-                            ( Value $6b39ef-arg= /Context( Value value )
-                                ( Value ctx@Value $6b39ef-ctx )
+                        [ tallied.$32a59f.$e740fd
+                            ( Value $e740fd-arg= /Context( Value value )( Value ctx@Value $e740fd-ctx ) )( Value $e740fd-states )= /Data/bindap
+                            ( Value m= /ContextIn( Value value= Value tallyValue )
+                                ( Value ctx= /( ..Value $e740fd-states )( ..Value $e740fd-ctx ) )
                             )
-                            ( Value $6b39ef-states )= /Data/bindap
-                            ( Value m= /ContextIn
-                                ( Value value= addConst
-                                    ( f( Value ..ps )= b( Value ..ps= Value ..ps ) )
-                                )
-                                ( Value ctx= /
-                                    ( ..Value $6b39ef-states )
-                                    ( ..Value $6b39ef-ctx )
-                                )
-                            )
-                            ( fn( Value v )= addConst.$6b39ef.$2fb251
-                                ( Value $2fb251-arg= Value v )
-                                ( Value $2fb251-states= /
-                                    ( ..Value $6b39ef-states )
-                                    ( ..Value $6b39ef-ctx )
-                                )
+                            ( fn( Value v )= tallied.$32a59f.$e740fd.$8b85f7
+                                ( Value $8b85f7-arg= Value v )
+                                ( Value $8b85f7-states= /( ..Value $e740fd-states )( ..Value $e740fd-ctx ) )
                             )
                         ]
                     }
                 )
             ,
-                ( "/tallied.$6ab200"
+                ( "/tallied.$32a59f"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ tallied.$6ab200
+                        [ tallied.$32a59f
                             ( /body( Value /..ps ) -> /Data/Primitive/Integer )
-                            ( Value $6ab200-arg= /Context( Value value )
-                                ( Value ctx@Value $6ab200-ctx )
+                            ( Value $32a59f-arg= /Context( Value value )
+                                ( Value ctx@Value $32a59f-ctx )
                             )
-                            ( Value $6ab200-states )= /Data/bindap
+                            ( Value $32a59f-states )= /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= addConst
                                     ( f( Value ..ps )= body( Value ..ps= Value ..ps ) )
                                 )
                                 ( Value ctx= /
-                                    ( ..Value $6ab200-states )
-                                    ( ..Value $6ab200-ctx )
+                                    ( ..Value $32a59f-states )
+                                    ( ..Value $32a59f-ctx )
                                 )
                             )
-                            ( fn( Value v )= tallied.$6ab200.$6ab200
-                                ( Value $6ab200-arg= Value v )
-                                ( Value $6ab200-states= /
-                                    ( ..Value $6ab200-states )
-                                    ( ..Value $6ab200-ctx )
+                            ( fn( Value v )= tallied.$32a59f.$e740fd( Value $e740fd-arg= Value v )
+                                ( Value $e740fd-states= /
+                                    ( ..Value $32a59f-states )
+                                    ( ..Value $32a59f-ctx )
                                 )
                             )
                         ]
                     }
                 )
             ,
-                ( "/tallied.$6ab200.$6ab200.$e4b5d2"
+                ( "/addConst.$bb3c9e"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ tallied.$6ab200.$6ab200.$e4b5d2
-                            ( Value $e4b5d2-arg= /Context( Value value@Value total )( Value ctx@Value $e4b5d2-ctx ) )( Value $e4b5d2-states )= /Context( Value value= Value total )
-                            ( Value ctx= /( ..Value $e4b5d2-states )( ..Value $e4b5d2-ctx ) )
+                        [ addConst.$bb3c9e
+                            ( /b( Value /..ps ) )
+                            ( Value $bb3c9e-arg= /Context( Value value )( Value ctx@Value $bb3c9e-ctx ) )( Value $bb3c9e-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= addConst
+                                    ( f( Value ..ps )= b( Value ..ps= Value ..ps ) )
+                                )
+                                ( Value ctx= /( ..Value $bb3c9e-states )( ..Value $bb3c9e-ctx ) )
+                            )
+                            ( fn( Value v )= addConst.$bb3c9e.$528a08
+                                ( Value $528a08-arg= Value v )
+                                ( Value $528a08-states= /( ..Value $bb3c9e-states )( ..Value $bb3c9e-ctx ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/addConst.$bb3c9e.$528a08"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ addConst.$bb3c9e.$528a08
+                            ( Value $528a08-arg= /Context( Value value )
+                                ( Value ctx@Value $528a08-ctx )
+                            )
+                            ( Value $528a08-states )= /Context( Value value= Value / )
+                            ( Value ctx= /
+                                ( ..Value $528a08-states )
+                                ( ..Value $528a08-ctx )
+                            )
                         ]
                     }
                 )

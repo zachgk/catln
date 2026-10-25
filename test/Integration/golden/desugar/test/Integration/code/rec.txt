@@ -2,6 +2,19 @@ Prgm
     { prgmObjMap = ObjectMapWith
         { omItems = fromList
             [
+                ( "/main.$d0a73d"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$d0a73d
+                            ( Value $d0a73d-arg= /Context( Value value )( Value ctx@Value $d0a73d-ctx ) )( Value $d0a73d-states )= /Context( Value value= Value / )
+                            ( Value ctx= /( ..Value $d0a73d-states )( ..Value $d0a73d-ctx ) )
+                        ]
+                    }
+                )
+            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
@@ -30,22 +43,9 @@ Prgm
                                 )
                                 ( Value ctx= /( Value io= Value io ) )
                             )
-                            ( fn( Value v )= main.$b2ad4a( Value $b2ad4a-arg= Value v )
-                                ( Value $b2ad4a-states= /( Value io= Value io ) )
+                            ( fn( Value v )= main.$d0a73d( Value $d0a73d-arg= Value v )
+                                ( Value $d0a73d-states= /( Value io= Value io ) )
                             )
-                        ]
-                    }
-                )
-            ,
-                ( "/main.$b2ad4a"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ main.$b2ad4a
-                            ( Value $b2ad4a-arg= /Context( Value value )( Value ctx@Value $b2ad4a-ctx ) )( Value $b2ad4a-states )= /Context( Value value= Value / )
-                            ( Value ctx= /( ..Value $b2ad4a-states )( ..Value $b2ad4a-ctx ) )
                         ]
                     }
                 )

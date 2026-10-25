@@ -20,6 +20,26 @@ Prgm
                     }
                 )
             ,
+                ( "/Llm/tllm.$89078f"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/tllm.$89078f( Value /type -> ∀/Catln/Type )( Value /source -> ∀/Data/String )
+                            ( Value $89078f-arg= /Context( Value value@Value reply )
+                                ( Value ctx@Value $89078f-ctx )
+                            )
+                            ( Value $89078f-states )= /Context
+                            ( Value value= typedReply( Value reply= Value reply )( Value type= Value type )( Value source= Value source ) )
+                            ( Value ctx= /
+                                ( ..Value $89078f-states )
+                                ( ..Value $89078f-ctx )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Llm/typedDecls"
                 , ObjectMapItem
                     { omiDecls =
@@ -85,9 +105,9 @@ Prgm
                                 )
                                 ( Value ctx= /( Value io= Value io ) )
                             )
-                            ( fn( Value v )= /Llm/tllm.$404341( Value /type= Value /type )( Value /source= Value /source )
-                                ( Value $404341-arg= Value v )
-                                ( Value $404341-states= /( Value io= Value io ) )
+                            ( fn( Value v )= /Llm/tllm.$89078f( Value /type= Value /type )( Value /source= Value /source )
+                                ( Value $89078f-arg= Value v )
+                                ( Value $89078f-states= /( Value io= Value io ) )
                             )
                         , /ContextIn
                             ( Value /value= /Llm/tlcm( Value input -> ∀/Data/String )( Value type -> ∀/Catln/Type )( Value source -> ∀/Data/String ) )
@@ -104,9 +124,29 @@ Prgm
                                 )
                                 ( Value ctx= /( Value io= Value io ) )
                             )
-                            ( fn( Value v )= /Llm/tlcm.$6d0af4( Value /type= Value /type )( Value /source= Value /source )
-                                ( Value $6d0af4-arg= Value v )
-                                ( Value $6d0af4-states= /( Value io= Value io ) )
+                            ( fn( Value v )= /Llm/tlcm.$93d217( Value /type= Value /type )( Value /source= Value /source )
+                                ( Value $93d217-arg= Value v )
+                                ( Value $93d217-states= /( Value io= Value io ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/tlcm.$93d217"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/tlcm.$93d217( Value /type -> ∀/Catln/Type )( Value /source -> ∀/Data/String )
+                            ( Value $93d217-arg= /Context( Value value@Value reply )
+                                ( Value ctx@Value $93d217-ctx )
+                            )
+                            ( Value $93d217-states )= /Context
+                            ( Value value= typedReply( Value reply= Value reply )( Value type= Value type )( Value source= Value source ) )
+                            ( Value ctx= /
+                                ( ..Value $93d217-states )
+                                ( ..Value $93d217-ctx )
                             )
                         ]
                     }
@@ -137,26 +177,6 @@ Prgm
                             )
                             ( Value /r= typedDecls
                                 ( Value decls= /Catln/typeDecls( Value type= Value type ) )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/Llm/tlcm.$6d0af4"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Llm/tlcm.$6d0af4( Value /type -> ∀/Catln/Type )( Value /source -> ∀/Data/String )
-                            ( Value $6d0af4-arg= /Context( Value value@Value reply )
-                                ( Value ctx@Value $6d0af4-ctx )
-                            )
-                            ( Value $6d0af4-states )= /Context
-                            ( Value value= typedReply( Value reply= Value reply )( Value type= Value type )( Value source= Value source ) )
-                            ( Value ctx= /
-                                ( ..Value $6d0af4-states )
-                                ( ..Value $6d0af4-ctx )
                             )
                         ]
                     }
@@ -197,26 +217,6 @@ Prgm
                         , /Llm/typedReply
                             ( Value reply= /Data/Result/Ok( Value value ) )( Value type )( Value source ) -> ∀/Data/Result[ /E=∀/Llm/LlmErr ] = typedValue( Value reply= Value value )
                             ( Value parsed= /Catln/parseExprIn( Value input= Value value )( Value type= Value type )( Value source= Value source ) )
-                        ]
-                    }
-                )
-            ,
-                ( "/Llm/tllm.$404341"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Llm/tllm.$404341( Value /type -> ∀/Catln/Type )( Value /source -> ∀/Data/String )
-                            ( Value $404341-arg= /Context( Value value@Value reply )
-                                ( Value ctx@Value $404341-ctx )
-                            )
-                            ( Value $404341-states )= /Context
-                            ( Value value= typedReply( Value reply= Value reply )( Value type= Value type )( Value source= Value source ) )
-                            ( Value ctx= /
-                                ( ..Value $404341-states )
-                                ( ..Value $404341-ctx )
-                            )
                         ]
                     }
                 )

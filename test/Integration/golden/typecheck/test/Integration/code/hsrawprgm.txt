@@ -422,68 +422,29 @@ Prgm
                     }
                 )
             ,
-                ( "/main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0"
+                ( "/main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700.$276e12.$cde263.$428388.$3ebdef.$729ed2.$1db409"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0
-                            ( Value /$d4a4c0-arg -> /Context
+                        [ /main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700.$276e12.$cde263.$428388.$3ebdef.$729ed2.$1db409
+                            ( Value /$1db409-arg -> /Context
                                 [ /V=() ]
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
                                 ) = /Context
                                 ( Value /value -> () )
-                                ( Value /ctx@Value /$d4a4c0-ctx -> ( /io=/Catln/IO ).. )
+                                ( Value /ctx@Value /$1db409-ctx -> ( /io=/Catln/IO ).. )
                             )
-                            ( Value /$d4a4c0-states -> ( /io=/Catln/IO ).. ) -> /Context
+                            ( Value /$1db409-states -> ( /io=/Catln/IO ).. ) -> /Context
                             ( /value=()
                             , /ctx=( /io=/Catln/IO )..
-                            ) = /Data/bindap
-                            ( Value /m -> /Context
-                                [ /V=() ]
-                                ( /value=()
-                                , /ctx=( /io=/Catln/IO )..
-                                ) = /ContextIn
-                                ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
-                                    ( Value /msg -> /Catln/CStr = /Test/objArrName
-                                        ( Value /oa -> /Catln/RawObjArr
-                                            ( /arr=∀/Data/Maybe
-                                                [ /T=/Catln/Pair
-                                                    [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                    , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                    ]..
-                                                ]
-                                            , /obj=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                            , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
-                                            , /doc=∀/Data/Maybe[ /T=∀/Data/String ]
-                                            , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                            , /basis=∀/Catln/ObjectBasis
-                                            ) = /Test/emptyObjArr
-                                            ( Value /name ->
-                                                ( /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
-                                                ) = CStr
-                                                { csValue = "myFn" }
-                                            )
-                                        )
-                                    )
-                                )
-                                ( Value /ctx -> ( /io=/Catln/IO ).. = /( ..Value /$d4a4c0-states )( ..Value /$d4a4c0-ctx ) )
-                            )
-                            ( /fn
-                                ( Value /v -> /Context
-                                    [ /V=() ]
-                                    ( /value=()
-                                    , /ctx=( /io=/Catln/IO )..
-                                    )
-                                ) -> /Context
-                                ( /value=()
-                                , /ctx=( /io=/Catln/IO )..
-                                ) = /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62
-                                ( Value /$5f4b62-arg -> TVArg /v = Value /v )
-                                ( Value /$5f4b62-states -> ( /io=/Catln/IO ).. = /( ..Value /$d4a4c0-states )( ..Value /$d4a4c0-ctx ) )
+                            ) = /Context
+                            ( Value /value -> () = Value / )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /
+                                ( ..Value /$1db409-states )
+                                ( ..Value /$1db409-ctx )
                             )
                         ]
                     }
@@ -517,6 +478,92 @@ Prgm
                                 ) = CStr
                                 { csValue = "" }
                             )( Value /dat -> /Catln/Unit = Value /Catln/Unit )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$feb9e5.$660041.$795ec3"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$feb9e5.$660041.$795ec3
+                            ( Value /$795ec3-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$795ec3-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$795ec3-states -> ( /io=/Catln/IO ).. ) -> /Context
+                            ( /value=()
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /ContextIn
+                                ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
+                                    ( Value /msg -> /Catln/CStr = /Test/rawValueName
+                                        ( Value /e -> /Catln/RawExpr/RawValue
+                                            ( /name=( /Data/String/Text.. + /Catln/CStr )
+                                            , /meta=/Catln/Meta
+                                                ( /type=∀/Catln/Type
+                                                , /dat=/Catln/Unit..
+                                                , /id=∀/Data/String
+                                                , /pos=∀/Data/Maybe
+                                                    [ /T=/Catln/Pair
+                                                        [ /B=/Catln/SourcePos..
+                                                        , /A=/Catln/SourcePos..
+                                                        ]..
+                                                    ]
+                                                )..
+                                            ) = /Catln/RawExpr/RawValue
+                                            ( Value /meta -> /Catln/Meta
+                                                ( /type=∀/Catln/Type
+                                                , /dat=/Catln/Unit..
+                                                , /id=∀/Data/String
+                                                , /pos=∀/Data/Maybe
+                                                    [ /T=/Catln/Pair
+                                                        [ /B=/Catln/SourcePos..
+                                                        , /A=/Catln/SourcePos..
+                                                        ]..
+                                                    ]
+                                                ).. = Value /Test/noMeta
+                                            )
+                                            ( Value /name ->
+                                                ( /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                ) = CStr
+                                                { csValue = "foo" }
+                                            )
+                                        )
+                                    )
+                                )
+                                ( Value /ctx -> ( /io=/Catln/IO ).. = /
+                                    ( ..Value /$795ec3-states )
+                                    ( ..Value /$795ec3-ctx )
+                                )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /ctx=( /io=/Catln/IO )..
+                                    )
+                                ) -> /Context
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /main.$feb9e5.$660041.$795ec3.$9e3f16
+                                ( Value /$9e3f16-arg -> TVArg /v = Value /v )
+                                ( Value /$9e3f16-states -> ( /io=/Catln/IO ).. = /
+                                    ( ..Value /$795ec3-states )
+                                    ( ..Value /$795ec3-ctx )
+                                )
+                            )
                         ]
                     }
                 )
@@ -563,9 +610,87 @@ Prgm
                                 ) -> /Context
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
-                                ) = /main.$13df36
-                                ( Value /$13df36-arg -> TVArg /v = Value /v )
-                                ( Value /$13df36-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
+                                ) = /main.$feb9e5( Value /$feb9e5-arg -> TVArg /v = Value /v )
+                                ( Value /$feb9e5-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$feb9e5.$660041.$795ec3.$9e3f16"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$feb9e5.$660041.$795ec3.$9e3f16
+                            ( Value /$9e3f16-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$9e3f16-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$9e3f16-states -> ( /io=/Catln/IO ).. ) -> /Context
+                            ( /value=()
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /ContextIn
+                                ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
+                                    ( Value /msg -> /Catln/CStr = /Test/exprKind
+                                        ( Value /e -> /Catln/RawExpr/RawList
+                                            ( /values=/Data/List/Nil
+                                            , /meta=/Catln/Meta
+                                                ( /type=∀/Catln/Type
+                                                , /dat=/Catln/Unit..
+                                                , /id=∀/Data/String
+                                                , /pos=∀/Data/Maybe
+                                                    [ /T=/Catln/Pair
+                                                        [ /B=/Catln/SourcePos..
+                                                        , /A=/Catln/SourcePos..
+                                                        ]..
+                                                    ]
+                                                )..
+                                            ) = /Catln/RawExpr/RawList
+                                            ( Value /meta -> /Catln/Meta
+                                                ( /type=∀/Catln/Type
+                                                , /dat=/Catln/Unit..
+                                                , /id=∀/Data/String
+                                                , /pos=∀/Data/Maybe
+                                                    [ /T=/Catln/Pair
+                                                        [ /B=/Catln/SourcePos..
+                                                        , /A=/Catln/SourcePos..
+                                                        ]..
+                                                    ]
+                                                ).. = Value /Test/noMeta
+                                            )( Value /values -> /Data/List/Nil = Value /Data/List/Nil )
+                                        )
+                                    )
+                                )
+                                ( Value /ctx -> ( /io=/Catln/IO ).. = /
+                                    ( ..Value /$9e3f16-states )
+                                    ( ..Value /$9e3f16-ctx )
+                                )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /ctx=( /io=/Catln/IO )..
+                                    )
+                                ) -> /Context
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700( Value /$f57700-arg -> TVArg /v = Value /v )
+                                ( Value /$f57700-states -> ( /io=/Catln/IO ).. = /
+                                    ( ..Value /$9e3f16-states )
+                                    ( ..Value /$9e3f16-ctx )
+                                )
                             )
                         ]
                     }
@@ -724,207 +849,6 @@ Prgm
                     }
                 )
             ,
-                ( "/main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f
-                            ( Value /$ad3f7f-arg -> /Context
-                                [ /V=() ]
-                                ( /value=()
-                                , /ctx=( /io=/Catln/IO )..
-                                ) = /Context
-                                ( Value /value -> () )
-                                ( Value /ctx@Value /$ad3f7f-ctx -> ( /io=/Catln/IO ).. )
-                            )
-                            ( Value /$ad3f7f-states -> ( /io=/Catln/IO ).. ) -> /Context
-                            ( /value=()
-                            , /ctx=( /io=/Catln/IO )..
-                            ) = /Data/bindap
-                            ( Value /m -> /Context
-                                [ /V=() ]
-                                ( /value=()
-                                , /ctx=( /io=/Catln/IO )..
-                                ) = /ContextIn
-                                ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
-                                    ( Value /msg -> /Catln/CStr = /Data/toString
-                                        ( Value /this -> /Data/Primitive/Integer = /Test/resultDeclCount
-                                            ( Value /r -> /Catln/ImportResult
-                                                ( /prgm=/Catln/RawPrgm..
-                                                , /reads=∀/Data/Maybe
-                                                    [ /T=∀/Data/List[ /T=∀/Catln/ReadPath ] ]
-                                                , /source=∀/Data/Maybe[ /T=∀/Data/String ]
-                                                ) = /Test/oneResult
-                                                ( Value /name ->
-                                                    ( /Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
-                                                    ) = CStr
-                                                    { csValue = "myFn" }
-                                                )
-                                            )
-                                        )
-                                    )
-                                )
-                                ( Value /ctx -> ( /io=/Catln/IO ).. = /( ..Value /$ad3f7f-states )( ..Value /$ad3f7f-ctx ) )
-                            )
-                            ( /fn
-                                ( Value /v -> /Context
-                                    [ /V=() ]
-                                    ( /value=()
-                                    , /ctx=( /io=/Catln/IO )..
-                                    )
-                                ) -> /Context
-                                ( /value=()
-                                , /ctx=( /io=/Catln/IO )..
-                                ) = /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f.$4e2f62
-                                ( Value /$4e2f62-arg -> TVArg /v = Value /v )
-                                ( Value /$4e2f62-states -> ( /io=/Catln/IO ).. = /( ..Value /$ad3f7f-states )( ..Value /$ad3f7f-ctx ) )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/main.$13df36.$5a9cdd"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /main.$13df36.$5a9cdd
-                            ( Value /$5a9cdd-arg -> /Context
-                                [ /V=() ]
-                                ( /value=()
-                                , /ctx=( /io=/Catln/IO )..
-                                ) = /Context
-                                ( Value /value -> () )
-                                ( Value /ctx@Value /$5a9cdd-ctx -> ( /io=/Catln/IO ).. )
-                            )
-                            ( Value /$5a9cdd-states -> ( /io=/Catln/IO ).. ) -> /Context
-                            ( /value=()
-                            , /ctx=( /io=/Catln/IO )..
-                            ) = /Data/bindap
-                            ( Value /m -> /Context
-                                [ /V=() ]
-                                ( /value=()
-                                , /ctx=( /io=/Catln/IO )..
-                                ) = /ContextIn
-                                ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
-                                    ( Value /msg -> /Catln/CStr = /Test/exprKind
-                                        ( Value /e -> /Catln/RawExpr/RawValue
-                                            ( /name=( /Data/String/Text.. + /Catln/CStr )
-                                            , /meta=/Catln/Meta
-                                                ( /type=∀/Catln/Type
-                                                , /dat=/Catln/Unit..
-                                                , /id=∀/Data/String
-                                                , /pos=∀/Data/Maybe
-                                                    [ /T=/Catln/Pair
-                                                        [ /B=/Catln/SourcePos..
-                                                        , /A=/Catln/SourcePos..
-                                                        ]..
-                                                    ]
-                                                )..
-                                            ) = /Catln/RawExpr/RawValue
-                                            ( Value /meta -> /Catln/Meta
-                                                ( /type=∀/Catln/Type
-                                                , /dat=/Catln/Unit..
-                                                , /id=∀/Data/String
-                                                , /pos=∀/Data/Maybe
-                                                    [ /T=/Catln/Pair
-                                                        [ /B=/Catln/SourcePos..
-                                                        , /A=/Catln/SourcePos..
-                                                        ]..
-                                                    ]
-                                                ).. = Value /Test/noMeta
-                                            )
-                                            ( Value /name ->
-                                                ( /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
-                                                ) = CStr
-                                                { csValue = "foo" }
-                                            )
-                                        )
-                                    )
-                                )
-                                ( Value /ctx -> ( /io=/Catln/IO ).. = /
-                                    ( ..Value /$5a9cdd-states )
-                                    ( ..Value /$5a9cdd-ctx )
-                                )
-                            )
-                            ( /fn
-                                ( Value /v -> /Context
-                                    [ /V=() ]
-                                    ( /value=()
-                                    , /ctx=( /io=/Catln/IO )..
-                                    )
-                                ) -> /Context
-                                ( /value=()
-                                , /ctx=( /io=/Catln/IO )..
-                                ) = /main.$13df36.$5a9cdd.$e3172c( Value /$e3172c-arg -> TVArg /v = Value /v )
-                                ( Value /$e3172c-states -> ( /io=/Catln/IO ).. = /
-                                    ( ..Value /$5a9cdd-states )
-                                    ( ..Value /$5a9cdd-ctx )
-                                )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f.$4e2f62.$4ed8f8"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f.$4e2f62.$4ed8f8
-                            ( Value /$4ed8f8-arg -> /Context
-                                [ /V=() ]
-                                ( /value=()
-                                , /ctx=( /io=/Catln/IO )..
-                                ) = /Context
-                                ( Value /value -> () )
-                                ( Value /ctx@Value /$4ed8f8-ctx -> ( /io=/Catln/IO ).. )
-                            )
-                            ( Value /$4ed8f8-states -> ( /io=/Catln/IO ).. ) -> /Context
-                            ( /value=()
-                            , /ctx=( /io=/Catln/IO )..
-                            ) = /Data/bindap
-                            ( Value /m -> /Context
-                                [ /V=() ]
-                                ( /value=()
-                                , /ctx=( /io=/Catln/IO )..
-                                ) = /ContextIn
-                                ( Value /value -> /Catln/exit( /val=/Data/Primitive/Integer ) = /Catln/exit
-                                    ( Value /val -> /Data/Primitive/Integer = CInt
-                                        { ciValue = 0 }
-                                    )
-                                )
-                                ( Value /ctx -> ( /io=/Catln/IO ).. = /
-                                    ( ..Value /$4ed8f8-states )
-                                    ( ..Value /$4ed8f8-ctx )
-                                )
-                            )
-                            ( /fn
-                                ( Value /v -> /Context
-                                    [ /V=() ]
-                                    ( /value=()
-                                    , /ctx=( /io=/Catln/IO )..
-                                    )
-                                ) -> /Context
-                                ( /value=()
-                                , /ctx=( /io=/Catln/IO )..
-                                ) = /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f.$4e2f62.$4ed8f8.$620336
-                                ( Value /$620336-arg -> TVArg /v = Value /v )
-                                ( Value /$620336-states -> ( /io=/Catln/IO ).. = /
-                                    ( ..Value /$4ed8f8-states )
-                                    ( ..Value /$4ed8f8-ctx )
-                                )
-                            )
-                        ]
-                    }
-                )
-            ,
                 ( "/Test/emptyPrgm"
                 , ObjectMapItem
                     { omiDecls = [ Value /Test/emptyPrgm -> /Catln/RawPrgm.. ]
@@ -1028,22 +952,22 @@ Prgm
                     }
                 )
             ,
-                ( "/main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62"
+                ( "/main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700.$276e12.$cde263.$428388.$3ebdef"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62
-                            ( Value /$5f4b62-arg -> /Context
+                        [ /main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700.$276e12.$cde263.$428388.$3ebdef
+                            ( Value /$3ebdef-arg -> /Context
                                 [ /V=() ]
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
                                 ) = /Context
                                 ( Value /value -> () )
-                                ( Value /ctx@Value /$5f4b62-ctx -> ( /io=/Catln/IO ).. )
+                                ( Value /ctx@Value /$3ebdef-ctx -> ( /io=/Catln/IO ).. )
                             )
-                            ( Value /$5f4b62-states -> ( /io=/Catln/IO ).. ) -> /Context
+                            ( Value /$3ebdef-states -> ( /io=/Catln/IO ).. ) -> /Context
                             ( /value=()
                             , /ctx=( /io=/Catln/IO )..
                             ) = /Data/bindap
@@ -1053,35 +977,14 @@ Prgm
                                 , /ctx=( /io=/Catln/IO )..
                                 ) = /ContextIn
                                 ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
-                                    ( Value /msg -> /Catln/CStr = /Test/statementKind
-                                        ( Value /s -> /Catln/RawStatement/RawDeclStatement
-                                            ( /objArr=/Catln/RawObjArr
-                                                ( /arr=∀/Data/Maybe
-                                                    [ /T=/Catln/Pair
-                                                        [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                        , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                        ]..
-                                                    ]
-                                                , /obj=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
-                                                , /doc=∀/Data/Maybe[ /T=∀/Data/String ]
-                                                , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                , /basis=∀/Catln/ObjectBasis
-                                                )..
-                                            ) = /Catln/RawStatement/RawDeclStatement
-                                            ( Value /objArr -> /Catln/RawObjArr
-                                                ( /arr=∀/Data/Maybe
-                                                    [ /T=/Catln/Pair
-                                                        [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                        , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                        ]..
-                                                    ]
-                                                , /obj=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
-                                                , /doc=∀/Data/Maybe[ /T=∀/Data/String ]
-                                                , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
-                                                , /basis=∀/Catln/ObjectBasis
-                                                ).. = /Test/emptyObjArr
+                                    ( Value /msg -> /Catln/CStr = /Data/toString
+                                        ( Value /this -> /Data/Primitive/Integer = /Test/readsCount
+                                            ( Value /r -> /Catln/ImportResult
+                                                ( /prgm=/Catln/RawPrgm..
+                                                , /reads=∀/Data/Maybe
+                                                    [ /T=∀/Data/List[ /T=∀/Catln/ReadPath ] ]
+                                                , /source=∀/Data/Maybe[ /T=∀/Data/String ]
+                                                ) = /Test/oneResult
                                                 ( Value /name ->
                                                     ( /Data/String/Text
                                                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
@@ -1093,8 +996,8 @@ Prgm
                                     )
                                 )
                                 ( Value /ctx -> ( /io=/Catln/IO ).. = /
-                                    ( ..Value /$5f4b62-states )
-                                    ( ..Value /$5f4b62-ctx )
+                                    ( ..Value /$3ebdef-states )
+                                    ( ..Value /$3ebdef-ctx )
                                 )
                             )
                             ( /fn
@@ -1106,33 +1009,33 @@ Prgm
                                 ) -> /Context
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
-                                ) = /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b
-                                ( Value /$57841b-arg -> TVArg /v = Value /v )
-                                ( Value /$57841b-states -> ( /io=/Catln/IO ).. = /
-                                    ( ..Value /$5f4b62-states )
-                                    ( ..Value /$5f4b62-ctx )
+                                ) = /main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700.$276e12.$cde263.$428388.$3ebdef.$729ed2
+                                ( Value /$729ed2-arg -> TVArg /v = Value /v )
+                                ( Value /$729ed2-states -> ( /io=/Catln/IO ).. = /
+                                    ( ..Value /$3ebdef-states )
+                                    ( ..Value /$3ebdef-ctx )
                                 )
                             )
                         ]
                     }
                 )
             ,
-                ( "/main.$13df36"
+                ( "/main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700.$276e12.$cde263.$428388"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /main.$13df36
-                            ( Value /$13df36-arg -> /Context
+                        [ /main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700.$276e12.$cde263.$428388
+                            ( Value /$428388-arg -> /Context
                                 [ /V=() ]
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
                                 ) = /Context
                                 ( Value /value -> () )
-                                ( Value /ctx@Value /$13df36-ctx -> ( /io=/Catln/IO ).. )
+                                ( Value /ctx@Value /$428388-ctx -> ( /io=/Catln/IO ).. )
                             )
-                            ( Value /$13df36-states -> ( /io=/Catln/IO ) ) -> /Context
+                            ( Value /$428388-states -> ( /io=/Catln/IO ).. ) -> /Context
                             ( /value=()
                             , /ctx=( /io=/Catln/IO )..
                             ) = /Data/bindap
@@ -1142,21 +1045,27 @@ Prgm
                                 , /ctx=( /io=/Catln/IO )..
                                 ) = /ContextIn
                                 ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
-                                    ( Value /msg -> /Catln/CStr = /Test/readKind
-                                        ( Value /r -> /Catln/ReadPath/ReadDir
-                                            ( /path=( /Data/String/Text.. + /Catln/CStr ) ) = /Catln/ReadPath/ReadDir
-                                            ( Value /path ->
-                                                ( /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
-                                                ) = CStr
-                                                { csValue = "src" }
+                                    ( Value /msg -> /Catln/CStr = /Data/toString
+                                        ( Value /this -> /Data/Primitive/Integer = /Test/resultDeclCount
+                                            ( Value /r -> /Catln/ImportResult
+                                                ( /prgm=/Catln/RawPrgm..
+                                                , /reads=∀/Data/Maybe
+                                                    [ /T=∀/Data/List[ /T=∀/Catln/ReadPath ] ]
+                                                , /source=∀/Data/Maybe[ /T=∀/Data/String ]
+                                                ) = /Test/oneResult
+                                                ( Value /name ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = CStr
+                                                    { csValue = "myFn" }
+                                                )
                                             )
                                         )
                                     )
                                 )
                                 ( Value /ctx -> ( /io=/Catln/IO ).. = /
-                                    ( ..Value /$13df36-states )
-                                    ( ..Value /$13df36-ctx )
+                                    ( ..Value /$428388-states )
+                                    ( ..Value /$428388-ctx )
                                 )
                             )
                             ( /fn
@@ -1168,85 +1077,12 @@ Prgm
                                 ) -> /Context
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
-                                ) = /main.$13df36.$5a9cdd
-                                ( Value /$5a9cdd-arg -> TVArg /v = Value /v )
-                                ( Value /$5a9cdd-states -> ( /io=/Catln/IO ).. = /
-                                    ( ..Value /$13df36-states )
-                                    ( ..Value /$13df36-ctx )
+                                ) = /main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700.$276e12.$cde263.$428388.$3ebdef
+                                ( Value /$3ebdef-arg -> TVArg /v = Value /v )
+                                ( Value /$3ebdef-states -> ( /io=/Catln/IO ).. = /
+                                    ( ..Value /$428388-states )
+                                    ( ..Value /$428388-ctx )
                                 )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/main.$13df36.$5a9cdd.$e3172c.$d86d4b"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /main.$13df36.$5a9cdd.$e3172c.$d86d4b
-                            ( Value /$d86d4b-arg -> /Context
-                                [ /V=() ]
-                                ( /value=()
-                                , /ctx=( /io=/Catln/IO )..
-                                ) = /Context
-                                ( Value /value -> () )
-                                ( Value /ctx@Value /$d86d4b-ctx -> ( /io=/Catln/IO ).. )
-                            )
-                            ( Value /$d86d4b-states -> ( /io=/Catln/IO ).. ) -> /Context
-                            ( /value=()
-                            , /ctx=( /io=/Catln/IO )..
-                            ) = /Data/bindap
-                            ( Value /m -> /Context
-                                [ /V=() ]
-                                ( /value=()
-                                , /ctx=( /io=/Catln/IO )..
-                                ) = /ContextIn
-                                ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
-                                    ( Value /msg -> /Catln/CStr = /Test/exprKind
-                                        ( Value /e -> /Catln/RawExpr/RawList
-                                            ( /values=/Data/List/Nil
-                                            , /meta=/Catln/Meta
-                                                ( /type=∀/Catln/Type
-                                                , /dat=/Catln/Unit..
-                                                , /id=∀/Data/String
-                                                , /pos=∀/Data/Maybe
-                                                    [ /T=/Catln/Pair
-                                                        [ /B=/Catln/SourcePos..
-                                                        , /A=/Catln/SourcePos..
-                                                        ]..
-                                                    ]
-                                                )..
-                                            ) = /Catln/RawExpr/RawList
-                                            ( Value /meta -> /Catln/Meta
-                                                ( /type=∀/Catln/Type
-                                                , /dat=/Catln/Unit..
-                                                , /id=∀/Data/String
-                                                , /pos=∀/Data/Maybe
-                                                    [ /T=/Catln/Pair
-                                                        [ /B=/Catln/SourcePos..
-                                                        , /A=/Catln/SourcePos..
-                                                        ]..
-                                                    ]
-                                                ).. = Value /Test/noMeta
-                                            )( Value /values -> /Data/List/Nil = Value /Data/List/Nil )
-                                        )
-                                    )
-                                )
-                                ( Value /ctx -> ( /io=/Catln/IO ).. = /( ..Value /$d86d4b-states )( ..Value /$d86d4b-ctx ) )
-                            )
-                            ( /fn
-                                ( Value /v -> /Context
-                                    [ /V=() ]
-                                    ( /value=()
-                                    , /ctx=( /io=/Catln/IO )..
-                                    )
-                                ) -> /Context
-                                ( /value=()
-                                , /ctx=( /io=/Catln/IO )..
-                                ) = /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0( Value /$d4a4c0-arg -> TVArg /v = Value /v )
-                                ( Value /$d4a4c0-states -> ( /io=/Catln/IO ).. = /( ..Value /$d86d4b-states )( ..Value /$d86d4b-ctx ) )
                             )
                         ]
                     }
@@ -1271,6 +1107,219 @@ Prgm
                         , /Test/readKind
                             ( Value /r -> /Catln/ReadPath/ReadTree( /path=∀/Data/String ) = /Catln/ReadPath/ReadTree( Value /path -> ∀/Data/String ) ) -> ( /Data/String/Text.. + /Catln/CStr ) = CStr
                             { csValue = "tree" }
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700
+                            ( Value /$f57700-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$f57700-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$f57700-states -> ( /io=/Catln/IO ).. ) -> /Context
+                            ( /value=()
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /ContextIn
+                                ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
+                                    ( Value /msg -> /Catln/CStr = /Test/objArrName
+                                        ( Value /oa -> /Catln/RawObjArr
+                                            ( /arr=∀/Data/Maybe
+                                                [ /T=/Catln/Pair
+                                                    [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                    , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                    ]..
+                                                ]
+                                            , /obj=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                            , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
+                                            , /doc=∀/Data/Maybe[ /T=∀/Data/String ]
+                                            , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                            , /basis=∀/Catln/ObjectBasis
+                                            ) = /Test/emptyObjArr
+                                            ( Value /name ->
+                                                ( /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                ) = CStr
+                                                { csValue = "myFn" }
+                                            )
+                                        )
+                                    )
+                                )
+                                ( Value /ctx -> ( /io=/Catln/IO ).. = /( ..Value /$f57700-states )( ..Value /$f57700-ctx ) )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /ctx=( /io=/Catln/IO )..
+                                    )
+                                ) -> /Context
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700.$276e12
+                                ( Value /$276e12-arg -> TVArg /v = Value /v )
+                                ( Value /$276e12-states -> ( /io=/Catln/IO ).. = /( ..Value /$f57700-states )( ..Value /$f57700-ctx ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700.$276e12.$cde263"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700.$276e12.$cde263
+                            ( Value /$cde263-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$cde263-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$cde263-states -> ( /io=/Catln/IO ).. ) -> /Context
+                            ( /value=()
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /ContextIn
+                                ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
+                                    ( Value /msg -> /Catln/CStr = /Data/toString
+                                        ( Value /this -> /Data/Primitive/Integer = /Test/declCount
+                                            ( Value /p -> /Catln/RawPrgm
+                                                ( /statements=∀/Data/List[ /T=/Catln/RawStatementTree.. ]
+                                                , /imports=∀/Data/List[ /T=/Catln/AFileImport.. ]
+                                                ) = /Test/onePrgm
+                                                ( Value /name ->
+                                                    ( /Data/String/Text
+                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                    ) = CStr
+                                                    { csValue = "myFn" }
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                                ( Value /ctx -> ( /io=/Catln/IO ).. = /( ..Value /$cde263-states )( ..Value /$cde263-ctx ) )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /ctx=( /io=/Catln/IO )..
+                                    )
+                                ) -> /Context
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700.$276e12.$cde263.$428388
+                                ( Value /$428388-arg -> TVArg /v = Value /v )
+                                ( Value /$428388-states -> ( /io=/Catln/IO ).. = /( ..Value /$cde263-states )( ..Value /$cde263-ctx ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$feb9e5.$660041"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$feb9e5.$660041
+                            ( Value /$660041-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$660041-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$660041-states -> ( /io=/Catln/IO ).. ) -> /Context
+                            ( /value=()
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /ContextIn
+                                ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
+                                    ( Value /msg -> /Catln/CStr = /Test/exprKind
+                                        ( Value /e -> /Catln/RawExpr/RawValue
+                                            ( /name=( /Data/String/Text.. + /Catln/CStr )
+                                            , /meta=/Catln/Meta
+                                                ( /type=∀/Catln/Type
+                                                , /dat=/Catln/Unit..
+                                                , /id=∀/Data/String
+                                                , /pos=∀/Data/Maybe
+                                                    [ /T=/Catln/Pair
+                                                        [ /B=/Catln/SourcePos..
+                                                        , /A=/Catln/SourcePos..
+                                                        ]..
+                                                    ]
+                                                )..
+                                            ) = /Catln/RawExpr/RawValue
+                                            ( Value /meta -> /Catln/Meta
+                                                ( /type=∀/Catln/Type
+                                                , /dat=/Catln/Unit..
+                                                , /id=∀/Data/String
+                                                , /pos=∀/Data/Maybe
+                                                    [ /T=/Catln/Pair
+                                                        [ /B=/Catln/SourcePos..
+                                                        , /A=/Catln/SourcePos..
+                                                        ]..
+                                                    ]
+                                                ).. = Value /Test/noMeta
+                                            )
+                                            ( Value /name ->
+                                                ( /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                ) = CStr
+                                                { csValue = "foo" }
+                                            )
+                                        )
+                                    )
+                                )
+                                ( Value /ctx -> ( /io=/Catln/IO ).. = /
+                                    ( ..Value /$660041-states )
+                                    ( ..Value /$660041-ctx )
+                                )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /ctx=( /io=/Catln/IO )..
+                                    )
+                                ) -> /Context
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /main.$feb9e5.$660041.$795ec3
+                                ( Value /$795ec3-arg -> TVArg /v = Value /v )
+                                ( Value /$795ec3-states -> ( /io=/Catln/IO ).. = /
+                                    ( ..Value /$660041-states )
+                                    ( ..Value /$660041-ctx )
+                                )
+                            )
                         ]
                     }
                 )
@@ -1446,22 +1495,22 @@ Prgm
                     }
                 )
             ,
-                ( "/main.$13df36.$5a9cdd.$e3172c"
+                ( "/main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700.$276e12.$cde263.$428388.$3ebdef.$729ed2"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /main.$13df36.$5a9cdd.$e3172c
-                            ( Value /$e3172c-arg -> /Context
+                        [ /main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700.$276e12.$cde263.$428388.$3ebdef.$729ed2
+                            ( Value /$729ed2-arg -> /Context
                                 [ /V=() ]
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
                                 ) = /Context
                                 ( Value /value -> () )
-                                ( Value /ctx@Value /$e3172c-ctx -> ( /io=/Catln/IO ).. )
+                                ( Value /ctx@Value /$729ed2-ctx -> ( /io=/Catln/IO ).. )
                             )
-                            ( Value /$e3172c-states -> ( /io=/Catln/IO ).. ) -> /Context
+                            ( Value /$729ed2-states -> ( /io=/Catln/IO ).. ) -> /Context
                             ( /value=()
                             , /ctx=( /io=/Catln/IO )..
                             ) = /Data/bindap
@@ -1470,44 +1519,15 @@ Prgm
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
                                 ) = /ContextIn
-                                ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
-                                    ( Value /msg -> /Catln/CStr = /Test/rawValueName
-                                        ( Value /e -> /Catln/RawExpr/RawValue
-                                            ( /name=( /Data/String/Text.. + /Catln/CStr )
-                                            , /meta=/Catln/Meta
-                                                ( /type=∀/Catln/Type
-                                                , /dat=/Catln/Unit..
-                                                , /id=∀/Data/String
-                                                , /pos=∀/Data/Maybe
-                                                    [ /T=/Catln/Pair
-                                                        [ /B=/Catln/SourcePos..
-                                                        , /A=/Catln/SourcePos..
-                                                        ]..
-                                                    ]
-                                                )..
-                                            ) = /Catln/RawExpr/RawValue
-                                            ( Value /meta -> /Catln/Meta
-                                                ( /type=∀/Catln/Type
-                                                , /dat=/Catln/Unit..
-                                                , /id=∀/Data/String
-                                                , /pos=∀/Data/Maybe
-                                                    [ /T=/Catln/Pair
-                                                        [ /B=/Catln/SourcePos..
-                                                        , /A=/Catln/SourcePos..
-                                                        ]..
-                                                    ]
-                                                ).. = Value /Test/noMeta
-                                            )
-                                            ( Value /name ->
-                                                ( /Data/String/Text
-                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
-                                                ) = CStr
-                                                { csValue = "foo" }
-                                            )
-                                        )
+                                ( Value /value -> /Catln/exit( /val=/Data/Primitive/Integer ) = /Catln/exit
+                                    ( Value /val -> /Data/Primitive/Integer = CInt
+                                        { ciValue = 0 }
                                     )
                                 )
-                                ( Value /ctx -> ( /io=/Catln/IO ).. = /( ..Value /$e3172c-states )( ..Value /$e3172c-ctx ) )
+                                ( Value /ctx -> ( /io=/Catln/IO ).. = /
+                                    ( ..Value /$729ed2-states )
+                                    ( ..Value /$729ed2-ctx )
+                                )
                             )
                             ( /fn
                                 ( Value /v -> /Context
@@ -1518,8 +1538,12 @@ Prgm
                                 ) -> /Context
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
-                                ) = /main.$13df36.$5a9cdd.$e3172c.$d86d4b( Value /$d86d4b-arg -> TVArg /v = Value /v )
-                                ( Value /$d86d4b-states -> ( /io=/Catln/IO ).. = /( ..Value /$e3172c-states )( ..Value /$e3172c-ctx ) )
+                                ) = /main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700.$276e12.$cde263.$428388.$3ebdef.$729ed2.$1db409
+                                ( Value /$1db409-arg -> TVArg /v = Value /v )
+                                ( Value /$1db409-states -> ( /io=/Catln/IO ).. = /
+                                    ( ..Value /$729ed2-states )
+                                    ( ..Value /$729ed2-ctx )
+                                )
                             )
                         ]
                     }
@@ -1545,22 +1569,22 @@ Prgm
                     }
                 )
             ,
-                ( "/main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f.$4e2f62"
+                ( "/main.$feb9e5"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f.$4e2f62
-                            ( Value /$4e2f62-arg -> /Context
+                        [ /main.$feb9e5
+                            ( Value /$feb9e5-arg -> /Context
                                 [ /V=() ]
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
                                 ) = /Context
                                 ( Value /value -> () )
-                                ( Value /ctx@Value /$4e2f62-ctx -> ( /io=/Catln/IO ).. )
+                                ( Value /ctx@Value /$feb9e5-ctx -> ( /io=/Catln/IO ).. )
                             )
-                            ( Value /$4e2f62-states -> ( /io=/Catln/IO ).. ) -> /Context
+                            ( Value /$feb9e5-states -> ( /io=/Catln/IO ) ) -> /Context
                             ( /value=()
                             , /ctx=( /io=/Catln/IO )..
                             ) = /Data/bindap
@@ -1570,14 +1594,91 @@ Prgm
                                 , /ctx=( /io=/Catln/IO )..
                                 ) = /ContextIn
                                 ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
-                                    ( Value /msg -> /Catln/CStr = /Data/toString
-                                        ( Value /this -> /Data/Primitive/Integer = /Test/readsCount
-                                            ( Value /r -> /Catln/ImportResult
-                                                ( /prgm=/Catln/RawPrgm..
-                                                , /reads=∀/Data/Maybe
-                                                    [ /T=∀/Data/List[ /T=∀/Catln/ReadPath ] ]
-                                                , /source=∀/Data/Maybe[ /T=∀/Data/String ]
-                                                ) = /Test/oneResult
+                                    ( Value /msg -> /Catln/CStr = /Test/readKind
+                                        ( Value /r -> /Catln/ReadPath/ReadDir
+                                            ( /path=( /Data/String/Text.. + /Catln/CStr ) ) = /Catln/ReadPath/ReadDir
+                                            ( Value /path ->
+                                                ( /Data/String/Text
+                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                ) = CStr
+                                                { csValue = "src" }
+                                            )
+                                        )
+                                    )
+                                )
+                                ( Value /ctx -> ( /io=/Catln/IO ).. = /( ..Value /$feb9e5-states )( ..Value /$feb9e5-ctx ) )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /ctx=( /io=/Catln/IO )..
+                                    )
+                                ) -> /Context
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /main.$feb9e5.$660041
+                                ( Value /$660041-arg -> TVArg /v = Value /v )
+                                ( Value /$660041-states -> ( /io=/Catln/IO ).. = /( ..Value /$feb9e5-states )( ..Value /$feb9e5-ctx ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700.$276e12"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700.$276e12
+                            ( Value /$276e12-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$276e12-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$276e12-states -> ( /io=/Catln/IO ).. ) -> /Context
+                            ( /value=()
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /ContextIn
+                                ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
+                                    ( Value /msg -> /Catln/CStr = /Test/statementKind
+                                        ( Value /s -> /Catln/RawStatement/RawDeclStatement
+                                            ( /objArr=/Catln/RawObjArr
+                                                ( /arr=∀/Data/Maybe
+                                                    [ /T=/Catln/Pair
+                                                        [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                        , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                        ]..
+                                                    ]
+                                                , /obj=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
+                                                , /doc=∀/Data/Maybe[ /T=∀/Data/String ]
+                                                , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                , /basis=∀/Catln/ObjectBasis
+                                                )..
+                                            ) = /Catln/RawStatement/RawDeclStatement
+                                            ( Value /objArr -> /Catln/RawObjArr
+                                                ( /arr=∀/Data/Maybe
+                                                    [ /T=/Catln/Pair
+                                                        [ /B=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                        , /A=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                        ]..
+                                                    ]
+                                                , /obj=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                , /annots=∀/Data/List[ /T=∀/Catln/RawExpr ]
+                                                , /doc=∀/Data/Maybe[ /T=∀/Data/String ]
+                                                , /def=∀/Data/Maybe[ /T=∀/Catln/RawExpr ]
+                                                , /basis=∀/Catln/ObjectBasis
+                                                ).. = /Test/emptyObjArr
                                                 ( Value /name ->
                                                     ( /Data/String/Text
                                                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
@@ -1589,8 +1690,8 @@ Prgm
                                     )
                                 )
                                 ( Value /ctx -> ( /io=/Catln/IO ).. = /
-                                    ( ..Value /$4e2f62-states )
-                                    ( ..Value /$4e2f62-ctx )
+                                    ( ..Value /$276e12-states )
+                                    ( ..Value /$276e12-ctx )
                                 )
                             )
                             ( /fn
@@ -1602,105 +1703,11 @@ Prgm
                                 ) -> /Context
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
-                                ) = /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f.$4e2f62.$4ed8f8
-                                ( Value /$4ed8f8-arg -> TVArg /v = Value /v )
-                                ( Value /$4ed8f8-states -> ( /io=/Catln/IO ).. = /
-                                    ( ..Value /$4e2f62-states )
-                                    ( ..Value /$4e2f62-ctx )
+                                ) = /main.$feb9e5.$660041.$795ec3.$9e3f16.$f57700.$276e12.$cde263( Value /$cde263-arg -> TVArg /v = Value /v )
+                                ( Value /$cde263-states -> ( /io=/Catln/IO ).. = /
+                                    ( ..Value /$276e12-states )
+                                    ( ..Value /$276e12-ctx )
                                 )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b
-                            ( Value /$57841b-arg -> /Context
-                                [ /V=() ]
-                                ( /value=()
-                                , /ctx=( /io=/Catln/IO )..
-                                ) = /Context
-                                ( Value /value -> () )
-                                ( Value /ctx@Value /$57841b-ctx -> ( /io=/Catln/IO ).. )
-                            )
-                            ( Value /$57841b-states -> ( /io=/Catln/IO ).. ) -> /Context
-                            ( /value=()
-                            , /ctx=( /io=/Catln/IO )..
-                            ) = /Data/bindap
-                            ( Value /m -> /Context
-                                [ /V=() ]
-                                ( /value=()
-                                , /ctx=( /io=/Catln/IO )..
-                                ) = /ContextIn
-                                ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /Catln/println
-                                    ( Value /msg -> /Catln/CStr = /Data/toString
-                                        ( Value /this -> /Data/Primitive/Integer = /Test/declCount
-                                            ( Value /p -> /Catln/RawPrgm
-                                                ( /statements=∀/Data/List[ /T=/Catln/RawStatementTree.. ]
-                                                , /imports=∀/Data/List[ /T=/Catln/AFileImport.. ]
-                                                ) = /Test/onePrgm
-                                                ( Value /name ->
-                                                    ( /Data/String/Text
-                                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
-                                                    ) = CStr
-                                                    { csValue = "myFn" }
-                                                )
-                                            )
-                                        )
-                                    )
-                                )
-                                ( Value /ctx -> ( /io=/Catln/IO ).. = /
-                                    ( ..Value /$57841b-states )
-                                    ( ..Value /$57841b-ctx )
-                                )
-                            )
-                            ( /fn
-                                ( Value /v -> /Context
-                                    [ /V=() ]
-                                    ( /value=()
-                                    , /ctx=( /io=/Catln/IO )..
-                                    )
-                                ) -> /Context
-                                ( /value=()
-                                , /ctx=( /io=/Catln/IO )..
-                                ) = /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f( Value /$ad3f7f-arg -> TVArg /v = Value /v )
-                                ( Value /$ad3f7f-states -> ( /io=/Catln/IO ).. = /
-                                    ( ..Value /$57841b-states )
-                                    ( ..Value /$57841b-ctx )
-                                )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f.$4e2f62.$4ed8f8.$620336"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /main.$13df36.$5a9cdd.$e3172c.$d86d4b.$d4a4c0.$5f4b62.$57841b.$ad3f7f.$4e2f62.$4ed8f8.$620336
-                            ( Value /$620336-arg -> /Context
-                                [ /V=() ]
-                                ( /value=()
-                                , /ctx=( /io=/Catln/IO )..
-                                ) = /Context
-                                ( Value /value -> () )
-                                ( Value /ctx@Value /$620336-ctx -> ( /io=/Catln/IO ).. )
-                            )
-                            ( Value /$620336-states -> ( /io=/Catln/IO ).. ) -> /Context
-                            ( /value=()
-                            , /ctx=( /io=/Catln/IO )..
-                            ) = /Context
-                            ( Value /value -> () = Value / )
-                            ( Value /ctx -> ( /io=/Catln/IO ).. = /
-                                ( ..Value /$620336-states )
-                                ( ..Value /$620336-ctx )
                             )
                         ]
                     }

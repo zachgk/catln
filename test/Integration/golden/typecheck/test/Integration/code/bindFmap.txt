@@ -9,9 +9,10 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /fmapBind
-                            ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = /Data/bindap( Value /m -> TVArg /m = Value /m )
-                            ( /fn( Value /v -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /fmapBind.$9471e8
-                                ( Value /$9471e8-arg -> TVArg /v = Value /v )
+                            ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) ->
+                            ( TopType | PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=/Data/Primitive/Integer ] ) = /Data/bindap( Value /m -> TVArg /m = Value /m )
+                            ( /fn( Value /v -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /fmapBind.$76f485
+                                ( Value /$76f485-arg -> TVArg /v = Value /v )
                             )
                         ]
                     }
@@ -36,14 +37,14 @@ Prgm
                     }
                 )
             ,
-                ( "/fmapBind.$9471e8"
+                ( "/fmapBind.$76f485"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /fmapBind.$9471e8
-                            ( Value /$9471e8-arg@Value /x -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /x = Value /x )
+                        [ /fmapBind.$76f485
+                            ( Value /$76f485-arg@Value /x -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /x = Value /x )
                             ( Value /r -> /Data/Primitive/Integer = CInt
                                 { ciValue = 1 }
                             )

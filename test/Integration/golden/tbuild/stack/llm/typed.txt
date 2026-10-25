@@ -58,6 +58,79 @@ Prgm
                     }
                 )
             ,
+                ( "/Llm/tllm.$89078f"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/tllm.$89078f
+                            ( EAppArg { eaaArg = Value /type -> ∀/Catln/Type } )
+                            ( EAppArg { eaaArg = Value /source -> ∀/Data/String } )
+                            ( EAppArg
+                                { eaaArg = Value /$89078f-arg -> /Context
+                                    [ /V=∀/Data/Result
+                                        [ /T=∀/Data/String
+                                        , /E=∀/Llm/LlmErr
+                                        ]
+                                    ]
+                                    ( /value=∀/Data/Result
+                                        [ /T=∀/Data/String
+                                        , /E=∀/Llm/LlmErr
+                                        ]
+                                    , /ctx=( /io=/Catln/IO )..
+                                    ) = /Context
+                                    ( EAppArg
+                                        { eaaArg = Value /value@Value /reply -> ∀/Data/Result
+                                            [ /T=∀/Data/String
+                                            , /E=∀/Llm/LlmErr
+                                            ]
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /ctx@Value /$89078f-ctx -> ( /io=/Catln/IO ).. }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /$89078f-states -> ( /io=/Catln/IO ) }
+                            ) -> /Context
+                            ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Context
+                            ( EAppArg
+                                { eaaArg = Value /value -> ∀/Data/Result[ /E=∀/Llm/LlmErr ] =
+                                    ( /Llm/typedReply
+                                        ( EAppArg
+                                            { eaaArg = Value /reply -> TVArg /reply = ( Value /reply ↦ TVArg /reply ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /type -> TVArg /type = ( Value /type ↦ TVArg /type ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /source -> TVArg /source = ( Value /source ↦ TVArg /source ) }
+                                        ) ↦ ∀/Data/Result[ /E=∀/Llm/LlmErr ]
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ).. = /
+                                    ( EAppSpread
+                                        { easExpr =
+                                            ( Value /$89078f-states ↦ TopType )
+                                        }
+                                    )
+                                    ( EAppSpread
+                                        { easExpr =
+                                            ( Value /$89078f-ctx ↦ TopType )
+                                        }
+                                    )
+                                }
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Llm/typedDecls"
                 , ObjectMapItem
                     { omiDecls =
@@ -248,7 +321,7 @@ Prgm
                                         ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
                                         , /ctx=( /io=/Catln/IO )..
                                         ) =
-                                        ( /Llm/tllm.$404341
+                                        ( /Llm/tllm.$89078f
                                             ( EAppArg
                                                 { eaaArg = Value /type -> TVArg /type = ( Value /type ↦ TVArg /type ) }
                                             )
@@ -256,10 +329,10 @@ Prgm
                                                 { eaaArg = Value /source -> TVArg /source = ( Value /source ↦ TVArg /source ) }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /$404341-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                                { eaaArg = Value /$89078f-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /$404341-states -> ( /io=/Catln/IO ) = /
+                                                { eaaArg = Value /$89078f-states -> ( /io=/Catln/IO ) = /
                                                     ( EAppArg
                                                         { eaaArg = Value /io -> TVArg /io = ( Value /io ↦ TVArg /io ) }
                                                     )
@@ -391,7 +464,7 @@ Prgm
                                         ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
                                         , /ctx=( /io=/Catln/IO )..
                                         ) =
-                                        ( /Llm/tlcm.$6d0af4
+                                        ( /Llm/tlcm.$93d217
                                             ( EAppArg
                                                 { eaaArg = Value /type -> TVArg /type = ( Value /type ↦ TVArg /type ) }
                                             )
@@ -399,10 +472,10 @@ Prgm
                                                 { eaaArg = Value /source -> TVArg /source = ( Value /source ↦ TVArg /source ) }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /$6d0af4-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                                { eaaArg = Value /$93d217-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /$6d0af4-states -> ( /io=/Catln/IO ) = /
+                                                { eaaArg = Value /$93d217-states -> ( /io=/Catln/IO ) = /
                                                     ( EAppArg
                                                         { eaaArg = Value /io -> TVArg /io = ( Value /io ↦ TVArg /io ) }
                                                     )
@@ -417,6 +490,85 @@ Prgm
                                 ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
                                 , /ctx=( /io=/Catln/IO )..
                                 )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/tlcm.$93d217"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/tlcm.$93d217
+                            ( EAppArg { eaaArg = Value /type -> ∀/Catln/Type } )
+                            ( EAppArg
+                                { eaaArg = Value /source ->
+                                    ( /Data/String/Text
+                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /$93d217-arg -> /Context
+                                    [ /V=∀/Data/Result
+                                        [ /T=∀/Data/String
+                                        , /E=∀/Llm/LlmErr
+                                        ]
+                                    ]
+                                    ( /value=∀/Data/Result
+                                        [ /T=∀/Data/String
+                                        , /E=∀/Llm/LlmErr
+                                        ]
+                                    , /ctx=( /io=/Catln/IO )..
+                                    ) = /Context
+                                    ( EAppArg
+                                        { eaaArg = Value /value@Value /reply -> ∀/Data/Result
+                                            [ /T=∀/Data/String
+                                            , /E=∀/Llm/LlmErr
+                                            ]
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /ctx@Value /$93d217-ctx -> ( /io=/Catln/IO ).. }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /$93d217-states -> ( /io=/Catln/IO ) }
+                            ) -> /Context
+                            ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Context
+                            ( EAppArg
+                                { eaaArg = Value /value -> ∀/Data/Result[ /E=∀/Llm/LlmErr ] =
+                                    ( /Llm/typedReply
+                                        ( EAppArg
+                                            { eaaArg = Value /reply -> TVArg /reply = ( Value /reply ↦ TVArg /reply ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /type -> TVArg /type = ( Value /type ↦ TVArg /type ) }
+                                        )
+                                        ( EAppArg
+                                            { eaaArg = Value /source -> TVArg /source = ( Value /source ↦ TVArg /source ) }
+                                        ) ↦ ∀/Data/Result[ /E=∀/Llm/LlmErr ]
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ).. = /
+                                    ( EAppSpread
+                                        { easExpr =
+                                            ( Value /$93d217-states ↦ TopType )
+                                        }
+                                    )
+                                    ( EAppSpread
+                                        { easExpr =
+                                            ( Value /$93d217-ctx ↦ TopType )
+                                        }
+                                    )
+                                }
                             )
                         ]
                     }
@@ -497,85 +649,6 @@ Prgm
                                         )
                                     }
                                 ) ↦ ∀/Data/String
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/Llm/tlcm.$6d0af4"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Llm/tlcm.$6d0af4
-                            ( EAppArg { eaaArg = Value /type -> ∀/Catln/Type } )
-                            ( EAppArg
-                                { eaaArg = Value /source ->
-                                    ( /Data/String/Text
-                                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
-                                    )
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /$6d0af4-arg -> /Context
-                                    [ /V=∀/Data/Result
-                                        [ /T=∀/Data/String
-                                        , /E=∀/Llm/LlmErr
-                                        ]
-                                    ]
-                                    ( /value=∀/Data/Result
-                                        [ /T=∀/Data/String
-                                        , /E=∀/Llm/LlmErr
-                                        ]
-                                    , /ctx=( /io=/Catln/IO )..
-                                    ) = /Context
-                                    ( EAppArg
-                                        { eaaArg = Value /value@Value /reply -> ∀/Data/Result
-                                            [ /T=∀/Data/String
-                                            , /E=∀/Llm/LlmErr
-                                            ]
-                                        }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /ctx@Value /$6d0af4-ctx -> ( /io=/Catln/IO ).. }
-                                    )
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /$6d0af4-states -> ( /io=/Catln/IO ) }
-                            ) -> /Context
-                            ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
-                            , /ctx=( /io=/Catln/IO )..
-                            ) = /Context
-                            ( EAppArg
-                                { eaaArg = Value /value -> ∀/Data/Result[ /E=∀/Llm/LlmErr ] =
-                                    ( /Llm/typedReply
-                                        ( EAppArg
-                                            { eaaArg = Value /reply -> TVArg /reply = ( Value /reply ↦ TVArg /reply ) }
-                                        )
-                                        ( EAppArg
-                                            { eaaArg = Value /type -> TVArg /type = ( Value /type ↦ TVArg /type ) }
-                                        )
-                                        ( EAppArg
-                                            { eaaArg = Value /source -> TVArg /source = ( Value /source ↦ TVArg /source ) }
-                                        ) ↦ ∀/Data/Result[ /E=∀/Llm/LlmErr ]
-                                    )
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ).. = /
-                                    ( EAppSpread
-                                        { easExpr =
-                                            ( Value /$6d0af4-states ↦ TopType )
-                                        }
-                                    )
-                                    ( EAppSpread
-                                        { easExpr =
-                                            ( Value /$6d0af4-ctx ↦ TopType )
-                                        }
-                                    )
-                                }
                             )
                         ]
                     }
@@ -724,79 +797,6 @@ Prgm
                                         )
                                     ) + /Data/Result/Ok[ /T=TopType ]( /value=$/T )
                                 )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/Llm/tllm.$404341"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Llm/tllm.$404341
-                            ( EAppArg { eaaArg = Value /type -> ∀/Catln/Type } )
-                            ( EAppArg { eaaArg = Value /source -> ∀/Data/String } )
-                            ( EAppArg
-                                { eaaArg = Value /$404341-arg -> /Context
-                                    [ /V=∀/Data/Result
-                                        [ /T=∀/Data/String
-                                        , /E=∀/Llm/LlmErr
-                                        ]
-                                    ]
-                                    ( /value=∀/Data/Result
-                                        [ /T=∀/Data/String
-                                        , /E=∀/Llm/LlmErr
-                                        ]
-                                    , /ctx=( /io=/Catln/IO )..
-                                    ) = /Context
-                                    ( EAppArg
-                                        { eaaArg = Value /value@Value /reply -> ∀/Data/Result
-                                            [ /T=∀/Data/String
-                                            , /E=∀/Llm/LlmErr
-                                            ]
-                                        }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /ctx@Value /$404341-ctx -> ( /io=/Catln/IO ).. }
-                                    )
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /$404341-states -> ( /io=/Catln/IO ) }
-                            ) -> /Context
-                            ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
-                            , /ctx=( /io=/Catln/IO )..
-                            ) = /Context
-                            ( EAppArg
-                                { eaaArg = Value /value -> ∀/Data/Result[ /E=∀/Llm/LlmErr ] =
-                                    ( /Llm/typedReply
-                                        ( EAppArg
-                                            { eaaArg = Value /reply -> TVArg /reply = ( Value /reply ↦ TVArg /reply ) }
-                                        )
-                                        ( EAppArg
-                                            { eaaArg = Value /type -> TVArg /type = ( Value /type ↦ TVArg /type ) }
-                                        )
-                                        ( EAppArg
-                                            { eaaArg = Value /source -> TVArg /source = ( Value /source ↦ TVArg /source ) }
-                                        ) ↦ ∀/Data/Result[ /E=∀/Llm/LlmErr ]
-                                    )
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ).. = /
-                                    ( EAppSpread
-                                        { easExpr =
-                                            ( Value /$404341-states ↦ TopType )
-                                        }
-                                    )
-                                    ( EAppSpread
-                                        { easExpr =
-                                            ( Value /$404341-ctx ↦ TopType )
-                                        }
-                                    )
-                                }
                             )
                         ]
                     }

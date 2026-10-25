@@ -38,14 +38,14 @@ Prgm
                     }
                 )
             ,
-                ( "/apBind.$9471e8"
+                ( "/apBind.$5b8e7f"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /apBind.$9471e8
-                            ( Value /$9471e8-arg@Value /x -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> /Data/Primitive/Integer = /orZero( Value /o -> TVArg /x = Value /x )
+                        [ /apBind.$5b8e7f
+                            ( Value /$5b8e7f-arg@Value /x -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> /Data/Primitive/Integer = /orZero( Value /o -> TVArg /x = Value /x )
                         ]
                     }
                 )
@@ -59,8 +59,10 @@ Prgm
                         [ /apBind
                             ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> /Data/Primitive/Integer = /Data/bindap( Value /m -> TVArg /m = Value /m )
                             ( /fn
-                                ( Value /v -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> /Data/Primitive/Integer = /apBind.$9471e8
-                                ( Value /$9471e8-arg -> TVArg /v = Value /v )
+                                ( Value /v ->
+                                    ( TopType | PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=/Data/Primitive/Integer ] )
+                                ) -> /Data/Primitive/Integer = /apBind.$5b8e7f
+                                ( Value /$5b8e7f-arg -> TVArg /v = Value /v )
                             )
                         ]
                     }

@@ -1,0 +1,26 @@
+import "core"
+
+
+# Tests two arms of one function whose bodies begin with the same bind. Each bind's continuation
+  is a function of its own, and the two arms' continuations are two functions: [scaled] given 1
+  reads the counter tens, and given 2 hundreds, though both first bump it the same way.
+data(Counter(i -> Integer))
+
+bump{Counter(i)}= (){Counter(i + 1)}
+
+peekValue{Counter(i)}= i{Counter(i)}
+
+scaled{Counter(i)}(k= 1) =
+  _<- bump
+  n<- peekValue
+
+  n * 10
+scaled{Counter(i)}(k= 2) =
+  _<- bump
+  n<- peekValue
+
+  n * 100
+
+main{io -> IO} -> (){IO} =
+  _<- exit(val= /Data/Context/unwrap(this= /ContextIn(value= scaled(k= 2), ctx= (counter= Counter(i= 0)))) + /Data/Context/unwrap(this= /ContextIn(value= scaled(k= 1), ctx= (counter= Counter(i= 0)))) - 110)
+  ()

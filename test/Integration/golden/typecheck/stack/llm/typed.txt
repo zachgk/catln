@@ -34,6 +34,45 @@ Prgm
                     }
                 )
             ,
+                ( "/Llm/tllm.$89078f"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/tllm.$89078f( Value /type -> ∀/Catln/Type )( Value /source -> ∀/Data/String )
+                            ( Value /$89078f-arg -> /Context
+                                [ /V=∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ]
+                                ]
+                                ( /value=∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ]
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value@Value /reply -> ∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ]
+                                )
+                                ( Value /ctx@Value /$89078f-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$89078f-states -> ( /io=/Catln/IO ) ) -> /Context
+                            ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Context
+                            ( Value /value -> ∀/Data/Result[ /E=∀/Llm/LlmErr ] = /Llm/typedReply( Value /reply -> TVArg /reply = Value /reply )( Value /type -> TVArg /type = Value /type )( Value /source -> TVArg /source = Value /source ) )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /
+                                ( ..Value /$89078f-states )
+                                ( ..Value /$89078f-ctx )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Llm/typedDecls"
                 , ObjectMapItem
                     { omiDecls =
@@ -142,9 +181,9 @@ Prgm
                                 ) -> /Context
                                 ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
                                 , /ctx=( /io=/Catln/IO )..
-                                ) = /Llm/tllm.$404341( Value /type -> TVArg /type = Value /type )( Value /source -> TVArg /source = Value /source )
-                                ( Value /$404341-arg -> TVArg /v = Value /v )
-                                ( Value /$404341-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
+                                ) = /Llm/tllm.$89078f( Value /type -> TVArg /type = Value /type )( Value /source -> TVArg /source = Value /source )
+                                ( Value /$89078f-arg -> TVArg /v = Value /v )
+                                ( Value /$89078f-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
                         , /ContextIn
                             ( Value /value -> /Llm/tlcm
@@ -204,9 +243,53 @@ Prgm
                                 ) -> /Context
                                 ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
                                 , /ctx=( /io=/Catln/IO )..
-                                ) = /Llm/tlcm.$6d0af4( Value /type -> TVArg /type = Value /type )( Value /source -> TVArg /source = Value /source )
-                                ( Value /$6d0af4-arg -> TVArg /v = Value /v )
-                                ( Value /$6d0af4-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
+                                ) = /Llm/tlcm.$93d217( Value /type -> TVArg /type = Value /type )( Value /source -> TVArg /source = Value /source )
+                                ( Value /$93d217-arg -> TVArg /v = Value /v )
+                                ( Value /$93d217-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/tlcm.$93d217"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/tlcm.$93d217( Value /type -> ∀/Catln/Type )
+                            ( Value /source ->
+                                ( /Data/String/Text
+                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
+                                )
+                            )
+                            ( Value /$93d217-arg -> /Context
+                                [ /V=∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ]
+                                ]
+                                ( /value=∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ]
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value@Value /reply -> ∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ]
+                                )
+                                ( Value /ctx@Value /$93d217-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$93d217-states -> ( /io=/Catln/IO ) ) -> /Context
+                            ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Context
+                            ( Value /value -> ∀/Data/Result[ /E=∀/Llm/LlmErr ] = /Llm/typedReply( Value /reply -> TVArg /reply = Value /reply )( Value /type -> TVArg /type = Value /type )( Value /source -> TVArg /source = Value /source ) )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /
+                                ( ..Value /$93d217-states )
+                                ( ..Value /$93d217-ctx )
                             )
                         ]
                     }
@@ -243,50 +326,6 @@ Prgm
                             )
                             ( Value /r -> ∀/Data/String = /Llm/typedDecls
                                 ( Value /decls -> ∀/Data/String = /Catln/typeDecls( Value /type -> TVArg /type = Value /type ) )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/Llm/tlcm.$6d0af4"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Llm/tlcm.$6d0af4( Value /type -> ∀/Catln/Type )
-                            ( Value /source ->
-                                ( /Data/String/Text
-                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
-                                )
-                            )
-                            ( Value /$6d0af4-arg -> /Context
-                                [ /V=∀/Data/Result
-                                    [ /T=∀/Data/String
-                                    , /E=∀/Llm/LlmErr
-                                    ]
-                                ]
-                                ( /value=∀/Data/Result
-                                    [ /T=∀/Data/String
-                                    , /E=∀/Llm/LlmErr
-                                    ]
-                                , /ctx=( /io=/Catln/IO )..
-                                ) = /Context
-                                ( Value /value@Value /reply -> ∀/Data/Result
-                                    [ /T=∀/Data/String
-                                    , /E=∀/Llm/LlmErr
-                                    ]
-                                )
-                                ( Value /ctx@Value /$6d0af4-ctx -> ( /io=/Catln/IO ).. )
-                            )
-                            ( Value /$6d0af4-states -> ( /io=/Catln/IO ) ) -> /Context
-                            ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
-                            , /ctx=( /io=/Catln/IO )..
-                            ) = /Context
-                            ( Value /value -> ∀/Data/Result[ /E=∀/Llm/LlmErr ] = /Llm/typedReply( Value /reply -> TVArg /reply = Value /reply )( Value /type -> TVArg /type = Value /type )( Value /source -> TVArg /source = Value /source ) )
-                            ( Value /ctx -> ( /io=/Catln/IO ).. = /
-                                ( ..Value /$6d0af4-states )
-                                ( ..Value /$6d0af4-ctx )
                             )
                         ]
                     }
@@ -367,45 +406,6 @@ Prgm
                                 ) + /Data/Result/Ok[ /T=TopType ]( /value=$/T )
                             ) = /Llm/typedValue( Value /reply -> TVArg /value = Value /value )
                             ( Value /parsed -> ∀/Data/Result[ /E=∀/Catln/ParseExprErr ] = /Catln/parseExprIn( Value /input -> TVArg /value = Value /value )( Value /type -> TVArg /type = Value /type )( Value /source -> TVArg /source = Value /source ) )
-                        ]
-                    }
-                )
-            ,
-                ( "/Llm/tllm.$404341"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Llm/tllm.$404341( Value /type -> ∀/Catln/Type )( Value /source -> ∀/Data/String )
-                            ( Value /$404341-arg -> /Context
-                                [ /V=∀/Data/Result
-                                    [ /T=∀/Data/String
-                                    , /E=∀/Llm/LlmErr
-                                    ]
-                                ]
-                                ( /value=∀/Data/Result
-                                    [ /T=∀/Data/String
-                                    , /E=∀/Llm/LlmErr
-                                    ]
-                                , /ctx=( /io=/Catln/IO )..
-                                ) = /Context
-                                ( Value /value@Value /reply -> ∀/Data/Result
-                                    [ /T=∀/Data/String
-                                    , /E=∀/Llm/LlmErr
-                                    ]
-                                )
-                                ( Value /ctx@Value /$404341-ctx -> ( /io=/Catln/IO ).. )
-                            )
-                            ( Value /$404341-states -> ( /io=/Catln/IO ) ) -> /Context
-                            ( /value=∀/Data/Result[ /E=∀/Llm/LlmErr ]
-                            , /ctx=( /io=/Catln/IO )..
-                            ) = /Context
-                            ( Value /value -> ∀/Data/Result[ /E=∀/Llm/LlmErr ] = /Llm/typedReply( Value /reply -> TVArg /reply = Value /reply )( Value /type -> TVArg /type = Value /type )( Value /source -> TVArg /source = Value /source ) )
-                            ( Value /ctx -> ( /io=/Catln/IO ).. = /
-                                ( ..Value /$404341-states )
-                                ( ..Value /$404341-ctx )
-                            )
                         ]
                     }
                 )

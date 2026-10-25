@@ -27,9 +27,42 @@ Prgm
                                 )
                                 ( Value ctx= /( Value io= Value io ) )
                             )
-                            ( fn( Value v )= main.$55da29
-                                ( Value $55da29-arg= Value v )
-                                ( Value $55da29-states= /( Value io= Value io ) )
+                            ( fn( Value v )= main.$9fe1ea
+                                ( Value $9fe1ea-arg= Value v )
+                                ( Value $9fe1ea-states= /( Value io= Value io ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$9fe1ea"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$9fe1ea
+                            ( Value $9fe1ea-arg= /Context( Value value )
+                                ( Value ctx@Value $9fe1ea-ctx )
+                            )
+                            ( Value $9fe1ea-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= exit
+                                    ( Value val= CInt
+                                        { ciValue = 0 }
+                                    )
+                                )
+                                ( Value ctx= /
+                                    ( ..Value $9fe1ea-states )
+                                    ( ..Value $9fe1ea-ctx )
+                                )
+                            )
+                            ( fn( Value v )= main.$9fe1ea.$2a50d9
+                                ( Value $2a50d9-arg= Value v )
+                                ( Value $2a50d9-states= /
+                                    ( ..Value $9fe1ea-states )
+                                    ( ..Value $9fe1ea-ctx )
+                                )
                             )
                         ]
                     }
@@ -48,53 +81,20 @@ Prgm
                     }
                 )
             ,
-                ( "/main.$55da29.$620336"
+                ( "/main.$9fe1ea.$2a50d9"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ main.$55da29.$620336
-                            ( Value $620336-arg= /Context( Value value )
-                                ( Value ctx@Value $620336-ctx )
+                        [ main.$9fe1ea.$2a50d9
+                            ( Value $2a50d9-arg= /Context( Value value )
+                                ( Value ctx@Value $2a50d9-ctx )
                             )
-                            ( Value $620336-states )= /Context( Value value= Value / )
+                            ( Value $2a50d9-states )= /Context( Value value= Value / )
                             ( Value ctx= /
-                                ( ..Value $620336-states )
-                                ( ..Value $620336-ctx )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/main.$55da29"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ main.$55da29
-                            ( Value $55da29-arg= /Context( Value value )
-                                ( Value ctx@Value $55da29-ctx )
-                            )
-                            ( Value $55da29-states )= /Data/bindap
-                            ( Value m= /ContextIn
-                                ( Value value= exit
-                                    ( Value val= CInt
-                                        { ciValue = 0 }
-                                    )
-                                )
-                                ( Value ctx= /
-                                    ( ..Value $55da29-states )
-                                    ( ..Value $55da29-ctx )
-                                )
-                            )
-                            ( fn( Value v )= main.$55da29.$620336
-                                ( Value $620336-arg= Value v )
-                                ( Value $620336-states= /
-                                    ( ..Value $55da29-states )
-                                    ( ..Value $55da29-ctx )
-                                )
+                                ( ..Value $2a50d9-states )
+                                ( ..Value $2a50d9-ctx )
                             )
                         ]
                     }

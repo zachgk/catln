@@ -2,6 +2,19 @@ Prgm
     { prgmObjMap = ObjectMapWith
         { omItems = fromList
             [
+                ( "/mmapMmap.$cee52d"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ mmapMmap.$cee52d
+                            ( Value /b -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )( Value $cee52d-arg@Value x )= /Data/bindap( Value m= Value b )
+                            ( fn( Value v )= mmapMmap.$cee52d.$dafdd4( Value /x= Value /x )( Value $dafdd4-arg= Value v ) )
+                        ]
+                    }
+                )
+            ,
                 ( "/orZero"
                 , ObjectMapItem
                     { omiDecls =
@@ -19,27 +32,39 @@ Prgm
                     }
                 )
             ,
-                ( "/mmapMmap.$f24651.$b671cb"
+                ( "/mmapMmap.$cee52d.$dafdd4"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ mmapMmap.$f24651.$b671cb( Value /x )( Value $b671cb-arg@Value y )= /Data/Maybe/Some
+                        [ mmapMmap.$cee52d.$dafdd4( Value /x )( Value $dafdd4-arg@Value y )= /Data/Maybe/Some
                             ( Value value= /operator+( Value /l= Value x )( Value /r= Value y ) )
                         ]
                     }
                 )
             ,
-                ( "/mmapMmap.$f24651"
+                ( "/mmapApFmap.$a4afea.$2fc598.s"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ mmapMmap.$f24651
-                            ( Value /b -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )( Value $f24651-arg@Value x )= /Data/bindap( Value m= Value b )
-                            ( fn( Value v )= mmapMmap.$f24651.$b671cb( Value /x= Value /x )( Value $b671cb-arg= Value v ) )
+                        [ mmapApFmap.$a4afea.$2fc598.s( Value /x )( Value /y )= /operator+( Value /l= Value x )
+                            ( Value /r= orZero( Value o= Value y ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/mmapApFmap.$a4afea.$2fc598.$84fa64"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ mmapApFmap.$a4afea.$2fc598.$84fa64( Value /x )( Value /y )
+                            ( Value $84fa64-arg@Value z )= /operator+
+                            ( Value /l= mmapApFmap.$a4afea.$2fc598.s( Value /x= Value /x )( Value /y= Value /y ) )( Value /r= Value z )
                         ]
                     }
                 )
@@ -53,20 +78,7 @@ Prgm
                         [ apFmap
                             ( Value a -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )
                             ( Value b -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = /Data/bindap( Value m= Value a )
-                            ( fn( Value v )= apFmap.$f24651( Value /b= Value /b )( Value $f24651-arg= Value v ) )
-                        ]
-                    }
-                )
-            ,
-                ( "/fmapAp.$f24651"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ fmapAp.$f24651
-                            ( Value /b -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )( Value $f24651-arg@Value x )= /Data/bindap( Value m= Value b )
-                            ( fn( Value v )= fmapAp.$f24651.$b671cb( Value /x= Value /x )( Value $b671cb-arg= Value v ) )
+                            ( fn( Value v )= apFmap.$a1e82b( Value /b= Value /b )( Value $a1e82b-arg= Value v ) )
                         ]
                     }
                 )
@@ -80,33 +92,9 @@ Prgm
                         [ fmapAp
                             ( Value a -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )
                             ( Value b -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = /Data/bindap( Value m= Value a )
-                            ( fn( Value v )= fmapAp.$f24651( Value /b= Value /b )( Value $f24651-arg= Value v ) )
-                        ]
-                    }
-                )
-            ,
-                ( "/apFmap.$f24651"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ apFmap.$f24651
-                            ( Value /b -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )( Value $f24651-arg@Value x )= /Data/bindap( Value m= Value b )
-                            ( fn( Value v )= apFmap.$f24651.$b671cb( Value /x= Value /x )( Value $b671cb-arg= Value v ) )
-                        ]
-                    }
-                )
-            ,
-                ( "/mmapFmap.$f24651"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ mmapFmap.$f24651
-                            ( Value /b -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )( Value $f24651-arg@Value x )= /Data/bindap( Value m= Value b )
-                            ( fn( Value v )= mmapFmap.$f24651.$b671cb( Value /x= Value /x )( Value $b671cb-arg= Value v ) )
+                            ( fn( Value v )= fmapAp.$9e70e6( Value /b= Value /b )
+                                ( Value $9e70e6-arg= Value v )
+                            )
                         ]
                     }
                 )
@@ -126,13 +114,28 @@ Prgm
                     }
                 )
             ,
-                ( "/mmapFmap.$f24651.$b671cb"
+                ( "/apFmap.$a1e82b"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ mmapFmap.$f24651.$b671cb( Value /x )( Value $b671cb-arg@Value y )= /operator+( Value /l= Value x )( Value /r= Value y ) ]
+                        [ apFmap.$a1e82b
+                            ( Value /b -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )( Value $a1e82b-arg@Value x )= /Data/bindap( Value m= Value b )
+                            ( fn( Value v )= apFmap.$a1e82b.$f6beec( Value /x= Value /x )( Value $f6beec-arg= Value v ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/apFmap.$a1e82b.$f6beec"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ apFmap.$a1e82b.$f6beec( Value /x )( Value $f6beec-arg@Value y )= /operator+
+                            ( Value /l= orZero( Value o= Value x ) )( Value /r= Value y )
+                        ]
                     }
                 )
             ,
@@ -146,19 +149,39 @@ Prgm
                             ( Value a -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )
                             ( Value b -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )
                             ( Value c -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = /Data/bindap( Value m= Value a )
-                            ( fn( Value v )= mmapApFmap.$f24651( Value /c= Value /c )( Value /b= Value /b )( Value $f24651-arg= Value v ) )
+                            ( fn( Value v )= mmapApFmap.$a4afea( Value /c= Value /c )( Value /b= Value /b )( Value $a4afea-arg= Value v ) )
                         ]
                     }
                 )
             ,
-                ( "/mmapApFmap.$f24651.$b671cb.s"
+                ( "/mmapFmap.$7b77bf"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ mmapApFmap.$f24651.$b671cb.s( Value /x )( Value /y )= /operator+( Value /l= Value x )
-                            ( Value /r= orZero( Value o= Value y ) )
+                        [ mmapFmap.$7b77bf
+                            ( Value /b -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )
+                            ( Value $7b77bf-arg@Value x )= /Data/bindap( Value m= Value b )
+                            ( fn( Value v )= mmapFmap.$7b77bf.$8c763f( Value /x= Value /x )
+                                ( Value $8c763f-arg= Value v )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/mmapApFmap.$a4afea.$2fc598"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ mmapApFmap.$a4afea.$2fc598
+                            ( Value /c -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )( Value /x )
+                            ( Value $2fc598-arg@Value y )= /Data/bindap( Value m= Value c )
+                            ( fn( Value v )= mmapApFmap.$a4afea.$2fc598.$84fa64( Value /x= Value /x )( Value /y= Value /y )
+                                ( Value $84fa64-arg= Value v )
+                            )
                         ]
                     }
                 )
@@ -172,43 +195,19 @@ Prgm
                         [ mmapMmap
                             ( Value a -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )
                             ( Value b -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = /Data/bindap( Value m= Value a )
-                            ( fn( Value v )= mmapMmap.$f24651( Value /b= Value /b )( Value $f24651-arg= Value v ) )
+                            ( fn( Value v )= mmapMmap.$cee52d( Value /b= Value /b )( Value $cee52d-arg= Value v ) )
                         ]
                     }
                 )
             ,
-                ( "/apFmap.$f24651.$b671cb"
+                ( "/mmapFmap.$7b77bf.$8c763f"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ apFmap.$f24651.$b671cb( Value /x )( Value $b671cb-arg@Value y )= /operator+
-                            ( Value /l= orZero( Value o= Value x ) )( Value /r= Value y )
-                        ]
-                    }
-                )
-            ,
-                ( "/fmapAp.$f24651.$b671cb"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ fmapAp.$f24651.$b671cb( Value /x )( Value $b671cb-arg@Value y )= /operator+( Value /l= Value x )
-                            ( Value /r= orZero( Value o= Value y ) )
-                        ]
-                    }
-                )
-            ,
-                ( "/mmapApFmap.$f24651.$b671cb.$a33c13"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ mmapApFmap.$f24651.$b671cb.$a33c13( Value /x )( Value /y )( Value $a33c13-arg@Value z )= /operator+
-                            ( Value /l= mmapApFmap.$f24651.$b671cb.s( Value /x= Value /x )( Value /y= Value /y ) )( Value /r= Value z )
+                        [ mmapFmap.$7b77bf.$8c763f( Value /x )
+                            ( Value $8c763f-arg@Value y )= /operator+( Value /l= Value x )( Value /r= Value y )
                         ]
                     }
                 )
@@ -222,34 +221,54 @@ Prgm
                         [ mmapFmap
                             ( Value a -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )
                             ( Value b -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = /Data/bindap( Value m= Value a )
-                            ( fn( Value v )= mmapFmap.$f24651( Value /b= Value /b )( Value $f24651-arg= Value v ) )
+                            ( fn( Value v )= mmapFmap.$7b77bf( Value /b= Value /b )
+                                ( Value $7b77bf-arg= Value v )
+                            )
                         ]
                     }
                 )
             ,
-                ( "/mmapApFmap.$f24651.$b671cb"
+                ( "/fmapAp.$9e70e6.$48e8f3"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ mmapApFmap.$f24651.$b671cb
-                            ( Value /c -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )( Value /x )( Value $b671cb-arg@Value y )= /Data/bindap( Value m= Value c )
-                            ( fn( Value v )= mmapApFmap.$f24651.$b671cb.$a33c13( Value /x= Value /x )( Value /y= Value /y )( Value $a33c13-arg= Value v ) )
+                        [ fmapAp.$9e70e6.$48e8f3( Value /x )
+                            ( Value $48e8f3-arg@Value y )= /operator+( Value /l= Value x )
+                            ( Value /r= orZero( Value o= Value y ) )
                         ]
                     }
                 )
             ,
-                ( "/mmapApFmap.$f24651"
+                ( "/fmapAp.$9e70e6"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ mmapApFmap.$f24651
+                        [ fmapAp.$9e70e6
+                            ( Value /b -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )
+                            ( Value $9e70e6-arg@Value x )= /Data/bindap( Value m= Value b )
+                            ( fn( Value v )= fmapAp.$9e70e6.$48e8f3( Value /x= Value /x )
+                                ( Value $48e8f3-arg= Value v )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/mmapApFmap.$a4afea"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ mmapApFmap.$a4afea
                             ( Value /c -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )
-                            ( Value /b -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )( Value $f24651-arg@Value x )= /Data/bindap( Value m= Value b )
-                            ( fn( Value v )= mmapApFmap.$f24651.$b671cb( Value /c= Value /c )( Value /x= Value /x )( Value $b671cb-arg= Value v ) )
+                            ( Value /b -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] )( Value $a4afea-arg@Value x )= /Data/bindap( Value m= Value b )
+                            ( fn( Value v )= mmapApFmap.$a4afea.$2fc598( Value /c= Value /c )( Value /x= Value /x )
+                                ( Value $2fc598-arg= Value v )
+                            )
                         ]
                     }
                 )

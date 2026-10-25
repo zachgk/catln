@@ -2,24 +2,6 @@ Prgm
     { prgmObjMap = ObjectMapWith
         { omItems = fromList
             [
-                ( "/bump.$9471e8"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ bump.$9471e8
-                            ( Value $9471e8-arg@Value x )= /Data/Maybe/Some
-                            ( Value value= /operator+
-                                ( Value /l= bump.$9471e8.doubled( Value /x= Value /x ) )
-                                ( Value /r= CInt
-                                    { ciValue = 1 }
-                                )
-                            )
-                        ]
-                    }
-                )
-            ,
                 ( "/bump"
                 , ObjectMapItem
                     { omiDecls = []
@@ -28,8 +10,25 @@ Prgm
                     , omiDefs =
                         [ bump
                             ( Value m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = /Data/bindap( Value m= Value m )
-                            ( fn( Value v )= bump.$9471e8
-                                ( Value $9471e8-arg= Value v )
+                            ( fn( Value v )= bump.$e791f4( Value $e791f4-arg= Value v ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$626515"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$626515
+                            ( Value $626515-arg= /Context( Value value )
+                                ( Value ctx@Value $626515-ctx )
+                            )
+                            ( Value $626515-states )= /Context( Value value= Value / )
+                            ( Value ctx= /
+                                ( ..Value $626515-states )
+                                ( ..Value $626515-ctx )
                             )
                         ]
                     }
@@ -66,8 +65,9 @@ Prgm
                                 )
                                 ( Value ctx= /( Value io= Value io ) )
                             )
-                            ( fn( Value v )= main.$dce14e( Value $dce14e-arg= Value v )
-                                ( Value $dce14e-states= /( Value io= Value io ) )
+                            ( fn( Value v )= main.$626515
+                                ( Value $626515-arg= Value v )
+                                ( Value $626515-states= /( Value io= Value io ) )
                             )
                         ]
                     }
@@ -85,6 +85,23 @@ Prgm
                     }
                 )
             ,
+                ( "/bump.$e791f4"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ bump.$e791f4( Value $e791f4-arg@Value x )= /Data/Maybe/Some
+                            ( Value value= /operator+
+                                ( Value /l= bump.$e791f4.doubled( Value /x= Value /x ) )
+                                ( Value /r= CInt
+                                    { ciValue = 1 }
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/scale"
                 , ObjectMapItem
                     { omiDecls = []
@@ -95,19 +112,6 @@ Prgm
                             ( Value /r= CInt
                                 { ciValue = 10 }
                             )
-                        ]
-                    }
-                )
-            ,
-                ( "/main.$dce14e"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ main.$dce14e
-                            ( Value $dce14e-arg= /Context( Value value )( Value ctx@Value $dce14e-ctx ) )( Value $dce14e-states )= /Context( Value value= Value / )
-                            ( Value ctx= /( ..Value $dce14e-states )( ..Value $dce14e-ctx ) )
                         ]
                     }
                 )
@@ -128,16 +132,6 @@ Prgm
                     }
                 )
             ,
-                ( "/bump.$9471e8.doubled"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ bump.$9471e8.doubled( Value /x )= /operator+( Value /l= Value x )( Value /r= Value x ) ]
-                    }
-                )
-            ,
                 ( "/total.unused"
                 , ObjectMapItem
                     { omiDecls = []
@@ -155,6 +149,16 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ total.sum( Value /a -> /Data/Primitive/Integer )( Value /b -> /Data/Primitive/Integer )= /operator+( Value /l= Value a )( Value /r= Value b ) ]
+                    }
+                )
+            ,
+                ( "/bump.$e791f4.doubled"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ bump.$e791f4.doubled( Value /x )= /operator+( Value /l= Value x )( Value /r= Value x ) ]
                     }
                 )
             ,

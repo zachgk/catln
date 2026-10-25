@@ -2,24 +2,6 @@ Prgm
     { prgmObjMap = ObjectMapWith
         { omItems = fromList
             [
-                ( "/bump.$9471e8"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /bump.$9471e8
-                            ( Value /$9471e8-arg@Value /x -> /Data/Primitive/Integer ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
-                            ( Value /value -> /Data/Primitive/Integer = /operator+
-                                ( Value /l -> /Data/Primitive/Integer = /bump.$9471e8.doubled( Value /x -> TVArg /x = Value /x ) )
-                                ( Value /r -> /Data/Primitive/Integer = CInt
-                                    { ciValue = 1 }
-                                )
-                            )
-                        ]
-                    }
-                )
-            ,
                 ( "/bump"
                 , ObjectMapItem
                     { omiDecls = []
@@ -27,9 +9,50 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /bump
-                            ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = /Data/bindap( Value /m -> TVArg /m = Value /m )
-                            ( /fn( Value /v -> /Data/Primitive/Integer ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /bump.$9471e8
-                                ( Value /$9471e8-arg -> TVArg /v = Value /v )
+                            ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> UnionType
+                            ( Just
+                                ( !
+                                    ( !
+                                        ( PredClass /Data/Maybe
+                                            [ /T=/Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) ] && PredClass /Data/Functor
+                                            [ /T=/Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) ]
+                                        ) && !
+                                        ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Monad[ /T=/Data/Primitive/Integer ] )
+                                    ) && PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ]
+                                , fromList []
+                                , []
+                                )
+                            , /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                            , []
+                            ) = /Data/bindap( Value /m -> TVArg /m = Value /m )
+                            ( /fn( Value /v -> /Data/Primitive/Integer ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /bump.$e791f4( Value /$e791f4-arg -> TVArg /v = Value /v ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$626515"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$626515
+                            ( Value /$626515-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$626515-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$626515-states -> ( /io=/Catln/IO ) ) -> /Context
+                            ( /value=()
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Context
+                            ( Value /value -> () = Value / )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /
+                                ( ..Value /$626515-states )
+                                ( ..Value /$626515-ctx )
                             )
                         ]
                     }
@@ -79,8 +102,9 @@ Prgm
                                 ) -> /Context
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
-                                ) = /main.$dce14e( Value /$dce14e-arg -> TVArg /v = Value /v )
-                                ( Value /$dce14e-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
+                                ) = /main.$626515
+                                ( Value /$626515-arg -> TVArg /v = Value /v )
+                                ( Value /$626515-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
                         ]
                     }
@@ -94,6 +118,23 @@ Prgm
                     , omiDefs =
                         [ /total.helper( Value /a -> /Data/Primitive/Integer )( Value /b -> /Data/Primitive/Integer )( Value /y -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /y = Value /y )
                             ( Value /r -> /Data/Primitive/Integer = /total.sum( Value /a -> TVArg /a = Value /a )( Value /b -> TVArg /b = Value /b ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/bump.$e791f4"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /bump.$e791f4( Value /$e791f4-arg@Value /x -> /Data/Primitive/Integer ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                            ( Value /value -> /Data/Primitive/Integer = /operator+
+                                ( Value /l -> /Data/Primitive/Integer = /bump.$e791f4.doubled( Value /x -> TVArg /x = Value /x ) )
+                                ( Value /r -> /Data/Primitive/Integer = CInt
+                                    { ciValue = 1 }
+                                )
+                            )
                         ]
                     }
                 )
@@ -112,31 +153,6 @@ Prgm
                     }
                 )
             ,
-                ( "/main.$dce14e"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /main.$dce14e
-                            ( Value /$dce14e-arg -> /Context
-                                [ /V=() ]
-                                ( /value=()
-                                , /ctx=( /io=/Catln/IO )..
-                                ) = /Context
-                                ( Value /value -> () )
-                                ( Value /ctx@Value /$dce14e-ctx -> ( /io=/Catln/IO ).. )
-                            )
-                            ( Value /$dce14e-states -> ( /io=/Catln/IO ) ) -> /Context
-                            ( /value=()
-                            , /ctx=( /io=/Catln/IO )..
-                            ) = /Context
-                            ( Value /value -> () = Value / )
-                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( ..Value /$dce14e-states )( ..Value /$dce14e-ctx ) )
-                        ]
-                    }
-                )
-            ,
                 ( "/sign.$c1be8f"
                 , ObjectMapItem
                     { omiDecls = []
@@ -151,16 +167,6 @@ Prgm
                                 { ciValue = 1 }
                             )
                         ]
-                    }
-                )
-            ,
-                ( "/bump.$9471e8.doubled"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /bump.$9471e8.doubled( Value /x -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /x = Value /x )( Value /r -> TVArg /x = Value /x ) ]
                     }
                 )
             ,
@@ -193,6 +199,16 @@ Prgm
                                 )| PredClass /Catln/Doc/DShow + /Data/Primitive/Integer
                             ) = /operator+( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b )
                         ]
+                    }
+                )
+            ,
+                ( "/bump.$e791f4.doubled"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /bump.$e791f4.doubled( Value /x -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /x = Value /x )( Value /r -> TVArg /x = Value /x ) ]
                     }
                 )
             ,

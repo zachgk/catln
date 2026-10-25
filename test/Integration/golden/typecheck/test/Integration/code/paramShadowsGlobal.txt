@@ -40,9 +40,9 @@ Prgm
                                 ) -> /Context
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
-                                ) = /main.$615bd8
-                                ( Value /$615bd8-arg -> TVArg /v = Value /v )
-                                ( Value /$615bd8-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
+                                ) = /main.$5c3162
+                                ( Value /$5c3162-arg -> TVArg /v = Value /v )
+                                ( Value /$5c3162-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
                         ]
                     }
@@ -101,22 +101,47 @@ Prgm
                     }
                 )
             ,
-                ( "/main.$615bd8"
+                ( "/main.$5c3162.$da74ff"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /main.$615bd8
-                            ( Value /$615bd8-arg -> /Context
+                        [ /main.$5c3162.$da74ff
+                            ( Value /$da74ff-arg -> /Context
                                 [ /V=() ]
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
                                 ) = /Context
                                 ( Value /value -> () )
-                                ( Value /ctx@Value /$615bd8-ctx -> ( /io=/Catln/IO ).. )
+                                ( Value /ctx@Value /$da74ff-ctx -> ( /io=/Catln/IO ).. )
                             )
-                            ( Value /$615bd8-states -> ( /io=/Catln/IO ) ) -> /Context
+                            ( Value /$da74ff-states -> ( /io=/Catln/IO ).. ) -> /Context
+                            ( /value=()
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Context
+                            ( Value /value -> () = Value / )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( ..Value /$da74ff-states )( ..Value /$da74ff-ctx ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$5c3162"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$5c3162
+                            ( Value /$5c3162-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$5c3162-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$5c3162-states -> ( /io=/Catln/IO ) ) -> /Context
                             ( /value=()
                             , /ctx=( /io=/Catln/IO )..
                             ) = /Data/bindap
@@ -131,8 +156,8 @@ Prgm
                                     )
                                 )
                                 ( Value /ctx -> ( /io=/Catln/IO ).. = /
-                                    ( ..Value /$615bd8-states )
-                                    ( ..Value /$615bd8-ctx )
+                                    ( ..Value /$5c3162-states )
+                                    ( ..Value /$5c3162-ctx )
                                 )
                             )
                             ( /fn
@@ -144,40 +169,11 @@ Prgm
                                 ) -> /Context
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
-                                ) = /main.$615bd8.$620336
-                                ( Value /$620336-arg -> TVArg /v = Value /v )
-                                ( Value /$620336-states -> ( /io=/Catln/IO ).. = /
-                                    ( ..Value /$615bd8-states )
-                                    ( ..Value /$615bd8-ctx )
+                                ) = /main.$5c3162.$da74ff( Value /$da74ff-arg -> TVArg /v = Value /v )
+                                ( Value /$da74ff-states -> ( /io=/Catln/IO ).. = /
+                                    ( ..Value /$5c3162-states )
+                                    ( ..Value /$5c3162-ctx )
                                 )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/main.$615bd8.$620336"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /main.$615bd8.$620336
-                            ( Value /$620336-arg -> /Context
-                                [ /V=() ]
-                                ( /value=()
-                                , /ctx=( /io=/Catln/IO )..
-                                ) = /Context
-                                ( Value /value -> () )
-                                ( Value /ctx@Value /$620336-ctx -> ( /io=/Catln/IO ).. )
-                            )
-                            ( Value /$620336-states -> ( /io=/Catln/IO ).. ) -> /Context
-                            ( /value=()
-                            , /ctx=( /io=/Catln/IO )..
-                            ) = /Context
-                            ( Value /value -> () = Value / )
-                            ( Value /ctx -> ( /io=/Catln/IO ).. = /
-                                ( ..Value /$620336-states )
-                                ( ..Value /$620336-ctx )
                             )
                         ]
                     }

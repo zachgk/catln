@@ -2,6 +2,25 @@ Prgm
     { prgmObjMap = ObjectMapWith
         { omItems = fromList
             [
+                ( "/main.$50ca1b"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$50ca1b
+                            ( Value $50ca1b-arg= /Context( Value value )
+                                ( Value ctx@Value $50ca1b-ctx )
+                            )
+                            ( Value $50ca1b-states )= /Context( Value value= Value / )
+                            ( Value ctx= /
+                                ( ..Value $50ca1b-states )
+                                ( ..Value $50ca1b-ctx )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
@@ -25,9 +44,9 @@ Prgm
                                 )
                                 ( Value ctx= /( Value io= Value io ) )
                             )
-                            ( fn( Value v )= main.$99a285
-                                ( Value $99a285-arg= Value v )
-                                ( Value $99a285-states= /( Value io= Value io ) )
+                            ( fn( Value v )= main.$50ca1b
+                                ( Value $50ca1b-arg= Value v )
+                                ( Value $50ca1b-states= /( Value io= Value io ) )
                             )
                         ]
                     }
@@ -40,25 +59,6 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ id( Value x )= Value x ]
-                    }
-                )
-            ,
-                ( "/main.$99a285"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ main.$99a285
-                            ( Value $99a285-arg= /Context( Value value )
-                                ( Value ctx@Value $99a285-ctx )
-                            )
-                            ( Value $99a285-states )= /Context( Value value= Value / )
-                            ( Value ctx= /
-                                ( ..Value $99a285-states )
-                                ( ..Value $99a285-ctx )
-                            )
-                        ]
                     }
                 )
             ]

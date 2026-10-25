@@ -2,31 +2,6 @@ Prgm
     { prgmObjMap = ObjectMapWith
         { omItems = fromList
             [
-                ( "/main.$e7dc4b"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /main.$e7dc4b
-                            ( Value /$e7dc4b-arg -> /Context
-                                [ /V=() ]
-                                ( /value=()
-                                , /ctx=( /io=/Catln/IO )..
-                                ) = /Context
-                                ( Value /value -> () )
-                                ( Value /ctx@Value /$e7dc4b-ctx -> ( /io=/Catln/IO ).. )
-                            )
-                            ( Value /$e7dc4b-states -> ( /io=/Catln/IO ) ) -> /Context
-                            ( /value=()
-                            , /ctx=( /io=/Catln/IO )..
-                            ) = /Context
-                            ( Value /value -> () = Value / )
-                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( ..Value /$e7dc4b-states )( ..Value /$e7dc4b-ctx ) )
-                        ]
-                    }
-                )
-            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
@@ -71,8 +46,9 @@ Prgm
                                 ) -> /Context
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
-                                ) = /main.$e7dc4b( Value /$e7dc4b-arg -> TVArg /v = Value /v )
-                                ( Value /$e7dc4b-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
+                                ) = /main.$6752db
+                                ( Value /$6752db-arg -> TVArg /v = Value /v )
+                                ( Value /$6752db-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
                         ]
                     }
@@ -94,6 +70,34 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /operator+( Value /l -> /Box = Value /Box )( Value /r -> /Box = Value /Box ) -> /Box = Value /Box ]
+                    }
+                )
+            ,
+                ( "/main.$6752db"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$6752db
+                            ( Value /$6752db-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$6752db-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$6752db-states -> ( /io=/Catln/IO ) ) -> /Context
+                            ( /value=()
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Context
+                            ( Value /value -> () = Value / )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /
+                                ( ..Value /$6752db-states )
+                                ( ..Value /$6752db-ctx )
+                            )
+                        ]
                     }
                 )
             ,

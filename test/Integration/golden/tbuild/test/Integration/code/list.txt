@@ -148,12 +148,12 @@ Prgm
                                         ( /value=()
                                         , /ctx=( /io=/Catln/IO )..
                                         ) =
-                                        ( /main.$4734c8
+                                        ( /main.$715a97
                                             ( EAppArg
-                                                { eaaArg = Value /$4734c8-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                                { eaaArg = Value /$715a97-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /$4734c8-states -> ( /io=/Catln/IO ) = /
+                                                { eaaArg = Value /$715a97-states -> ( /io=/Catln/IO ) = /
                                                     ( EAppArg
                                                         { eaaArg = Value /io -> TVArg /io = ( Value /io ↦ TVArg /io ) }
                                                     )
@@ -173,15 +173,15 @@ Prgm
                     }
                 )
             ,
-                ( "/main.$4734c8"
+                ( "/main.$715a97"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /main.$4734c8
+                        [ /main.$715a97
                             ( EAppArg
-                                { eaaArg = Value /$4734c8-arg -> /Context
+                                { eaaArg = Value /$715a97-arg -> /Context
                                     [ /V=() ]
                                     ( /value=()
                                     , /ctx=( /io=/Catln/IO )..
@@ -190,12 +190,12 @@ Prgm
                                         { eaaArg = Value /value -> () }
                                     )
                                     ( EAppArg
-                                        { eaaArg = Value /ctx@Value /$4734c8-ctx -> ( /io=/Catln/IO ).. }
+                                        { eaaArg = Value /ctx@Value /$715a97-ctx -> ( /io=/Catln/IO ).. }
                                     )
                                 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /$4734c8-states -> ( /io=/Catln/IO ) }
+                                { eaaArg = Value /$715a97-states -> ( /io=/Catln/IO ) }
                             ) -> /Context
                             ( /value=()
                             , /ctx=( /io=/Catln/IO )..
@@ -207,12 +207,12 @@ Prgm
                                 { eaaArg = Value /ctx -> ( /io=/Catln/IO ).. = /
                                     ( EAppSpread
                                         { easExpr =
-                                            ( Value /$4734c8-states ↦ TopType )
+                                            ( Value /$715a97-states ↦ TopType )
                                         }
                                     )
                                     ( EAppSpread
                                         { easExpr =
-                                            ( Value /$4734c8-ctx ↦ TopType )
+                                            ( Value /$715a97-ctx ↦ TopType )
                                         }
                                     )
                                 }

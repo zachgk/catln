@@ -2,34 +2,6 @@ Prgm
     { prgmObjMap = ObjectMapWith
         { omItems = fromList
             [
-                ( "/main.$1ff46a"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /main.$1ff46a
-                            ( Value /$1ff46a-arg -> /Context
-                                [ /V=() ]
-                                ( /value=()
-                                , /ctx=( /io=/Catln/IO )..
-                                ) = /Context
-                                ( Value /value -> () )
-                                ( Value /ctx@Value /$1ff46a-ctx -> ( /io=/Catln/IO ).. )
-                            )
-                            ( Value /$1ff46a-states -> ( /io=/Catln/IO ) ) -> /Context
-                            ( /value=()
-                            , /ctx=( /io=/Catln/IO )..
-                            ) = /Context
-                            ( Value /value -> () = Value / )
-                            ( Value /ctx -> ( /io=/Catln/IO ).. = /
-                                ( ..Value /$1ff46a-states )
-                                ( ..Value /$1ff46a-ctx )
-                            )
-                        ]
-                    }
-                )
-            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
@@ -119,9 +91,9 @@ Prgm
                                 ) -> /Context
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
-                                ) = /main.$1ff46a
-                                ( Value /$1ff46a-arg -> TVArg /v = Value /v )
-                                ( Value /$1ff46a-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
+                                ) = /main.$8c693e
+                                ( Value /$8c693e-arg -> TVArg /v = Value /v )
+                                ( Value /$8c693e-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
                         ]
                     }
@@ -182,6 +154,34 @@ Prgm
                                 , /l=~nonNeg( /this=~/$this )
                                 ) && PredRel Integer
                             ) = Value /n
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$8c693e"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$8c693e
+                            ( Value /$8c693e-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$8c693e-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$8c693e-states -> ( /io=/Catln/IO ) ) -> /Context
+                            ( /value=()
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Context
+                            ( Value /value -> () = Value / )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /
+                                ( ..Value /$8c693e-states )
+                                ( ..Value /$8c693e-ctx )
+                            )
                         ]
                     }
                 )

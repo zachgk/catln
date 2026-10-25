@@ -2,25 +2,6 @@ Prgm
     { prgmObjMap = ObjectMapWith
         { omItems = fromList
             [
-                ( "/main.$47d595"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ main.$47d595
-                            ( Value $47d595-arg= /Context( Value value )
-                                ( Value ctx@Value $47d595-ctx )
-                            )
-                            ( Value $47d595-states )= /Context( Value value= Value / )
-                            ( Value ctx= /
-                                ( ..Value $47d595-states )
-                                ( ..Value $47d595-ctx )
-                            )
-                        ]
-                    }
-                )
-            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
@@ -42,9 +23,9 @@ Prgm
                             ( Value m= /ContextIn( Value value= Value f )
                                 ( Value ctx= /( Value io= Value io ) )
                             )
-                            ( fn( Value v )= main.$47d595
-                                ( Value $47d595-arg= Value v )
-                                ( Value $47d595-states= /( Value io= Value io ) )
+                            ( fn( Value v )= main.$526c7b
+                                ( Value $526c7b-arg= Value v )
+                                ( Value $526c7b-states= /( Value io= Value io ) )
                             )
                         ]
                     }
@@ -67,6 +48,25 @@ Prgm
                             )
                             ( Value /r= CInt
                                 { ciValue = 2 }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$526c7b"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$526c7b
+                            ( Value $526c7b-arg= /Context( Value value )
+                                ( Value ctx@Value $526c7b-ctx )
+                            )
+                            ( Value $526c7b-states )= /Context( Value value= Value / )
+                            ( Value ctx= /
+                                ( ..Value $526c7b-states )
+                                ( ..Value $526c7b-ctx )
                             )
                         ]
                     }

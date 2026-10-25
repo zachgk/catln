@@ -33,9 +33,9 @@ Prgm
                                 ( Value value= lcm( Value input= Value input )( Value page= Value page ) )
                                 ( Value ctx= /( Value io= Value io ) )
                             )
-                            ( fn( Value v )= /Catln/process.$590790( Value /input= Value /input )
-                                ( Value $590790-arg= Value v )
-                                ( Value $590790-states= /( Value io= Value io ) )
+                            ( fn( Value v )= /Catln/process.$777570( Value /input= Value /input )
+                                ( Value $777570-arg= Value v )
+                                ( Value $777570-states= /( Value io= Value io ) )
                             )
                         ]
                     }
@@ -76,21 +76,21 @@ Prgm
                     }
                 )
             ,
-                ( "/Catln/process.$590790"
+                ( "/Catln/process.$777570"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Catln/process.$590790( Value /input -> ∀/Data/String )
-                            ( Value $590790-arg= /Context( Value value@Value reply )
-                                ( Value ctx@Value $590790-ctx )
+                        [ /Catln/process.$777570( Value /input -> ∀/Data/String )
+                            ( Value $777570-arg= /Context( Value value@Value reply )
+                                ( Value ctx@Value $777570-ctx )
                             )
-                            ( Value $590790-states )= /Context
+                            ( Value $777570-states )= /Context
                             ( Value value= qAnswered( Value input= Value input )( Value reply= Value reply ) )
                             ( Value ctx= /
-                                ( ..Value $590790-states )
-                                ( ..Value $590790-ctx )
+                                ( ..Value $777570-states )
+                                ( ..Value $777570-ctx )
                             )
                         ]
                     }

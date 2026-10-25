@@ -148,6 +148,129 @@ Prgm
                     }
                 )
             ,
+                ( "/Llm/llm.$b0b33b.$a41629.$c66a50"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/llm.$b0b33b.$a41629.$c66a50( Value /input -> ∀/Data/String )
+                            ( Value /base -> ∀/Data/Maybe[ /T=∀/Data/String ] )
+                            ( Value /model -> ∀/Data/Maybe[ /T=∀/Data/String ] )
+                            ( Value /$c66a50-arg -> /Context
+                                [ /V=∀/Data/Maybe[ /T=∀/Data/String ] ]
+                                ( /value=∀/Data/Maybe[ /T=∀/Data/String ]
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value@Value /key -> ∀/Data/Maybe[ /T=∀/Data/String ] )
+                                ( Value /ctx@Value /$c66a50-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$c66a50-states -> ( /io=/Catln/IO ).. ) -> /Context
+                            [ /V=∀/Data/Result
+                                [ /T=∀/Data/String
+                                , /E=∀/Llm/LlmErr
+                                ]
+                            ]
+                            ( /value=∀/Data/Result
+                                [ /T=∀/Data/String
+                                , /E=∀/Llm/LlmErr
+                                ]
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ]
+                                ]
+                                ( /value=∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ]
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /ContextIn
+                                ( Value /value -> /Llm/llmWith
+                                    ( /model=∀/Data/Maybe[ /T=∀/Data/String ]
+                                    , /base=∀/Data/Maybe[ /T=∀/Data/String ]
+                                    , /input=∀/Data/String
+                                    , /key=∀/Data/Maybe[ /T=∀/Data/String ]
+                                    ) = /Llm/llmWith( Value /input -> TVArg /input = Value /input )( Value /base -> TVArg /base = Value /base )( Value /model -> TVArg /model = Value /model )( Value /key -> TVArg /key = Value /key )
+                                )
+                                ( Value /ctx -> ( /io=/Catln/IO ).. = /( ..Value /$c66a50-states )( ..Value /$c66a50-ctx ) )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=∀/Data/Result
+                                        [ /T=∀/Data/String
+                                        , /E=∀/Llm/LlmErr
+                                        ]
+                                    ]
+                                    ( /value=∀/Data/Result
+                                        [ /T=∀/Data/String
+                                        , /E=∀/Llm/LlmErr
+                                        ]
+                                    , /ctx=( /io=/Catln/IO )..
+                                    )
+                                ) -> /Context
+                                [ /V=∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ]
+                                ]
+                                ( /value=∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ]
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Llm/llm.$b0b33b.$a41629.$c66a50.$3fb3ee
+                                ( Value /$3fb3ee-arg -> TVArg /v = Value /v )
+                                ( Value /$3fb3ee-states -> ( /io=/Catln/IO ).. = /( ..Value /$c66a50-states )( ..Value /$c66a50-ctx ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/llm.$b0b33b.$a41629.$c66a50.$3fb3ee"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/llm.$b0b33b.$a41629.$c66a50.$3fb3ee
+                            ( Value /$3fb3ee-arg -> /Context
+                                [ /V=∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ]
+                                ]
+                                ( /value=∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ]
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value@Value /reply -> ∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ]
+                                )
+                                ( Value /ctx@Value /$3fb3ee-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$3fb3ee-states -> ( /io=/Catln/IO ).. ) -> /Context
+                            ( /value=∀/Data/Result
+                                [ /T=∀/Data/String
+                                , /E=∀/Llm/LlmErr
+                                ]
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Context( Value /value -> TVArg /reply = Value /reply )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /
+                                ( ..Value /$3fb3ee-states )
+                                ( ..Value /$3fb3ee-ctx )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Llm/llmSent"
                 , ObjectMapItem
                     { omiDecls =
@@ -178,6 +301,70 @@ Prgm
                                 [ /T=∀/Data/Json
                                 , /E=/Data/JsonParseErr..
                                 ] = /Data/jsonParse( Value /text -> TVArg /value = Value /value )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/llm.$b0b33b.$a41629"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/llm.$b0b33b.$a41629( Value /input -> ∀/Data/String )
+                            ( Value /base -> ∀/Data/Maybe[ /T=∀/Data/String ] )
+                            ( Value /$a41629-arg -> /Context
+                                [ /V=∀/Data/Maybe[ /T=∀/Data/String ] ]
+                                ( /value=∀/Data/Maybe[ /T=∀/Data/String ]
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value@Value /model -> ∀/Data/Maybe[ /T=∀/Data/String ] )
+                                ( Value /ctx@Value /$a41629-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$a41629-states -> ( /io=/Catln/IO ).. ) -> /Context
+                            [ /V=∀/Data/Result
+                                [ /T=∀/Data/String
+                                , /E=∀/Llm/LlmErr
+                                ]
+                            ]
+                            ( /value=∀/Data/Result
+                                [ /T=∀/Data/String
+                                , /E=∀/Llm/LlmErr
+                                ]
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=∀/Data/Maybe[ /T=∀/Data/String ] ]
+                                ( /value=∀/Data/Maybe[ /T=∀/Data/String ]
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /ContextIn
+                                ( Value /value -> /System/env( /name=/Catln/CStr ) = /System/env
+                                    ( Value /name -> /Catln/CStr = CStr
+                                        { csValue = "OPENAI_API_KEY" }
+                                    )
+                                )
+                                ( Value /ctx -> ( /io=/Catln/IO ).. = /( ..Value /$a41629-states )( ..Value /$a41629-ctx ) )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=∀/Data/Maybe[ /T=∀/Data/String ] ]
+                                    ( /value=∀/Data/Maybe[ /T=∀/Data/String ]
+                                    , /ctx=( /io=/Catln/IO )..
+                                    )
+                                ) -> /Context
+                                [ /V=∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ]
+                                ]
+                                ( /value=∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ]
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Llm/llm.$b0b33b.$a41629.$c66a50( Value /input -> TVArg /input = Value /input )( Value /base -> TVArg /base = Value /base )( Value /model -> TVArg /model = Value /model )( Value /$c66a50-arg -> TVArg /v = Value /v )
+                                ( Value /$c66a50-states -> ( /io=/Catln/IO ).. = /( ..Value /$a41629-states )( ..Value /$a41629-ctx ) )
                             )
                         ]
                     }
@@ -256,8 +443,8 @@ Prgm
                                     , /E=∀/Llm/LlmErr
                                     ]
                                 , /ctx=( /io=/Catln/IO )..
-                                ) = /Llm/llm.$ad0f0c( Value /input -> TVArg /input = Value /input )( Value /$ad0f0c-arg -> TVArg /v = Value /v )
-                                ( Value /$ad0f0c-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
+                                ) = /Llm/llm.$b0b33b( Value /input -> TVArg /input = Value /input )( Value /$b0b33b-arg -> TVArg /v = Value /v )
+                                ( Value /$b0b33b-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
                         , /ContextIn
                             ( Value /value -> /Llm/llmWith
@@ -460,8 +647,8 @@ Prgm
                                     , /E=∀/Llm/LlmErr
                                     ]
                                 , /ctx=( /io=/Catln/IO )..
-                                ) = /Llm/llmWith.$a45a5a( Value /$a45a5a-arg -> TVArg /v = Value /v )
-                                ( Value /$a45a5a-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
+                                ) = /Llm/llmWith.$a87281( Value /$a87281-arg -> TVArg /v = Value /v )
+                                ( Value /$a87281-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
                         ]
                     }
@@ -508,76 +695,22 @@ Prgm
                     }
                 )
             ,
-                ( "/Llm/llmWith.$a45a5a"
+                ( "/Llm/llm.$b0b33b"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Llm/llmWith.$a45a5a
-                            ( Value /$a45a5a-arg -> /Context
-                                [ /V=∀/Data/Result
-                                    [ /T=∀/Data/String
-                                    , /E=∀/Http/HttpErr
-                                    ]
-                                ]
-                                ( /value=∀/Data/Result
-                                    [ /T=∀/Data/String
-                                    , /E=∀/Http/HttpErr
-                                    ]
-                                , /ctx=( /io=/Catln/IO )..
-                                ) = /Context
-                                ( Value /value@Value /response -> UnionType
-                                    ( Just
-                                        ( PredClass /Data/Result
-                                            [ /T=∀/Data/String
-                                            , /E=∀/Http/HttpErr
-                                            ]
-                                        , fromList []
-                                        , []
-                                        )
-                                    ,
-                                        ( /Data/Result/Fail[ /E=∀/Http/HttpErr ]( /err=∀/Http/HttpErr ) + /Data/Result/Ok[ /T=∀/Data/String ]( /value=∀/Data/String ) )
-                                    , []
-                                    )
-                                )
-                                ( Value /ctx@Value /$a45a5a-ctx -> ( /io=/Catln/IO ).. )
-                            )
-                            ( Value /$a45a5a-states -> ( /io=/Catln/IO ) ) -> /Context
-                            ( /value=∀/Data/Result
-                                [ /T=∀/Data/String
-                                , /E=∀/Llm/LlmErr
-                                ]
-                            , /ctx=( /io=/Catln/IO )..
-                            ) = /Context
-                            ( Value /value -> ∀/Data/Result
-                                [ /T=∀/Data/String
-                                , /E=∀/Llm/LlmErr
-                                ] = /Llm/llmSent( Value /response -> TVArg /response = Value /response )
-                            )
-                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( ..Value /$a45a5a-states )( ..Value /$a45a5a-ctx ) )
-                        ]
-                    }
-                )
-            ,
-                ( "/Llm/llm.$ad0f0c.$a07c6b.$e5c534"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Llm/llm.$ad0f0c.$a07c6b.$e5c534( Value /input -> ∀/Data/String )
-                            ( Value /base -> ∀/Data/Maybe[ /T=∀/Data/String ] )
-                            ( Value /model -> ∀/Data/Maybe[ /T=∀/Data/String ] )
-                            ( Value /$e5c534-arg -> /Context
+                        [ /Llm/llm.$b0b33b( Value /input -> ∀/Data/String )
+                            ( Value /$b0b33b-arg -> /Context
                                 [ /V=∀/Data/Maybe[ /T=∀/Data/String ] ]
                                 ( /value=∀/Data/Maybe[ /T=∀/Data/String ]
                                 , /ctx=( /io=/Catln/IO )..
                                 ) = /Context
-                                ( Value /value@Value /key -> ∀/Data/Maybe[ /T=∀/Data/String ] )
-                                ( Value /ctx@Value /$e5c534-ctx -> ( /io=/Catln/IO ).. )
+                                ( Value /value@Value /base -> ∀/Data/Maybe[ /T=∀/Data/String ] )
+                                ( Value /ctx@Value /$b0b33b-ctx -> ( /io=/Catln/IO ).. )
                             )
-                            ( Value /$e5c534-states -> ( /io=/Catln/IO ).. ) -> /Context
+                            ( Value /$b0b33b-states -> ( /io=/Catln/IO ) ) -> /Context
                             [ /V=∀/Data/Result
                                 [ /T=∀/Data/String
                                 , /E=∀/Llm/LlmErr
@@ -590,37 +723,21 @@ Prgm
                             , /ctx=( /io=/Catln/IO )..
                             ) = /Data/bindap
                             ( Value /m -> /Context
-                                [ /V=∀/Data/Result
-                                    [ /T=∀/Data/String
-                                    , /E=∀/Llm/LlmErr
-                                    ]
-                                ]
-                                ( /value=∀/Data/Result
-                                    [ /T=∀/Data/String
-                                    , /E=∀/Llm/LlmErr
-                                    ]
+                                [ /V=∀/Data/Maybe[ /T=∀/Data/String ] ]
+                                ( /value=∀/Data/Maybe[ /T=∀/Data/String ]
                                 , /ctx=( /io=/Catln/IO )..
                                 ) = /ContextIn
-                                ( Value /value -> /Llm/llmWith
-                                    ( /model=∀/Data/Maybe[ /T=∀/Data/String ]
-                                    , /base=∀/Data/Maybe[ /T=∀/Data/String ]
-                                    , /input=∀/Data/String
-                                    , /key=∀/Data/Maybe[ /T=∀/Data/String ]
-                                    ) = /Llm/llmWith( Value /input -> TVArg /input = Value /input )( Value /base -> TVArg /base = Value /base )( Value /model -> TVArg /model = Value /model )( Value /key -> TVArg /key = Value /key )
+                                ( Value /value -> /System/env( /name=/Catln/CStr ) = /System/env
+                                    ( Value /name -> /Catln/CStr = CStr
+                                        { csValue = "OPENAI_MODEL" }
+                                    )
                                 )
-                                ( Value /ctx -> ( /io=/Catln/IO ).. = /( ..Value /$e5c534-states )( ..Value /$e5c534-ctx ) )
+                                ( Value /ctx -> ( /io=/Catln/IO ).. = /( ..Value /$b0b33b-states )( ..Value /$b0b33b-ctx ) )
                             )
                             ( /fn
                                 ( Value /v -> /Context
-                                    [ /V=∀/Data/Result
-                                        [ /T=∀/Data/String
-                                        , /E=∀/Llm/LlmErr
-                                        ]
-                                    ]
-                                    ( /value=∀/Data/Result
-                                        [ /T=∀/Data/String
-                                        , /E=∀/Llm/LlmErr
-                                        ]
+                                    [ /V=∀/Data/Maybe[ /T=∀/Data/String ] ]
+                                    ( /value=∀/Data/Maybe[ /T=∀/Data/String ]
                                     , /ctx=( /io=/Catln/IO )..
                                     )
                                 ) -> /Context
@@ -634,8 +751,8 @@ Prgm
                                     , /E=∀/Llm/LlmErr
                                     ]
                                 , /ctx=( /io=/Catln/IO )..
-                                ) = /Llm/llm.$ad0f0c.$a07c6b.$e5c534.$d20a74( Value /$d20a74-arg -> TVArg /v = Value /v )
-                                ( Value /$d20a74-states -> ( /io=/Catln/IO ).. = /( ..Value /$e5c534-states )( ..Value /$e5c534-ctx ) )
+                                ) = /Llm/llm.$b0b33b.$a41629( Value /input -> TVArg /input = Value /input )( Value /base -> TVArg /base = Value /base )( Value /$a41629-arg -> TVArg /v = Value /v )
+                                ( Value /$a41629-states -> ( /io=/Catln/IO ).. = /( ..Value /$b0b33b-states )( ..Value /$b0b33b-ctx ) )
                             )
                         ]
                     }
@@ -950,44 +1067,6 @@ Prgm
                                     { csValue = "choices" }
                                 )
                             )
-                        ]
-                    }
-                )
-            ,
-                ( "/Llm/llm.$ad0f0c.$a07c6b.$e5c534.$d20a74"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Llm/llm.$ad0f0c.$a07c6b.$e5c534.$d20a74
-                            ( Value /$d20a74-arg -> /Context
-                                [ /V=∀/Data/Result
-                                    [ /T=∀/Data/String
-                                    , /E=∀/Llm/LlmErr
-                                    ]
-                                ]
-                                ( /value=∀/Data/Result
-                                    [ /T=∀/Data/String
-                                    , /E=∀/Llm/LlmErr
-                                    ]
-                                , /ctx=( /io=/Catln/IO )..
-                                ) = /Context
-                                ( Value /value@Value /reply -> ∀/Data/Result
-                                    [ /T=∀/Data/String
-                                    , /E=∀/Llm/LlmErr
-                                    ]
-                                )
-                                ( Value /ctx@Value /$d20a74-ctx -> ( /io=/Catln/IO ).. )
-                            )
-                            ( Value /$d20a74-states -> ( /io=/Catln/IO ).. ) -> /Context
-                            ( /value=∀/Data/Result
-                                [ /T=∀/Data/String
-                                , /E=∀/Llm/LlmErr
-                                ]
-                            , /ctx=( /io=/Catln/IO )..
-                            ) = /Context( Value /value -> TVArg /reply = Value /reply )
-                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( ..Value /$d20a74-states )( ..Value /$d20a74-ctx ) )
                         ]
                     }
                 )
@@ -1615,129 +1694,54 @@ Prgm
                     }
                 )
             ,
-                ( "/Llm/llm.$ad0f0c.$a07c6b"
+                ( "/Llm/llmWith.$a87281"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Llm/llm.$ad0f0c.$a07c6b( Value /input -> ∀/Data/String )
-                            ( Value /base -> ∀/Data/Maybe[ /T=∀/Data/String ] )
-                            ( Value /$a07c6b-arg -> /Context
-                                [ /V=∀/Data/Maybe[ /T=∀/Data/String ] ]
-                                ( /value=∀/Data/Maybe[ /T=∀/Data/String ]
+                        [ /Llm/llmWith.$a87281
+                            ( Value /$a87281-arg -> /Context
+                                [ /V=∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Http/HttpErr
+                                    ]
+                                ]
+                                ( /value=∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Http/HttpErr
+                                    ]
                                 , /ctx=( /io=/Catln/IO )..
                                 ) = /Context
-                                ( Value /value@Value /model -> ∀/Data/Maybe[ /T=∀/Data/String ] )
-                                ( Value /ctx@Value /$a07c6b-ctx -> ( /io=/Catln/IO ).. )
+                                ( Value /value@Value /response -> UnionType
+                                    ( Just
+                                        ( PredClass /Data/Result
+                                            [ /T=∀/Data/String
+                                            , /E=∀/Http/HttpErr
+                                            ]
+                                        , fromList []
+                                        , []
+                                        )
+                                    ,
+                                        ( /Data/Result/Fail[ /E=∀/Http/HttpErr ]( /err=∀/Http/HttpErr ) + /Data/Result/Ok[ /T=∀/Data/String ]( /value=∀/Data/String ) )
+                                    , []
+                                    )
+                                )
+                                ( Value /ctx@Value /$a87281-ctx -> ( /io=/Catln/IO ).. )
                             )
-                            ( Value /$a07c6b-states -> ( /io=/Catln/IO ).. ) -> /Context
-                            [ /V=∀/Data/Result
-                                [ /T=∀/Data/String
-                                , /E=∀/Llm/LlmErr
-                                ]
-                            ]
+                            ( Value /$a87281-states -> ( /io=/Catln/IO ) ) -> /Context
                             ( /value=∀/Data/Result
                                 [ /T=∀/Data/String
                                 , /E=∀/Llm/LlmErr
                                 ]
                             , /ctx=( /io=/Catln/IO )..
-                            ) = /Data/bindap
-                            ( Value /m -> /Context
-                                [ /V=∀/Data/Maybe[ /T=∀/Data/String ] ]
-                                ( /value=∀/Data/Maybe[ /T=∀/Data/String ]
-                                , /ctx=( /io=/Catln/IO )..
-                                ) = /ContextIn
-                                ( Value /value -> /System/env( /name=/Catln/CStr ) = /System/env
-                                    ( Value /name -> /Catln/CStr = CStr
-                                        { csValue = "OPENAI_API_KEY" }
-                                    )
-                                )
-                                ( Value /ctx -> ( /io=/Catln/IO ).. = /( ..Value /$a07c6b-states )( ..Value /$a07c6b-ctx ) )
-                            )
-                            ( /fn
-                                ( Value /v -> /Context
-                                    [ /V=∀/Data/Maybe[ /T=∀/Data/String ] ]
-                                    ( /value=∀/Data/Maybe[ /T=∀/Data/String ]
-                                    , /ctx=( /io=/Catln/IO )..
-                                    )
-                                ) -> /Context
-                                [ /V=∀/Data/Result
-                                    [ /T=∀/Data/String
-                                    , /E=∀/Llm/LlmErr
-                                    ]
-                                ]
-                                ( /value=∀/Data/Result
-                                    [ /T=∀/Data/String
-                                    , /E=∀/Llm/LlmErr
-                                    ]
-                                , /ctx=( /io=/Catln/IO )..
-                                ) = /Llm/llm.$ad0f0c.$a07c6b.$e5c534( Value /input -> TVArg /input = Value /input )( Value /base -> TVArg /base = Value /base )( Value /model -> TVArg /model = Value /model )( Value /$e5c534-arg -> TVArg /v = Value /v )
-                                ( Value /$e5c534-states -> ( /io=/Catln/IO ).. = /( ..Value /$a07c6b-states )( ..Value /$a07c6b-ctx ) )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/Llm/llm.$ad0f0c"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Llm/llm.$ad0f0c( Value /input -> ∀/Data/String )
-                            ( Value /$ad0f0c-arg -> /Context
-                                [ /V=∀/Data/Maybe[ /T=∀/Data/String ] ]
-                                ( /value=∀/Data/Maybe[ /T=∀/Data/String ]
-                                , /ctx=( /io=/Catln/IO )..
-                                ) = /Context
-                                ( Value /value@Value /base -> ∀/Data/Maybe[ /T=∀/Data/String ] )
-                                ( Value /ctx@Value /$ad0f0c-ctx -> ( /io=/Catln/IO ).. )
-                            )
-                            ( Value /$ad0f0c-states -> ( /io=/Catln/IO ) ) -> /Context
-                            [ /V=∀/Data/Result
+                            ) = /Context
+                            ( Value /value -> ∀/Data/Result
                                 [ /T=∀/Data/String
                                 , /E=∀/Llm/LlmErr
-                                ]
-                            ]
-                            ( /value=∀/Data/Result
-                                [ /T=∀/Data/String
-                                , /E=∀/Llm/LlmErr
-                                ]
-                            , /ctx=( /io=/Catln/IO )..
-                            ) = /Data/bindap
-                            ( Value /m -> /Context
-                                [ /V=∀/Data/Maybe[ /T=∀/Data/String ] ]
-                                ( /value=∀/Data/Maybe[ /T=∀/Data/String ]
-                                , /ctx=( /io=/Catln/IO )..
-                                ) = /ContextIn
-                                ( Value /value -> /System/env( /name=/Catln/CStr ) = /System/env
-                                    ( Value /name -> /Catln/CStr = CStr
-                                        { csValue = "OPENAI_MODEL" }
-                                    )
-                                )
-                                ( Value /ctx -> ( /io=/Catln/IO ).. = /( ..Value /$ad0f0c-states )( ..Value /$ad0f0c-ctx ) )
+                                ] = /Llm/llmSent( Value /response -> TVArg /response = Value /response )
                             )
-                            ( /fn
-                                ( Value /v -> /Context
-                                    [ /V=∀/Data/Maybe[ /T=∀/Data/String ] ]
-                                    ( /value=∀/Data/Maybe[ /T=∀/Data/String ]
-                                    , /ctx=( /io=/Catln/IO )..
-                                    )
-                                ) -> /Context
-                                [ /V=∀/Data/Result
-                                    [ /T=∀/Data/String
-                                    , /E=∀/Llm/LlmErr
-                                    ]
-                                ]
-                                ( /value=∀/Data/Result
-                                    [ /T=∀/Data/String
-                                    , /E=∀/Llm/LlmErr
-                                    ]
-                                , /ctx=( /io=/Catln/IO )..
-                                ) = /Llm/llm.$ad0f0c.$a07c6b( Value /input -> TVArg /input = Value /input )( Value /base -> TVArg /base = Value /base )( Value /$a07c6b-arg -> TVArg /v = Value /v )
-                                ( Value /$a07c6b-states -> ( /io=/Catln/IO ).. = /( ..Value /$ad0f0c-states )( ..Value /$ad0f0c-ctx ) )
-                            )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( ..Value /$a87281-states )( ..Value /$a87281-ctx ) )
                         ]
                     }
                 )

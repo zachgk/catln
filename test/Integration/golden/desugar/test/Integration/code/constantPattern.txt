@@ -2,41 +2,6 @@ Prgm
     { prgmObjMap = ObjectMapWith
         { omItems = fromList
             [
-                ( "/main.$33dea6.$b16fa6"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ main.$33dea6.$b16fa6
-                            ( Value $b16fa6-arg= /Context( Value value )( Value ctx@Value $b16fa6-ctx ) )( Value $b16fa6-states )= /Data/bindap
-                            ( Value m= /ContextIn
-                                ( Value value= println
-                                    ( Value msg= toString
-                                        ( Value /this= startsA
-                                            ( Value cs= /Data/List/Cons
-                                                ( Value /head= CChar
-                                                    { chValue = 'a' }
-                                                )
-                                                ( Value /tail= /Data/List/Cons
-                                                    ( Value /head= CChar
-                                                        { chValue = 'b' }
-                                                    )( Value /tail= Value /Data/List/Nil )
-                                                )
-                                            )
-                                        )
-                                    )
-                                )
-                                ( Value ctx= /( ..Value $b16fa6-states )( ..Value $b16fa6-ctx ) )
-                            )
-                            ( fn( Value v )= main.$33dea6.$b16fa6.$2f4383
-                                ( Value $2f4383-arg= Value v )
-                                ( Value $2f4383-states= /( ..Value $b16fa6-states )( ..Value $b16fa6-ctx ) )
-                            )
-                        ]
-                    }
-                )
-            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
@@ -62,33 +27,70 @@ Prgm
                                 )
                                 ( Value ctx= /( Value io= Value io ) )
                             )
-                            ( fn( Value v )= main.$33dea6
-                                ( Value $33dea6-arg= Value v )
-                                ( Value $33dea6-states= /( Value io= Value io ) )
+                            ( fn( Value v )= main.$44eb9c
+                                ( Value $44eb9c-arg= Value v )
+                                ( Value $44eb9c-states= /( Value io= Value io ) )
                             )
                         ]
                     }
                 )
             ,
-                ( "/main.$33dea6.$b16fa6.$2f4383.$e7cc3d"
+                ( "/main.$44eb9c"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ main.$33dea6.$b16fa6.$2f4383.$e7cc3d
-                            ( Value $e7cc3d-arg= /Context( Value value )( Value ctx@Value $e7cc3d-ctx ) )( Value $e7cc3d-states )= /Data/bindap
+                        [ main.$44eb9c
+                            ( Value $44eb9c-arg= /Context( Value value )
+                                ( Value ctx@Value $44eb9c-ctx )
+                            )
+                            ( Value $44eb9c-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= println
+                                    ( Value msg= toString
+                                        ( Value /this= isZero
+                                            ( Value x= CInt
+                                                { ciValue = 5 }
+                                            )
+                                        )
+                                    )
+                                )
+                                ( Value ctx= /
+                                    ( ..Value $44eb9c-states )
+                                    ( ..Value $44eb9c-ctx )
+                                )
+                            )
+                            ( fn( Value v )= main.$44eb9c.$7c157b
+                                ( Value $7c157b-arg= Value v )
+                                ( Value $7c157b-states= /
+                                    ( ..Value $44eb9c-states )
+                                    ( ..Value $44eb9c-ctx )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$44eb9c.$7c157b.$c6ebc0.$cabaab"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$44eb9c.$7c157b.$c6ebc0.$cabaab
+                            ( Value $cabaab-arg= /Context( Value value )( Value ctx@Value $cabaab-ctx ) )( Value $cabaab-states )= /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= exit
                                     ( Value val= CInt
                                         { ciValue = 0 }
                                     )
                                 )
-                                ( Value ctx= /( ..Value $e7cc3d-states )( ..Value $e7cc3d-ctx ) )
+                                ( Value ctx= /( ..Value $cabaab-states )( ..Value $cabaab-ctx ) )
                             )
-                            ( fn( Value v )= main.$33dea6.$b16fa6.$2f4383.$e7cc3d.$620336
-                                ( Value $620336-arg= Value v )
-                                ( Value $620336-states= /( ..Value $e7cc3d-states )( ..Value $e7cc3d-ctx ) )
+                            ( fn( Value v )= main.$44eb9c.$7c157b.$c6ebc0.$cabaab.$53d687
+                                ( Value $53d687-arg= Value v )
+                                ( Value $53d687-states= /( ..Value $cabaab-states )( ..Value $cabaab-ctx ) )
                             )
                         ]
                     }
@@ -114,42 +116,6 @@ Prgm
                     }
                 )
             ,
-                ( "/main.$33dea6"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ main.$33dea6
-                            ( Value $33dea6-arg= /Context( Value value )
-                                ( Value ctx@Value $33dea6-ctx )
-                            )
-                            ( Value $33dea6-states )= /Data/bindap
-                            ( Value m= /ContextIn
-                                ( Value value= println
-                                    ( Value msg= toString
-                                        ( Value /this= isZero
-                                            ( Value x= CInt
-                                                { ciValue = 5 }
-                                            )
-                                        )
-                                    )
-                                )
-                                ( Value ctx= /
-                                    ( ..Value $33dea6-states )
-                                    ( ..Value $33dea6-ctx )
-                                )
-                            )
-                            ( fn( Value v )= main.$33dea6.$b16fa6( Value $b16fa6-arg= Value v )
-                                ( Value $b16fa6-states= /
-                                    ( ..Value $33dea6-states )
-                                    ( ..Value $33dea6-ctx )
-                                )
-                            )
-                        ]
-                    }
-                )
-            ,
                 ( "/isZero"
                 , ObjectMapItem
                     { omiDecls =
@@ -166,36 +132,76 @@ Prgm
                     }
                 )
             ,
-                ( "/main.$33dea6.$b16fa6.$2f4383.$e7cc3d.$620336"
+                ( "/main.$44eb9c.$7c157b.$c6ebc0.$cabaab.$53d687"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ main.$33dea6.$b16fa6.$2f4383.$e7cc3d.$620336
-                            ( Value $620336-arg= /Context( Value value )
-                                ( Value ctx@Value $620336-ctx )
+                        [ main.$44eb9c.$7c157b.$c6ebc0.$cabaab.$53d687
+                            ( Value $53d687-arg= /Context( Value value )
+                                ( Value ctx@Value $53d687-ctx )
                             )
-                            ( Value $620336-states )= /Context( Value value= Value / )
+                            ( Value $53d687-states )= /Context( Value value= Value / )
                             ( Value ctx= /
-                                ( ..Value $620336-states )
-                                ( ..Value $620336-ctx )
+                                ( ..Value $53d687-states )
+                                ( ..Value $53d687-ctx )
                             )
                         ]
                     }
                 )
             ,
-                ( "/main.$33dea6.$b16fa6.$2f4383"
+                ( "/main.$44eb9c.$7c157b"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ main.$33dea6.$b16fa6.$2f4383
-                            ( Value $2f4383-arg= /Context( Value value )
-                                ( Value ctx@Value $2f4383-ctx )
+                        [ main.$44eb9c.$7c157b
+                            ( Value $7c157b-arg= /Context( Value value )
+                                ( Value ctx@Value $7c157b-ctx )
                             )
-                            ( Value $2f4383-states )= /Data/bindap
+                            ( Value $7c157b-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= println
+                                    ( Value msg= toString
+                                        ( Value /this= startsA
+                                            ( Value cs= /Data/List/Cons
+                                                ( Value /head= CChar
+                                                    { chValue = 'a' }
+                                                )
+                                                ( Value /tail= /Data/List/Cons
+                                                    ( Value /head= CChar
+                                                        { chValue = 'b' }
+                                                    )( Value /tail= Value /Data/List/Nil )
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                                ( Value ctx= /
+                                    ( ..Value $7c157b-states )
+                                    ( ..Value $7c157b-ctx )
+                                )
+                            )
+                            ( fn( Value v )= main.$44eb9c.$7c157b.$c6ebc0( Value $c6ebc0-arg= Value v )
+                                ( Value $c6ebc0-states= /
+                                    ( ..Value $7c157b-states )
+                                    ( ..Value $7c157b-ctx )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$44eb9c.$7c157b.$c6ebc0"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$44eb9c.$7c157b.$c6ebc0
+                            ( Value $c6ebc0-arg= /Context( Value value )( Value ctx@Value $c6ebc0-ctx ) )( Value $c6ebc0-states )= /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= println
                                     ( Value msg= toString
@@ -208,16 +214,10 @@ Prgm
                                         )
                                     )
                                 )
-                                ( Value ctx= /
-                                    ( ..Value $2f4383-states )
-                                    ( ..Value $2f4383-ctx )
-                                )
+                                ( Value ctx= /( ..Value $c6ebc0-states )( ..Value $c6ebc0-ctx ) )
                             )
-                            ( fn( Value v )= main.$33dea6.$b16fa6.$2f4383.$e7cc3d( Value $e7cc3d-arg= Value v )
-                                ( Value $e7cc3d-states= /
-                                    ( ..Value $2f4383-states )
-                                    ( ..Value $2f4383-ctx )
-                                )
+                            ( fn( Value v )= main.$44eb9c.$7c157b.$c6ebc0.$cabaab( Value $cabaab-arg= Value v )
+                                ( Value $cabaab-states= /( ..Value $c6ebc0-states )( ..Value $c6ebc0-ctx ) )
                             )
                         ]
                     }

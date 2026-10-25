@@ -52,28 +52,8 @@ Prgm
                                 )
                                 ( Value ctx= /( Value io= Value io ) )
                             )
-                            ( fn( Value v )= main.$19cbd4
-                                ( Value $19cbd4-arg= Value v )
-                                ( Value $19cbd4-states= /( Value io= Value io ) )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/main.$19cbd4"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ main.$19cbd4
-                            ( Value $19cbd4-arg= /Context( Value value )
-                                ( Value ctx@Value $19cbd4-ctx )
-                            )
-                            ( Value $19cbd4-states )= /Context( Value value= Value / )
-                            ( Value ctx= /
-                                ( ..Value $19cbd4-states )
-                                ( ..Value $19cbd4-ctx )
+                            ( fn( Value v )= main.$ab94c6( Value $ab94c6-arg= Value v )
+                                ( Value $ab94c6-states= /( Value io= Value io ) )
                             )
                         ]
                     }
@@ -86,6 +66,19 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ evenAdd( Value a -> /Data/Primitive/Integer )( Value b -> /Data/Primitive/Integer ) | even( Value a ) -> /Data/Primitive/Integer = /operator+( Value /l= Value a )( Value /r= Value b ) ]
+                    }
+                )
+            ,
+                ( "/main.$ab94c6"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$ab94c6
+                            ( Value $ab94c6-arg= /Context( Value value )( Value ctx@Value $ab94c6-ctx ) )( Value $ab94c6-states )= /Context( Value value= Value / )
+                            ( Value ctx= /( ..Value $ab94c6-states )( ..Value $ab94c6-ctx ) )
+                        ]
                     }
                 )
             ]

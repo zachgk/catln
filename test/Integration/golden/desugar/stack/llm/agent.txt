@@ -255,9 +255,8 @@ Prgm
                                 )
                                 ( Value ctx= /( Value io= Value io ) )
                             )
-                            ( fn( Value v )= /Catln/processFile.$4ef661
-                                ( Value $4ef661-arg= Value v )
-                                ( Value $4ef661-states= /( Value io= Value io ) )
+                            ( fn( Value v )= /Catln/processFile.$fbaaa5( Value $fbaaa5-arg= Value v )
+                                ( Value $fbaaa5-states= /( Value io= Value io ) )
                             )
                         , /ContextIn
                             ( Value /value= /Llm/agentAsk
@@ -276,8 +275,9 @@ Prgm
                                 )
                                 ( Value ctx= /( Value io= Value io ) )
                             )
-                            ( fn( Value v )= /Llm/agentAsk.$db8f2a( Value /annotId= Value /annotId )( Value /history= Value /history )( Value /page= Value /page )( Value /tries= Value /tries )( Value /input= Value /input )( Value /source= Value /source )( Value $db8f2a-arg= Value v )
-                                ( Value $db8f2a-states= /( Value io= Value io ) )
+                            ( fn( Value v )= /Llm/agentAsk.$2f6469( Value /annotId= Value /annotId )( Value /history= Value /history )( Value /page= Value /page )( Value /tries= Value /tries )( Value /input= Value /input )( Value /source= Value /source )
+                                ( Value $2f6469-arg= Value v )
+                                ( Value $2f6469-states= /( Value io= Value io ) )
                             )
                         , /ContextIn
                             ( Value /value= /Llm/agentNext
@@ -304,9 +304,9 @@ Prgm
                                 ( Value value= agentAsk( Value at= Value at )( Value tries= Value tries )( Value history= Value history ) )
                                 ( Value ctx= /( Value io= Value io ) )
                             )
-                            ( fn( Value v )= /Llm/agentNext.$6cb4bc
-                                ( Value $6cb4bc-arg= Value v )
-                                ( Value $6cb4bc-states= /( Value io= Value io ) )
+                            ( fn( Value v )= /Llm/agentNext.$4c7eea
+                                ( Value $4c7eea-arg= Value v )
+                                ( Value $4c7eea-states= /( Value io= Value io ) )
                             )
                         ]
                     }
@@ -353,6 +353,38 @@ Prgm
                                 { csValue = "error: " }
                             )
                             ( Value /r= msg( Value /this= Value err ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/agentNext.$4c7eea"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/agentNext.$4c7eea
+                            ( Value $4c7eea-arg= /Context( Value value@Value result )
+                                ( Value ctx@Value $4c7eea-ctx )
+                            )
+                            ( Value $4c7eea-states )= /Context( Value value= Value result )
+                            ( Value ctx= /
+                                ( ..Value $4c7eea-states )
+                                ( ..Value $4c7eea-ctx )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Catln/processFile.$fbaaa5"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Catln/processFile.$fbaaa5
+                            ( Value $fbaaa5-arg= /Context( Value value@Value result )( Value ctx@Value $fbaaa5-ctx ) )( Value $fbaaa5-states )= /Context( Value value= Value result )
+                            ( Value ctx= /( ..Value $fbaaa5-states )( ..Value $fbaaa5-ctx ) )
                         ]
                     }
                 )
@@ -492,6 +524,39 @@ Prgm
                     }
                 )
             ,
+                ( "/Llm/agentAsk.$2f6469"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/agentAsk.$2f6469( Value /annotId -> ∀/Data/String )( Value /history -> ∀/Data/String )( Value /page -> /Catln/RawPrgm.. )( Value /tries -> /Data/Primitive/Integer )( Value /input -> ∀/Data/String )( Value /source -> ∀/Data/String )
+                            ( Value $2f6469-arg= /Context( Value value@Value reply )
+                                ( Value ctx@Value $2f6469-ctx )
+                            )
+                            ( Value $2f6469-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= agentNext
+                                    ( Value next= agentTook
+                                        ( Value at= AgentAt( Value input= Value input )( Value page= Value page )( Value annotId= Value annotId )( Value source= Value source ) )( Value tries= Value tries )( Value history= Value history )( Value reply= Value reply )
+                                    )
+                                )
+                                ( Value ctx= /
+                                    ( ..Value $2f6469-states )
+                                    ( ..Value $2f6469-ctx )
+                                )
+                            )
+                            ( fn( Value v )= /Llm/agentAsk.$2f6469.$4c309d
+                                ( Value $4c309d-arg= Value v )
+                                ( Value $4c309d-states= /
+                                    ( ..Value $2f6469-states )
+                                    ( ..Value $2f6469-ctx )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Llm/editsFound"
                 , ObjectMapItem
                     { omiDecls =
@@ -596,19 +661,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Llm/agentAsk.$db8f2a.$ccb179"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Llm/agentAsk.$db8f2a.$ccb179
-                            ( Value $ccb179-arg= /Context( Value value@Value result )( Value ctx@Value $ccb179-ctx ) )( Value $ccb179-states )= /Context( Value value= Value result )
-                            ( Value ctx= /( ..Value $ccb179-states )( ..Value $ccb179-ctx ) )
-                        ]
-                    }
-                )
-            ,
                 ( "/Llm/editsJoined"
                 , ObjectMapItem
                     { omiDecls =
@@ -634,6 +686,25 @@ Prgm
                             )
                             ( Value /r= editsJoined
                                 ( Value edits= /Data/List/Cons( Value head= Value next )( Value tail= Value rest ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/agentAsk.$2f6469.$4c309d"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/agentAsk.$2f6469.$4c309d
+                            ( Value $4c309d-arg= /Context( Value value@Value result )
+                                ( Value ctx@Value $4c309d-ctx )
+                            )
+                            ( Value $4c309d-states )= /Context( Value value= Value result )
+                            ( Value ctx= /
+                                ( ..Value $4c309d-states )
+                                ( ..Value $4c309d-ctx )
                             )
                         ]
                     }
@@ -782,25 +853,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Llm/agentNext.$6cb4bc"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Llm/agentNext.$6cb4bc
-                            ( Value $6cb4bc-arg= /Context( Value value@Value result )
-                                ( Value ctx@Value $6cb4bc-ctx )
-                            )
-                            ( Value $6cb4bc-states )= /Context( Value value= Value result )
-                            ( Value ctx= /
-                                ( ..Value $6cb4bc-states )
-                                ( ..Value $6cb4bc-ctx )
-                            )
-                        ]
-                    }
-                )
-            ,
                 ( "/Llm/#agent"
                 , ObjectMapItem
                     { omiDecls =
@@ -810,48 +862,6 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
-                    }
-                )
-            ,
-                ( "/Catln/processFile.$4ef661"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Catln/processFile.$4ef661
-                            ( Value $4ef661-arg= /Context( Value value@Value result )
-                                ( Value ctx@Value $4ef661-ctx )
-                            )
-                            ( Value $4ef661-states )= /Context( Value value= Value result )
-                            ( Value ctx= /
-                                ( ..Value $4ef661-states )
-                                ( ..Value $4ef661-ctx )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/Llm/agentAsk.$db8f2a"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Llm/agentAsk.$db8f2a( Value /annotId -> ∀/Data/String )( Value /history -> ∀/Data/String )( Value /page -> /Catln/RawPrgm.. )( Value /tries -> /Data/Primitive/Integer )( Value /input -> ∀/Data/String )( Value /source -> ∀/Data/String )
-                            ( Value $db8f2a-arg= /Context( Value value@Value reply )( Value ctx@Value $db8f2a-ctx ) )( Value $db8f2a-states )= /Data/bindap
-                            ( Value m= /ContextIn
-                                ( Value value= agentNext
-                                    ( Value next= agentTook
-                                        ( Value at= AgentAt( Value input= Value input )( Value page= Value page )( Value annotId= Value annotId )( Value source= Value source ) )( Value tries= Value tries )( Value history= Value history )( Value reply= Value reply )
-                                    )
-                                )
-                                ( Value ctx= /( ..Value $db8f2a-states )( ..Value $db8f2a-ctx ) )
-                            )
-                            ( fn( Value v )= /Llm/agentAsk.$db8f2a.$ccb179( Value $ccb179-arg= Value v )
-                                ( Value $ccb179-states= /( ..Value $db8f2a-states )( ..Value $db8f2a-ctx ) )
-                            )
-                        ]
                     }
                 )
             ,

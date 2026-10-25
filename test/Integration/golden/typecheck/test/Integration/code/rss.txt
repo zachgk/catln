@@ -36,38 +36,34 @@ Prgm
                                 ) -> /Context
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
-                                ) = /main.$620336
-                                ( Value /$620336-arg -> TVArg /v = Value /v )
-                                ( Value /$620336-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
+                                ) = /main.$ffd654( Value /$ffd654-arg -> TVArg /v = Value /v )
+                                ( Value /$ffd654-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
                         ]
                     }
                 )
             ,
-                ( "/main.$620336"
+                ( "/main.$ffd654"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /main.$620336
-                            ( Value /$620336-arg -> /Context
+                        [ /main.$ffd654
+                            ( Value /$ffd654-arg -> /Context
                                 [ /V=() ]
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
                                 ) = /Context
                                 ( Value /value -> () )
-                                ( Value /ctx@Value /$620336-ctx -> ( /io=/Catln/IO ).. )
+                                ( Value /ctx@Value /$ffd654-ctx -> ( /io=/Catln/IO ).. )
                             )
-                            ( Value /$620336-states -> ( /io=/Catln/IO ) ) -> /Context
+                            ( Value /$ffd654-states -> ( /io=/Catln/IO ) ) -> /Context
                             ( /value=()
                             , /ctx=( /io=/Catln/IO )..
                             ) = /Context
                             ( Value /value -> () = Value / )
-                            ( Value /ctx -> ( /io=/Catln/IO ).. = /
-                                ( ..Value /$620336-states )
-                                ( ..Value /$620336-ctx )
-                            )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( ..Value /$ffd654-states )( ..Value /$ffd654-ctx ) )
                         ]
                     }
                 )

@@ -50,51 +50,6 @@ Prgm
                     }
                 )
             ,
-                ( "/main.$af0acc.$974bb3.$66f693"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ main.$af0acc.$974bb3.$66f693
-                            ( Value $66f693-arg= /Context( Value value )
-                                ( Value ctx@Value $66f693-ctx )
-                            )
-                            ( Value $66f693-states )= /Data/bindap
-                            ( Value m= /ContextIn
-                                ( Value value= println
-                                    ( Value msg= toString
-                                        ( Value /this= keyDepth
-                                            ( Value k= /Catln/PartialKey
-                                                ( Value name= CStr
-                                                    { csValue = "f" }
-                                                )( Value vars= Value /Data/List/Nil )
-                                                ( Value args= /Data/List/Cons
-                                                    ( Value /head= /Catln/PartialKey
-                                                        ( Value name= CStr
-                                                            { csValue = "a" }
-                                                        )( Value vars= Value /Data/List/Nil )( Value args= Value /Data/List/Nil )
-                                                    )( Value /tail= Value /Data/List/Nil )
-                                                )
-                                            )
-                                        )
-                                    )
-                                )
-                                ( Value ctx= /
-                                    ( ..Value $66f693-states )
-                                    ( ..Value $66f693-ctx )
-                                )
-                            )
-                            ( fn( Value v )= main.$af0acc.$974bb3.$66f693.$d51523( Value $d51523-arg= Value v )
-                                ( Value $d51523-states= /
-                                    ( ..Value $66f693-states )
-                                    ( ..Value $66f693-ctx )
-                                )
-                            )
-                        ]
-                    }
-                )
-            ,
                 ( "/Test/noMeta"
                 , ObjectMapItem
                     { omiDecls = [ Value /Test/noMeta -> /Catln/Meta.. ]
@@ -130,152 +85,44 @@ Prgm
                     }
                 )
             ,
-                ( "/main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3"
+                ( "/main.$469447.$91fb08.$6aa23b.$5aaba1.$fcdba9.$97fd00.$271b19"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3
-                            ( Value $40b2f3-arg= /Context( Value value )
-                                ( Value ctx@Value $40b2f3-ctx )
+                        [ main.$469447.$91fb08.$6aa23b.$5aaba1.$fcdba9.$97fd00.$271b19
+                            ( Value $271b19-arg= /Context( Value value )
+                                ( Value ctx@Value $271b19-ctx )
                             )
-                            ( Value $40b2f3-states )= /Data/bindap
+                            ( Value $271b19-states )= /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= println
                                     ( Value msg= toString
-                                        ( Value /this= declCount
-                                            ( Value p= /Catln/Prgm
-                                                ( Value objMap= /Catln/ObjectMap( Value items= Value /Data/List/Nil )( Value decls= Value /Data/List/Nil ) )( Value cg= Value /Data/List/Nil )( Value annots= Value /Data/List/Nil )
-                                            )
-                                        )
-                                    )
-                                )
-                                ( Value ctx= /
-                                    ( ..Value $40b2f3-states )
-                                    ( ..Value $40b2f3-ctx )
-                                )
-                            )
-                            ( fn( Value v )= main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3.$ad597a( Value $ad597a-arg= Value v )
-                                ( Value $ad597a-states= /
-                                    ( ..Value $40b2f3-states )
-                                    ( ..Value $40b2f3-ctx )
-                                )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/main.$af0acc.$974bb3.$66f693.$d51523.$6499d5"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ main.$af0acc.$974bb3.$66f693.$d51523.$6499d5
-                            ( Value $6499d5-arg= /Context( Value value )
-                                ( Value ctx@Value $6499d5-ctx )
-                            )
-                            ( Value $6499d5-states )= /Data/bindap
-                            ( Value m= /ContextIn
-                                ( Value value= println
-                                    ( Value msg= toString
-                                        ( Value /this= constCount
-                                            ( Value t= /Catln/Type/UnionType( Value top= Value /Data/Maybe/Nothing )( Value leafs= Value /Data/List/Nil )
-                                                ( Value consts= /Data/List/Cons
-                                                    ( Value /head= /Catln/Constant/CInt
-                                                        ( Value value= CInt
-                                                            { ciValue = 1 }
-                                                        )
-                                                    )( Value /tail= Value /Data/List/Nil )
+                                        ( Value /this= posLine
+                                            ( Value p= /Catln/SourcePos
+                                                ( Value file= CStr
+                                                    { csValue = "a.ct" }
+                                                )
+                                                ( Value line= CInt
+                                                    { ciValue = 7 }
+                                                )
+                                                ( Value column= CInt
+                                                    { ciValue = 3 }
                                                 )
                                             )
                                         )
                                     )
                                 )
                                 ( Value ctx= /
-                                    ( ..Value $6499d5-states )
-                                    ( ..Value $6499d5-ctx )
+                                    ( ..Value $271b19-states )
+                                    ( ..Value $271b19-ctx )
                                 )
                             )
-                            ( fn( Value v )= main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336( Value $b61336-arg= Value v )
-                                ( Value $b61336-states= /
-                                    ( ..Value $6499d5-states )
-                                    ( ..Value $6499d5-ctx )
-                                )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df
-                            ( Value $64e1df-arg= /Context( Value value )
-                                ( Value ctx@Value $64e1df-ctx )
-                            )
-                            ( Value $64e1df-states )= /Data/bindap
-                            ( Value m= /ContextIn
-                                ( Value value= println
-                                    ( Value msg= exprKind
-                                        ( Value e= /Catln/Expr/Value( Value meta= Value noMeta )
-                                            ( Value name= CStr
-                                                { csValue = "foo" }
-                                            )
-                                        )
-                                    )
-                                )
-                                ( Value ctx= /
-                                    ( ..Value $64e1df-states )
-                                    ( ..Value $64e1df-ctx )
-                                )
-                            )
-                            ( fn( Value v )= main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08
-                                ( Value $873d08-arg= Value v )
-                                ( Value $873d08-states= /
-                                    ( ..Value $64e1df-states )
-                                    ( ..Value $64e1df-ctx )
-                                )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08
-                            ( Value $873d08-arg= /Context( Value value )
-                                ( Value ctx@Value $873d08-ctx )
-                            )
-                            ( Value $873d08-states )= /Data/bindap
-                            ( Value m= /ContextIn
-                                ( Value value= println
-                                    ( Value msg= valueName
-                                        ( Value e= /Catln/Expr/Value( Value meta= Value noMeta )
-                                            ( Value name= CStr
-                                                { csValue = "foo" }
-                                            )
-                                        )
-                                    )
-                                )
-                                ( Value ctx= /
-                                    ( ..Value $873d08-states )
-                                    ( ..Value $873d08-ctx )
-                                )
-                            )
-                            ( fn( Value v )= main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3
-                                ( Value $40b2f3-arg= Value v )
-                                ( Value $40b2f3-states= /
-                                    ( ..Value $873d08-states )
-                                    ( ..Value $873d08-ctx )
+                            ( fn( Value v )= main.$469447.$91fb08.$6aa23b.$5aaba1.$fcdba9.$97fd00.$271b19.$d28d31( Value $d28d31-arg= Value v )
+                                ( Value $d28d31-states= /
+                                    ( ..Value $271b19-states )
+                                    ( ..Value $271b19-ctx )
                                 )
                             )
                         ]
@@ -354,8 +201,9 @@ Prgm
                                 )
                                 ( Value ctx= /( Value io= Value io ) )
                             )
-                            ( fn( Value v )= main.$af0acc( Value $af0acc-arg= Value v )
-                                ( Value $af0acc-states= /( Value io= Value io ) )
+                            ( fn( Value v )= main.$469447
+                                ( Value $469447-arg= Value v )
+                                ( Value $469447-states= /( Value io= Value io ) )
                             )
                         ]
                     }
@@ -403,57 +251,33 @@ Prgm
                     }
                 )
             ,
-                ( "/main.$af0acc.$974bb3"
+                ( "/main.$469447.$91fb08.$6aa23b.$5aaba1.$fcdba9.$97fd00.$271b19.$d28d31.$245d3f.$6bc2c5.$5e4016.$707c3a"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ main.$af0acc.$974bb3
-                            ( Value $974bb3-arg= /Context( Value value )
-                                ( Value ctx@Value $974bb3-ctx )
+                        [ main.$469447.$91fb08.$6aa23b.$5aaba1.$fcdba9.$97fd00.$271b19.$d28d31.$245d3f.$6bc2c5.$5e4016.$707c3a
+                            ( Value $707c3a-arg= /Context( Value value )
+                                ( Value ctx@Value $707c3a-ctx )
                             )
-                            ( Value $974bb3-states )= /Data/bindap
+                            ( Value $707c3a-states )= /Data/bindap
                             ( Value m= /ContextIn
-                                ( Value value= println
-                                    ( Value msg= keyName
-                                        ( Value k= /Catln/PartialKey
-                                            ( Value name= CStr
-                                                { csValue = "x" }
-                                            )( Value vars= Value /Data/List/Nil )( Value args= Value /Data/List/Nil )
-                                        )
+                                ( Value value= exit
+                                    ( Value val= CInt
+                                        { ciValue = 0 }
                                     )
                                 )
                                 ( Value ctx= /
-                                    ( ..Value $974bb3-states )
-                                    ( ..Value $974bb3-ctx )
+                                    ( ..Value $707c3a-states )
+                                    ( ..Value $707c3a-ctx )
                                 )
                             )
-                            ( fn( Value v )= main.$af0acc.$974bb3.$66f693
-                                ( Value $66f693-arg= Value v )
-                                ( Value $66f693-states= /
-                                    ( ..Value $974bb3-states )
-                                    ( ..Value $974bb3-ctx )
+                            ( fn( Value v )= main.$469447.$91fb08.$6aa23b.$5aaba1.$fcdba9.$97fd00.$271b19.$d28d31.$245d3f.$6bc2c5.$5e4016.$707c3a.$ab25a7( Value $ab25a7-arg= Value v )
+                                ( Value $ab25a7-states= /
+                                    ( ..Value $707c3a-states )
+                                    ( ..Value $707c3a-ctx )
                                 )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3.$ad597a.$83078d.$620336"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3.$ad597a.$83078d.$620336
-                            ( Value $620336-arg= /Context( Value value )
-                                ( Value ctx@Value $620336-ctx )
-                            )
-                            ( Value $620336-states )= /Context( Value value= Value / )
-                            ( Value ctx= /
-                                ( ..Value $620336-states )
-                                ( ..Value $620336-ctx )
                             )
                         ]
                     }
@@ -516,31 +340,98 @@ Prgm
                     }
                 )
             ,
-                ( "/main.$af0acc"
+                ( "/main.$469447.$91fb08.$6aa23b.$5aaba1"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ main.$af0acc
-                            ( Value $af0acc-arg= /Context( Value value )( Value ctx@Value $af0acc-ctx ) )( Value $af0acc-states )= /Data/bindap
+                        [ main.$469447.$91fb08.$6aa23b.$5aaba1
+                            ( Value $5aaba1-arg= /Context( Value value )
+                                ( Value ctx@Value $5aaba1-ctx )
+                            )
+                            ( Value $5aaba1-states )= /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= println
-                                    ( Value msg= toString
-                                        ( Value /this= intOf
-                                            ( Value c= /Catln/Constant/CInt
-                                                ( Value value= CInt
-                                                    { ciValue = 42 }
-                                                )
+                                    ( Value msg= typeKind
+                                        ( Value t= /Catln/Type/UnionType( Value top= Value /Data/Maybe/Nothing )( Value leafs= Value /Data/List/Nil )( Value consts= Value /Data/List/Nil ) )
+                                    )
+                                )
+                                ( Value ctx= /
+                                    ( ..Value $5aaba1-states )
+                                    ( ..Value $5aaba1-ctx )
+                                )
+                            )
+                            ( fn( Value v )= main.$469447.$91fb08.$6aa23b.$5aaba1.$fcdba9( Value $fcdba9-arg= Value v )
+                                ( Value $fcdba9-states= /
+                                    ( ..Value $5aaba1-states )
+                                    ( ..Value $5aaba1-ctx )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$469447.$91fb08.$6aa23b.$5aaba1.$fcdba9.$97fd00.$271b19.$d28d31"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$469447.$91fb08.$6aa23b.$5aaba1.$fcdba9.$97fd00.$271b19.$d28d31
+                            ( Value $d28d31-arg= /Context( Value value )( Value ctx@Value $d28d31-ctx ) )( Value $d28d31-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= println
+                                    ( Value msg= exprKind
+                                        ( Value e= /Catln/Expr/Value( Value meta= Value noMeta )
+                                            ( Value name= CStr
+                                                { csValue = "foo" }
                                             )
                                         )
                                     )
                                 )
-                                ( Value ctx= /( ..Value $af0acc-states )( ..Value $af0acc-ctx ) )
+                                ( Value ctx= /( ..Value $d28d31-states )( ..Value $d28d31-ctx ) )
                             )
-                            ( fn( Value v )= main.$af0acc.$974bb3
-                                ( Value $974bb3-arg= Value v )
-                                ( Value $974bb3-states= /( ..Value $af0acc-states )( ..Value $af0acc-ctx ) )
+                            ( fn( Value v )= main.$469447.$91fb08.$6aa23b.$5aaba1.$fcdba9.$97fd00.$271b19.$d28d31.$245d3f
+                                ( Value $245d3f-arg= Value v )
+                                ( Value $245d3f-states= /( ..Value $d28d31-states )( ..Value $d28d31-ctx ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$469447.$91fb08.$6aa23b.$5aaba1.$fcdba9.$97fd00.$271b19.$d28d31.$245d3f"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$469447.$91fb08.$6aa23b.$5aaba1.$fcdba9.$97fd00.$271b19.$d28d31.$245d3f
+                            ( Value $245d3f-arg= /Context( Value value )
+                                ( Value ctx@Value $245d3f-ctx )
+                            )
+                            ( Value $245d3f-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= println
+                                    ( Value msg= valueName
+                                        ( Value e= /Catln/Expr/Value( Value meta= Value noMeta )
+                                            ( Value name= CStr
+                                                { csValue = "foo" }
+                                            )
+                                        )
+                                    )
+                                )
+                                ( Value ctx= /
+                                    ( ..Value $245d3f-states )
+                                    ( ..Value $245d3f-ctx )
+                                )
+                            )
+                            ( fn( Value v )= main.$469447.$91fb08.$6aa23b.$5aaba1.$fcdba9.$97fd00.$271b19.$d28d31.$245d3f.$6bc2c5
+                                ( Value $6bc2c5-arg= Value v )
+                                ( Value $6bc2c5-states= /
+                                    ( ..Value $245d3f-states )
+                                    ( ..Value $245d3f-ctx )
+                                )
                             )
                         ]
                     }
@@ -568,94 +459,6 @@ Prgm
                     }
                 )
             ,
-                ( "/main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b
-                            ( Value $f1991b-arg= /Context( Value value )( Value ctx@Value $f1991b-ctx ) )( Value $f1991b-states )= /Data/bindap
-                            ( Value m= /ContextIn
-                                ( Value value= println
-                                    ( Value msg= toString
-                                        ( Value /this= posLine
-                                            ( Value p= /Catln/SourcePos
-                                                ( Value file= CStr
-                                                    { csValue = "a.ct" }
-                                                )
-                                                ( Value line= CInt
-                                                    { ciValue = 7 }
-                                                )
-                                                ( Value column= CInt
-                                                    { ciValue = 3 }
-                                                )
-                                            )
-                                        )
-                                    )
-                                )
-                                ( Value ctx= /( ..Value $f1991b-states )( ..Value $f1991b-ctx ) )
-                            )
-                            ( fn( Value v )= main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df
-                                ( Value $64e1df-arg= Value v )
-                                ( Value $64e1df-states= /( ..Value $f1991b-states )( ..Value $f1991b-ctx ) )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336
-                            ( Value $b61336-arg= /Context( Value value )( Value ctx@Value $b61336-ctx ) )( Value $b61336-states )= /Data/bindap
-                            ( Value m= /ContextIn
-                                ( Value value= println
-                                    ( Value msg= writtenIn
-                                        ( Value m= /Catln/Meta
-                                            ( Value type= /Catln/Type/UnionType( Value top= Value /Data/Maybe/Nothing )( Value leafs= Value /Data/List/Nil )( Value consts= Value /Data/List/Nil ) )( Value pos= Value /Data/Maybe/Nothing )
-                                            ( Value id= CStr
-                                                { csValue = "" }
-                                            )( Value dat= Value /Catln/Unit )
-                                        )
-                                    )
-                                )
-                                ( Value ctx= /( ..Value $b61336-states )( ..Value $b61336-ctx ) )
-                            )
-                            ( fn( Value v )= main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b( Value $f1991b-arg= Value v )
-                                ( Value $f1991b-states= /( ..Value $b61336-states )( ..Value $b61336-ctx ) )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/main.$af0acc.$974bb3.$66f693.$d51523"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ main.$af0acc.$974bb3.$66f693.$d51523
-                            ( Value $d51523-arg= /Context( Value value )( Value ctx@Value $d51523-ctx ) )( Value $d51523-states )= /Data/bindap
-                            ( Value m= /ContextIn
-                                ( Value value= println
-                                    ( Value msg= typeKind
-                                        ( Value t= /Catln/Type/UnionType( Value top= Value /Data/Maybe/Nothing )( Value leafs= Value /Data/List/Nil )( Value consts= Value /Data/List/Nil ) )
-                                    )
-                                )
-                                ( Value ctx= /( ..Value $d51523-states )( ..Value $d51523-ctx ) )
-                            )
-                            ( fn( Value v )= main.$af0acc.$974bb3.$66f693.$d51523.$6499d5
-                                ( Value $6499d5-arg= Value v )
-                                ( Value $6499d5-states= /( ..Value $d51523-states )( ..Value $d51523-ctx ) )
-                            )
-                        ]
-                    }
-                )
-            ,
                 ( "/Test/constCount"
                 , ObjectMapItem
                     { omiDecls =
@@ -668,6 +471,40 @@ Prgm
                         , /Test/constCount
                             ( Value t= /Catln/Type/TypeVar( Value aux )( Value loc )( Value inner ) ) -> /Data/Primitive/Integer = CInt
                             { ciValue = 0 }
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$469447.$91fb08.$6aa23b.$5aaba1.$fcdba9"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$469447.$91fb08.$6aa23b.$5aaba1.$fcdba9
+                            ( Value $fcdba9-arg= /Context( Value value )( Value ctx@Value $fcdba9-ctx ) )( Value $fcdba9-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= println
+                                    ( Value msg= toString
+                                        ( Value /this= constCount
+                                            ( Value t= /Catln/Type/UnionType( Value top= Value /Data/Maybe/Nothing )( Value leafs= Value /Data/List/Nil )
+                                                ( Value consts= /Data/List/Cons
+                                                    ( Value /head= /Catln/Constant/CInt
+                                                        ( Value value= CInt
+                                                            { ciValue = 1 }
+                                                        )
+                                                    )( Value /tail= Value /Data/List/Nil )
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                                ( Value ctx= /( ..Value $fcdba9-states )( ..Value $fcdba9-ctx ) )
+                            )
+                            ( fn( Value v )= main.$469447.$91fb08.$6aa23b.$5aaba1.$fcdba9.$97fd00
+                                ( Value $97fd00-arg= Value v )
+                                ( Value $97fd00-states= /( ..Value $fcdba9-states )( ..Value $fcdba9-ctx ) )
+                            )
                         ]
                     }
                 )
@@ -691,6 +528,44 @@ Prgm
                     }
                 )
             ,
+                ( "/main.$469447.$91fb08.$6aa23b.$5aaba1.$fcdba9.$97fd00"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$469447.$91fb08.$6aa23b.$5aaba1.$fcdba9.$97fd00
+                            ( Value $97fd00-arg= /Context( Value value )
+                                ( Value ctx@Value $97fd00-ctx )
+                            )
+                            ( Value $97fd00-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= println
+                                    ( Value msg= writtenIn
+                                        ( Value m= /Catln/Meta
+                                            ( Value type= /Catln/Type/UnionType( Value top= Value /Data/Maybe/Nothing )( Value leafs= Value /Data/List/Nil )( Value consts= Value /Data/List/Nil ) )( Value pos= Value /Data/Maybe/Nothing )
+                                            ( Value id= CStr
+                                                { csValue = "" }
+                                            )( Value dat= Value /Catln/Unit )
+                                        )
+                                    )
+                                )
+                                ( Value ctx= /
+                                    ( ..Value $97fd00-states )
+                                    ( ..Value $97fd00-ctx )
+                                )
+                            )
+                            ( fn( Value v )= main.$469447.$91fb08.$6aa23b.$5aaba1.$fcdba9.$97fd00.$271b19
+                                ( Value $271b19-arg= Value v )
+                                ( Value $271b19-states= /
+                                    ( ..Value $97fd00-states )
+                                    ( ..Value $97fd00-ctx )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/Test/keyDepthAll"
                 , ObjectMapItem
                     { omiDecls =
@@ -710,29 +585,40 @@ Prgm
                     }
                 )
             ,
-                ( "/main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3.$ad597a"
+                ( "/main.$469447"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3.$ad597a
-                            ( Value $ad597a-arg= /Context( Value value )( Value ctx@Value $ad597a-ctx ) )( Value $ad597a-states )= /Data/bindap
+                        [ main.$469447
+                            ( Value $469447-arg= /Context( Value value )
+                                ( Value ctx@Value $469447-ctx )
+                            )
+                            ( Value $469447-states )= /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= println
                                     ( Value msg= toString
-                                        ( Value /this= ownDeclCount
-                                            ( Value name= CStr
-                                                { csValue = "/Test/intOf" }
+                                        ( Value /this= intOf
+                                            ( Value c= /Catln/Constant/CInt
+                                                ( Value value= CInt
+                                                    { ciValue = 42 }
+                                                )
                                             )
                                         )
                                     )
                                 )
-                                ( Value ctx= /( ..Value $ad597a-states )( ..Value $ad597a-ctx ) )
+                                ( Value ctx= /
+                                    ( ..Value $469447-states )
+                                    ( ..Value $469447-ctx )
+                                )
                             )
-                            ( fn( Value v )= main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3.$ad597a.$83078d
-                                ( Value $83078d-arg= Value v )
-                                ( Value $83078d-states= /( ..Value $ad597a-states )( ..Value $ad597a-ctx ) )
+                            ( fn( Value v )= main.$469447.$91fb08
+                                ( Value $91fb08-arg= Value v )
+                                ( Value $91fb08-states= /
+                                    ( ..Value $469447-states )
+                                    ( ..Value $469447-ctx )
+                                )
                             )
                         ]
                     }
@@ -760,35 +646,98 @@ Prgm
                     }
                 )
             ,
-                ( "/main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3.$ad597a.$83078d"
+                ( "/main.$469447.$91fb08.$6aa23b"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3.$ad597a.$83078d
-                            ( Value $83078d-arg= /Context( Value value )
-                                ( Value ctx@Value $83078d-ctx )
+                        [ main.$469447.$91fb08.$6aa23b
+                            ( Value $6aa23b-arg= /Context( Value value )
+                                ( Value ctx@Value $6aa23b-ctx )
                             )
-                            ( Value $83078d-states )= /Data/bindap
+                            ( Value $6aa23b-states )= /Data/bindap
                             ( Value m= /ContextIn
-                                ( Value value= exit
-                                    ( Value val= CInt
-                                        { ciValue = 0 }
+                                ( Value value= println
+                                    ( Value msg= toString
+                                        ( Value /this= keyDepth
+                                            ( Value k= /Catln/PartialKey
+                                                ( Value name= CStr
+                                                    { csValue = "f" }
+                                                )( Value vars= Value /Data/List/Nil )
+                                                ( Value args= /Data/List/Cons
+                                                    ( Value /head= /Catln/PartialKey
+                                                        ( Value name= CStr
+                                                            { csValue = "a" }
+                                                        )( Value vars= Value /Data/List/Nil )( Value args= Value /Data/List/Nil )
+                                                    )( Value /tail= Value /Data/List/Nil )
+                                                )
+                                            )
+                                        )
                                     )
                                 )
                                 ( Value ctx= /
-                                    ( ..Value $83078d-states )
-                                    ( ..Value $83078d-ctx )
+                                    ( ..Value $6aa23b-states )
+                                    ( ..Value $6aa23b-ctx )
                                 )
                             )
-                            ( fn( Value v )= main.$af0acc.$974bb3.$66f693.$d51523.$6499d5.$b61336.$f1991b.$64e1df.$873d08.$40b2f3.$ad597a.$83078d.$620336
-                                ( Value $620336-arg= Value v )
-                                ( Value $620336-states= /
-                                    ( ..Value $83078d-states )
-                                    ( ..Value $83078d-ctx )
+                            ( fn( Value v )= main.$469447.$91fb08.$6aa23b.$5aaba1
+                                ( Value $5aaba1-arg= Value v )
+                                ( Value $5aaba1-states= /
+                                    ( ..Value $6aa23b-states )
+                                    ( ..Value $6aa23b-ctx )
                                 )
                             )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$469447.$91fb08"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$469447.$91fb08
+                            ( Value $91fb08-arg= /Context( Value value )
+                                ( Value ctx@Value $91fb08-ctx )
+                            )
+                            ( Value $91fb08-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= println
+                                    ( Value msg= keyName
+                                        ( Value k= /Catln/PartialKey
+                                            ( Value name= CStr
+                                                { csValue = "x" }
+                                            )( Value vars= Value /Data/List/Nil )( Value args= Value /Data/List/Nil )
+                                        )
+                                    )
+                                )
+                                ( Value ctx= /
+                                    ( ..Value $91fb08-states )
+                                    ( ..Value $91fb08-ctx )
+                                )
+                            )
+                            ( fn( Value v )= main.$469447.$91fb08.$6aa23b
+                                ( Value $6aa23b-arg= Value v )
+                                ( Value $6aa23b-states= /
+                                    ( ..Value $91fb08-states )
+                                    ( ..Value $91fb08-ctx )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$469447.$91fb08.$6aa23b.$5aaba1.$fcdba9.$97fd00.$271b19.$d28d31.$245d3f.$6bc2c5.$5e4016.$707c3a.$ab25a7"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$469447.$91fb08.$6aa23b.$5aaba1.$fcdba9.$97fd00.$271b19.$d28d31.$245d3f.$6bc2c5.$5e4016.$707c3a.$ab25a7
+                            ( Value $ab25a7-arg= /Context( Value value )( Value ctx@Value $ab25a7-ctx ) )( Value $ab25a7-states )= /Context( Value value= Value / )
+                            ( Value ctx= /( ..Value $ab25a7-states )( ..Value $ab25a7-ctx ) )
                         ]
                     }
                 )
@@ -831,6 +780,80 @@ Prgm
                         , /Test/isType( Value b= Value /Catln/ObjectBasis/PatternObj ) -> ∀/Data/Primitive/Boolean = Value False
                         , /Test/isType( Value b= Value /Catln/ObjectBasis/MatchObj ) -> ∀/Data/Primitive/Boolean = Value False
                         , /Test/isType( Value b= Value /Catln/ObjectBasis/ArgObj ) -> ∀/Data/Primitive/Boolean = Value False
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$469447.$91fb08.$6aa23b.$5aaba1.$fcdba9.$97fd00.$271b19.$d28d31.$245d3f.$6bc2c5"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$469447.$91fb08.$6aa23b.$5aaba1.$fcdba9.$97fd00.$271b19.$d28d31.$245d3f.$6bc2c5
+                            ( Value $6bc2c5-arg= /Context( Value value )
+                                ( Value ctx@Value $6bc2c5-ctx )
+                            )
+                            ( Value $6bc2c5-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= println
+                                    ( Value msg= toString
+                                        ( Value /this= declCount
+                                            ( Value p= /Catln/Prgm
+                                                ( Value objMap= /Catln/ObjectMap( Value items= Value /Data/List/Nil )( Value decls= Value /Data/List/Nil ) )( Value cg= Value /Data/List/Nil )( Value annots= Value /Data/List/Nil )
+                                            )
+                                        )
+                                    )
+                                )
+                                ( Value ctx= /
+                                    ( ..Value $6bc2c5-states )
+                                    ( ..Value $6bc2c5-ctx )
+                                )
+                            )
+                            ( fn( Value v )= main.$469447.$91fb08.$6aa23b.$5aaba1.$fcdba9.$97fd00.$271b19.$d28d31.$245d3f.$6bc2c5.$5e4016
+                                ( Value $5e4016-arg= Value v )
+                                ( Value $5e4016-states= /
+                                    ( ..Value $6bc2c5-states )
+                                    ( ..Value $6bc2c5-ctx )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$469447.$91fb08.$6aa23b.$5aaba1.$fcdba9.$97fd00.$271b19.$d28d31.$245d3f.$6bc2c5.$5e4016"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$469447.$91fb08.$6aa23b.$5aaba1.$fcdba9.$97fd00.$271b19.$d28d31.$245d3f.$6bc2c5.$5e4016
+                            ( Value $5e4016-arg= /Context( Value value )
+                                ( Value ctx@Value $5e4016-ctx )
+                            )
+                            ( Value $5e4016-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= println
+                                    ( Value msg= toString
+                                        ( Value /this= ownDeclCount
+                                            ( Value name= CStr
+                                                { csValue = "/Test/intOf" }
+                                            )
+                                        )
+                                    )
+                                )
+                                ( Value ctx= /
+                                    ( ..Value $5e4016-states )
+                                    ( ..Value $5e4016-ctx )
+                                )
+                            )
+                            ( fn( Value v )= main.$469447.$91fb08.$6aa23b.$5aaba1.$fcdba9.$97fd00.$271b19.$d28d31.$245d3f.$6bc2c5.$5e4016.$707c3a
+                                ( Value $707c3a-arg= Value v )
+                                ( Value $707c3a-states= /
+                                    ( ..Value $5e4016-states )
+                                    ( ..Value $5e4016-ctx )
+                                )
+                            )
                         ]
                     }
                 )

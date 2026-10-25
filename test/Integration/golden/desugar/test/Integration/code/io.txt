@@ -2,6 +2,51 @@ Prgm
     { prgmObjMap = ObjectMapWith
         { omItems = fromList
             [
+                ( "/main.$58338d.$dc9c18"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$58338d.$dc9c18
+                            ( Value $dc9c18-arg= /Context( Value value )( Value ctx@Value $dc9c18-ctx ) )( Value $dc9c18-states )= /Context( Value value= Value / )
+                            ( Value ctx= /( ..Value $dc9c18-states )( ..Value $dc9c18-ctx ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$58338d"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$58338d
+                            ( Value $58338d-arg= /Context( Value value )
+                                ( Value ctx@Value $58338d-ctx )
+                            )
+                            ( Value $58338d-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= exit
+                                    ( Value val= CInt
+                                        { ciValue = 0 }
+                                    )
+                                )
+                                ( Value ctx= /
+                                    ( ..Value $58338d-states )
+                                    ( ..Value $58338d-ctx )
+                                )
+                            )
+                            ( fn( Value v )= main.$58338d.$dc9c18( Value $dc9c18-arg= Value v )
+                                ( Value $dc9c18-states= /
+                                    ( ..Value $58338d-states )
+                                    ( ..Value $58338d-ctx )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
@@ -23,61 +68,9 @@ Prgm
                                 )
                                 ( Value ctx= /( Value io= Value io ) )
                             )
-                            ( fn( Value v )= main.$5cb687
-                                ( Value $5cb687-arg= Value v )
-                                ( Value $5cb687-states= /( Value io= Value io ) )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/main.$5cb687.$620336"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ main.$5cb687.$620336
-                            ( Value $620336-arg= /Context( Value value )
-                                ( Value ctx@Value $620336-ctx )
-                            )
-                            ( Value $620336-states )= /Context( Value value= Value / )
-                            ( Value ctx= /
-                                ( ..Value $620336-states )
-                                ( ..Value $620336-ctx )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/main.$5cb687"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ main.$5cb687
-                            ( Value $5cb687-arg= /Context( Value value )
-                                ( Value ctx@Value $5cb687-ctx )
-                            )
-                            ( Value $5cb687-states )= /Data/bindap
-                            ( Value m= /ContextIn
-                                ( Value value= exit
-                                    ( Value val= CInt
-                                        { ciValue = 0 }
-                                    )
-                                )
-                                ( Value ctx= /
-                                    ( ..Value $5cb687-states )
-                                    ( ..Value $5cb687-ctx )
-                                )
-                            )
-                            ( fn( Value v )= main.$5cb687.$620336
-                                ( Value $620336-arg= Value v )
-                                ( Value $620336-states= /
-                                    ( ..Value $5cb687-states )
-                                    ( ..Value $5cb687-ctx )
-                                )
+                            ( fn( Value v )= main.$58338d
+                                ( Value $58338d-arg= Value v )
+                                ( Value $58338d-states= /( Value io= Value io ) )
                             )
                         ]
                     }

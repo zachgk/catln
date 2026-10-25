@@ -35,44 +35,6 @@ Prgm
                     }
                 )
             ,
-                ( "/Llm/lcm.$acf11b"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /Llm/lcm.$acf11b
-                            ( Value /$acf11b-arg -> /Context
-                                [ /V=∀/Data/Result
-                                    [ /T=∀/Data/String
-                                    , /E=∀/Llm/LlmErr
-                                    ]
-                                ]
-                                ( /value=∀/Data/Result
-                                    [ /T=∀/Data/String
-                                    , /E=∀/Llm/LlmErr
-                                    ]
-                                , /ctx=( /io=/Catln/IO )..
-                                ) = /Context
-                                ( Value /value@Value /reply -> ∀/Data/Result
-                                    [ /T=∀/Data/String
-                                    , /E=∀/Llm/LlmErr
-                                    ]
-                                )
-                                ( Value /ctx@Value /$acf11b-ctx -> ( /io=/Catln/IO ).. )
-                            )
-                            ( Value /$acf11b-states -> ( /io=/Catln/IO ) ) -> /Context
-                            ( /value=∀/Data/Result
-                                [ /T=∀/Data/String
-                                , /E=∀/Llm/LlmErr
-                                ]
-                            , /ctx=( /io=/Catln/IO )..
-                            ) = /Context( Value /value -> TVArg /reply = Value /reply )
-                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( ..Value /$acf11b-states )( ..Value /$acf11b-ctx ) )
-                        ]
-                    }
-                )
-            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
@@ -152,8 +114,50 @@ Prgm
                                     , /E=∀/Llm/LlmErr
                                     ]
                                 , /ctx=( /io=/Catln/IO )..
-                                ) = /Llm/lcm.$acf11b( Value /$acf11b-arg -> TVArg /v = Value /v )
-                                ( Value /$acf11b-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
+                                ) = /Llm/lcm.$2f4d67
+                                ( Value /$2f4d67-arg -> TVArg /v = Value /v )
+                                ( Value /$2f4d67-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Llm/lcm.$2f4d67"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /Llm/lcm.$2f4d67
+                            ( Value /$2f4d67-arg -> /Context
+                                [ /V=∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ]
+                                ]
+                                ( /value=∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ]
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value@Value /reply -> ∀/Data/Result
+                                    [ /T=∀/Data/String
+                                    , /E=∀/Llm/LlmErr
+                                    ]
+                                )
+                                ( Value /ctx@Value /$2f4d67-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$2f4d67-states -> ( /io=/Catln/IO ) ) -> /Context
+                            ( /value=∀/Data/Result
+                                [ /T=∀/Data/String
+                                , /E=∀/Llm/LlmErr
+                                ]
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Context( Value /value -> TVArg /reply = Value /reply )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /
+                                ( ..Value /$2f4d67-states )
+                                ( ..Value /$2f4d67-ctx )
                             )
                         ]
                     }

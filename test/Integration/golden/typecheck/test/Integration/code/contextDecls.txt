@@ -80,8 +80,8 @@ Prgm
                                 ( /value=/Data/Primitive/Integer
                                 , /ctx=
                                     ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
-                                ) = /total.$c55c11( Value /$c55c11-arg -> TVArg /v = Value /v )
-                                ( Value /$c55c11-states ->
+                                ) = /total.$bad02e( Value /$bad02e-arg -> TVArg /v = Value /v )
+                                ( Value /$bad02e-states ->
                                     ( /counter=/Counter( /i=/Data/Primitive/Integer ) ) = /( Value /counter -> TVArg /counter = Value /counter )
                                 )
                             )
@@ -144,33 +144,89 @@ Prgm
                                 ) -> /Context
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
-                                ) = /main.$247c0d
-                                ( Value /$247c0d-arg -> TVArg /v = Value /v )
-                                ( Value /$247c0d-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
+                                ) = /main.$b70786( Value /$b70786-arg -> TVArg /v = Value /v )
+                                ( Value /$b70786-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
                         ]
                     }
                 )
             ,
-                ( "/total.$c55c11"
+                ( "/total.$bad02e.$8424a2"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /total.$c55c11
-                            ( Value /$c55c11-arg -> /Context
+                        [ /total.$bad02e.$8424a2
+                            ( Value /$8424a2-arg -> /Context[ /V=/Data/Primitive/Integer ]
+                                ( /value=/Data/Primitive/Integer
+                                , /ctx=
+                                    ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                                ) = /Context( Value /value@Value /n -> /Data/Primitive/Integer )
+                                ( Value /ctx@Value /$8424a2-ctx ->
+                                    ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                                )
+                            )
+                            ( Value /$8424a2-states ->
+                                ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                            ) -> /Context
+                            ( /value=/Data/Primitive/Integer
+                            , /ctx=
+                                ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
+                            ) = /Context( Value /value -> TVArg /n = Value /n )
+                            ( Value /ctx ->
+                                ( /counter=/Counter( /i=/Data/Primitive/Integer ) ) = /
+                                ( ..Value /$8424a2-states )
+                                ( ..Value /$8424a2-ctx )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$b70786"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$b70786
+                            ( Value /$b70786-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$b70786-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$b70786-states -> ( /io=/Catln/IO ) ) -> /Context
+                            ( /value=()
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Context
+                            ( Value /value -> () = Value / )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( ..Value /$b70786-states )( ..Value /$b70786-ctx ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/total.$bad02e"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /total.$bad02e
+                            ( Value /$bad02e-arg -> /Context
                                 [ /V=() ]
                                 ( /value=()
                                 , /ctx=
                                     ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
                                 ) = /Context
                                 ( Value /value -> () )
-                                ( Value /ctx@Value /$c55c11-ctx ->
+                                ( Value /ctx@Value /$bad02e-ctx ->
                                     ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
                                 )
                             )
-                            ( Value /$c55c11-states ->
+                            ( Value /$bad02e-states ->
                                 ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
                             ) -> /Context[ /V=/Data/Primitive/Integer ]
                             ( /value=/Data/Primitive/Integer
@@ -183,7 +239,7 @@ Prgm
                                     ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
                                 ) = /ContextIn( Value /value -> /peek = Value /peek )
                                 ( Value /ctx ->
-                                    ( /counter=/Counter( /i=/Data/Primitive/Integer ) ) = /( ..Value /$c55c11-states )( ..Value /$c55c11-ctx )
+                                    ( /counter=/Counter( /i=/Data/Primitive/Integer ) ) = /( ..Value /$bad02e-states )( ..Value /$bad02e-ctx )
                                 )
                             )
                             ( /fn
@@ -196,68 +252,11 @@ Prgm
                                 ( /value=/Data/Primitive/Integer
                                 , /ctx=
                                     ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
-                                ) = /total.$c55c11.$eb7f1d( Value /$eb7f1d-arg -> TVArg /v = Value /v )
-                                ( Value /$eb7f1d-states ->
-                                    ( /counter=/Counter( /i=/Data/Primitive/Integer ) ) = /( ..Value /$c55c11-states )( ..Value /$c55c11-ctx )
+                                ) = /total.$bad02e.$8424a2
+                                ( Value /$8424a2-arg -> TVArg /v = Value /v )
+                                ( Value /$8424a2-states ->
+                                    ( /counter=/Counter( /i=/Data/Primitive/Integer ) ) = /( ..Value /$bad02e-states )( ..Value /$bad02e-ctx )
                                 )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/main.$247c0d"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /main.$247c0d
-                            ( Value /$247c0d-arg -> /Context
-                                [ /V=() ]
-                                ( /value=()
-                                , /ctx=( /io=/Catln/IO )..
-                                ) = /Context
-                                ( Value /value -> () )
-                                ( Value /ctx@Value /$247c0d-ctx -> ( /io=/Catln/IO ).. )
-                            )
-                            ( Value /$247c0d-states -> ( /io=/Catln/IO ) ) -> /Context
-                            ( /value=()
-                            , /ctx=( /io=/Catln/IO )..
-                            ) = /Context
-                            ( Value /value -> () = Value / )
-                            ( Value /ctx -> ( /io=/Catln/IO ).. = /
-                                ( ..Value /$247c0d-states )
-                                ( ..Value /$247c0d-ctx )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/total.$c55c11.$eb7f1d"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /total.$c55c11.$eb7f1d
-                            ( Value /$eb7f1d-arg -> /Context[ /V=/Data/Primitive/Integer ]
-                                ( /value=/Data/Primitive/Integer
-                                , /ctx=
-                                    ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
-                                ) = /Context( Value /value@Value /n -> /Data/Primitive/Integer )
-                                ( Value /ctx@Value /$eb7f1d-ctx ->
-                                    ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
-                                )
-                            )
-                            ( Value /$eb7f1d-states ->
-                                ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
-                            ) -> /Context
-                            ( /value=/Data/Primitive/Integer
-                            , /ctx=
-                                ( /counter=/Counter( /i=/Data/Primitive/Integer ) )
-                            ) = /Context( Value /value -> TVArg /n = Value /n )
-                            ( Value /ctx ->
-                                ( /counter=/Counter( /i=/Data/Primitive/Integer ) ) = /( ..Value /$eb7f1d-states )( ..Value /$eb7f1d-ctx )
                             )
                         ]
                     }

@@ -2,19 +2,6 @@ Prgm
     { prgmObjMap = ObjectMapWith
         { omItems = fromList
             [
-                ( "/main.$e7dc4b"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ main.$e7dc4b
-                            ( Value $e7dc4b-arg= /Context( Value value )( Value ctx@Value $e7dc4b-ctx ) )( Value $e7dc4b-states )= /Context( Value value= Value / )
-                            ( Value ctx= /( ..Value $e7dc4b-states )( ..Value $e7dc4b-ctx ) )
-                        ]
-                    }
-                )
-            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
@@ -46,8 +33,9 @@ Prgm
                                 )
                                 ( Value ctx= /( Value io= Value io ) )
                             )
-                            ( fn( Value v )= main.$e7dc4b( Value $e7dc4b-arg= Value v )
-                                ( Value $e7dc4b-states= /( Value io= Value io ) )
+                            ( fn( Value v )= main.$6752db
+                                ( Value $6752db-arg= Value v )
+                                ( Value $6752db-states= /( Value io= Value io ) )
                             )
                         ]
                     }
@@ -69,6 +57,25 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /operator+( Value /l= Value Box )( Value /r= Value Box )= Value Box ]
+                    }
+                )
+            ,
+                ( "/main.$6752db"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$6752db
+                            ( Value $6752db-arg= /Context( Value value )
+                                ( Value ctx@Value $6752db-ctx )
+                            )
+                            ( Value $6752db-states )= /Context( Value value= Value / )
+                            ( Value ctx= /
+                                ( ..Value $6752db-states )
+                                ( ..Value $6752db-ctx )
+                            )
+                        ]
                     }
                 )
             ,

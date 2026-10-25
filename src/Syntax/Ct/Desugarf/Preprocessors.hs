@@ -308,7 +308,10 @@ nestedDeclPreprocessor (oa, subStatements) = pure . DPPStatements <$> aux [] sub
       -- element to it.
       return [RawStatementTree (RawDeclStatement oa{roaArr=Just (Just bindapCall, oaReturnMeta)}) (reverse accStmts ++ [contDef])]
       where
-        contName = "$" ++ take 6 (printf "%08x" (hash roa))
+        -- Named from the bind and the object of the declaration it is written in: the same bind
+        -- written in two arms of one function (@leftOp<- llvmOperand(f(..ps)= a(..ps))@ in each
+        -- operator's arm) is two continuations, which named from the bind alone were arms of one.
+        contName = "$" ++ take 6 (printf "%08x" (hash (roaObj oa, roa)))
         contArgName = bindContArgName contName
         -- @cont(contArg\@objExpr)= <restStmt>@ — a nested declaration so its body is preprocessed. The
         -- bind's pattern is aliased onto the parameter (as the working inline form does) rather than

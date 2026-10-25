@@ -2,54 +2,6 @@ Prgm
     { prgmObjMap = ObjectMapWith
         { omItems = fromList
             [
-                ( "/main.$47d595"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /main.$47d595
-                            ( EAppArg
-                                { eaaArg = Value /$47d595-arg -> /Context
-                                    [ /V=() ]
-                                    ( /value=()
-                                    , /ctx=( /io=/Catln/IO )
-                                    ) = /Context
-                                    ( EAppArg
-                                        { eaaArg = Value /value -> () }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /ctx@Value /$47d595-ctx -> ( /io=/Catln/IO ) }
-                                    )
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /$47d595-states -> ( /io=/Catln/IO ) }
-                            ) -> /Context
-                            ( /value=()
-                            , /ctx=( /io=/Catln/IO )
-                            ) = /Context
-                            ( EAppArg
-                                { eaaArg = Value /value -> () = Value / }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ) = /
-                                    ( EAppSpread
-                                        { easExpr =
-                                            ( Value /$47d595-states ↦ TopType )
-                                        }
-                                    )
-                                    ( EAppSpread
-                                        { easExpr =
-                                            ( Value /$47d595-ctx ↦ TopType )
-                                        }
-                                    )
-                                }
-                            )
-                        ]
-                    }
-                )
-            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls = []
@@ -128,12 +80,12 @@ Prgm
                                         ( /value=()
                                         , /ctx=( /io=/Catln/IO )
                                         ) =
-                                        ( /main.$47d595
+                                        ( /main.$526c7b
                                             ( EAppArg
-                                                { eaaArg = Value /$47d595-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                                { eaaArg = Value /$526c7b-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /$47d595-states -> ( /io=/Catln/IO ) = /
+                                                { eaaArg = Value /$526c7b-states -> ( /io=/Catln/IO ) = /
                                                     ( EAppArg
                                                         { eaaArg = Value /io -> TVArg /io = ( Value /io ↦ TVArg /io ) }
                                                     )
@@ -203,6 +155,54 @@ Prgm
                                     )
                                 , []
                                 )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$526c7b"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$526c7b
+                            ( EAppArg
+                                { eaaArg = Value /$526c7b-arg -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /ctx=( /io=/Catln/IO )
+                                    ) = /Context
+                                    ( EAppArg
+                                        { eaaArg = Value /value -> () }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /ctx@Value /$526c7b-ctx -> ( /io=/Catln/IO ) }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /$526c7b-states -> ( /io=/Catln/IO ) }
+                            ) -> /Context
+                            ( /value=()
+                            , /ctx=( /io=/Catln/IO )
+                            ) = /Context
+                            ( EAppArg
+                                { eaaArg = Value /value -> () = Value / }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /ctx -> ( /io=/Catln/IO ) = /
+                                    ( EAppSpread
+                                        { easExpr =
+                                            ( Value /$526c7b-states ↦ TopType )
+                                        }
+                                    )
+                                    ( EAppSpread
+                                        { easExpr =
+                                            ( Value /$526c7b-ctx ↦ TopType )
+                                        }
+                                    )
+                                }
                             )
                         ]
                     }

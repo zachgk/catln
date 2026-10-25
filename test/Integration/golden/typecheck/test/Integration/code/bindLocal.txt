@@ -21,26 +21,26 @@ Prgm
                     }
                 )
             ,
-                ( "/bindWithLocal.$9471e8.doubled"
+                ( "/bindWithLocal.$353967.doubled"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /bindWithLocal.$9471e8.doubled( Value /x -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /x = Value /x )( Value /r -> TVArg /x = Value /x ) ]
+                        [ /bindWithLocal.$353967.doubled( Value /x -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /x = Value /x )( Value /r -> TVArg /x = Value /x ) ]
                     }
                 )
             ,
-                ( "/bindWithLocal.$9471e8"
+                ( "/bindWithLocal.$353967"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /bindWithLocal.$9471e8
-                            ( Value /$9471e8-arg@Value /x -> /Data/Primitive/Integer ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
+                        [ /bindWithLocal.$353967
+                            ( Value /$353967-arg@Value /x -> /Data/Primitive/Integer ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /Data/Maybe/Some
                             ( Value /value -> /Data/Primitive/Integer = /operator+
-                                ( Value /l -> /Data/Primitive/Integer = /bindWithLocal.$9471e8.doubled( Value /x -> TVArg /x = Value /x ) )
+                                ( Value /l -> /Data/Primitive/Integer = /bindWithLocal.$353967.doubled( Value /x -> TVArg /x = Value /x ) )
                                 ( Value /r -> /Data/Primitive/Integer = CInt
                                     { ciValue = 1 }
                                 )
@@ -56,9 +56,24 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /bindWithLocal
-                            ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] = /Data/bindap( Value /m -> TVArg /m = Value /m )
-                            ( /fn( Value /v -> /Data/Primitive/Integer ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /bindWithLocal.$9471e8
-                                ( Value /$9471e8-arg -> TVArg /v = Value /v )
+                            ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> UnionType
+                            ( Just
+                                ( !
+                                    ( !
+                                        ( PredClass /Data/Maybe
+                                            [ /T=/Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) ] && PredClass /Data/Functor
+                                            [ /T=/Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) ]
+                                        ) && !
+                                        ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Monad[ /T=/Data/Primitive/Integer ] )
+                                    ) && PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ]
+                                , fromList []
+                                , []
+                                )
+                            , /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
+                            , []
+                            ) = /Data/bindap( Value /m -> TVArg /m = Value /m )
+                            ( /fn( Value /v -> /Data/Primitive/Integer ) -> /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer ) = /bindWithLocal.$353967
+                                ( Value /$353967-arg -> TVArg /v = Value /v )
                             )
                         ]
                     }

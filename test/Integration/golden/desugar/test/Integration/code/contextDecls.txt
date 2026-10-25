@@ -52,8 +52,8 @@ Prgm
                             ( Value m= /ContextIn( Value value= Value bump )
                                 ( Value ctx= /( Value counter= Value counter ) )
                             )
-                            ( fn( Value v )= total.$c55c11( Value $c55c11-arg= Value v )
-                                ( Value $c55c11-states= /( Value counter= Value counter ) )
+                            ( fn( Value v )= total.$bad02e( Value $bad02e-arg= Value v )
+                                ( Value $bad02e-states= /( Value counter= Value counter ) )
                             )
                         , /ContextIn( Value /value= Value peek )
                             ( Value /ctx= /
@@ -91,60 +91,60 @@ Prgm
                                 )
                                 ( Value ctx= /( Value io= Value io ) )
                             )
-                            ( fn( Value v )= main.$247c0d
-                                ( Value $247c0d-arg= Value v )
-                                ( Value $247c0d-states= /( Value io= Value io ) )
+                            ( fn( Value v )= main.$b70786( Value $b70786-arg= Value v )
+                                ( Value $b70786-states= /( Value io= Value io ) )
                             )
                         ]
                     }
                 )
             ,
-                ( "/total.$c55c11"
+                ( "/total.$bad02e.$8424a2"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ total.$c55c11
-                            ( Value $c55c11-arg= /Context( Value value )( Value ctx@Value $c55c11-ctx ) )( Value $c55c11-states )= /Data/bindap
-                            ( Value m= /ContextIn( Value value= Value peek )
-                                ( Value ctx= /( ..Value $c55c11-states )( ..Value $c55c11-ctx ) )
+                        [ total.$bad02e.$8424a2
+                            ( Value $8424a2-arg= /Context( Value value@Value n )
+                                ( Value ctx@Value $8424a2-ctx )
                             )
-                            ( fn( Value v )= total.$c55c11.$eb7f1d( Value $eb7f1d-arg= Value v )
-                                ( Value $eb7f1d-states= /( ..Value $c55c11-states )( ..Value $c55c11-ctx ) )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/main.$247c0d"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ main.$247c0d
-                            ( Value $247c0d-arg= /Context( Value value )
-                                ( Value ctx@Value $247c0d-ctx )
-                            )
-                            ( Value $247c0d-states )= /Context( Value value= Value / )
+                            ( Value $8424a2-states )= /Context( Value value= Value n )
                             ( Value ctx= /
-                                ( ..Value $247c0d-states )
-                                ( ..Value $247c0d-ctx )
+                                ( ..Value $8424a2-states )
+                                ( ..Value $8424a2-ctx )
                             )
                         ]
                     }
                 )
             ,
-                ( "/total.$c55c11.$eb7f1d"
+                ( "/main.$b70786"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ total.$c55c11.$eb7f1d
-                            ( Value $eb7f1d-arg= /Context( Value value@Value n )( Value ctx@Value $eb7f1d-ctx ) )( Value $eb7f1d-states )= /Context( Value value= Value n )
-                            ( Value ctx= /( ..Value $eb7f1d-states )( ..Value $eb7f1d-ctx ) )
+                        [ main.$b70786
+                            ( Value $b70786-arg= /Context( Value value )( Value ctx@Value $b70786-ctx ) )( Value $b70786-states )= /Context( Value value= Value / )
+                            ( Value ctx= /( ..Value $b70786-states )( ..Value $b70786-ctx ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/total.$bad02e"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ total.$bad02e
+                            ( Value $bad02e-arg= /Context( Value value )( Value ctx@Value $bad02e-ctx ) )( Value $bad02e-states )= /Data/bindap
+                            ( Value m= /ContextIn( Value value= Value peek )
+                                ( Value ctx= /( ..Value $bad02e-states )( ..Value $bad02e-ctx ) )
+                            )
+                            ( fn( Value v )= total.$bad02e.$8424a2
+                                ( Value $8424a2-arg= Value v )
+                                ( Value $8424a2-states= /( ..Value $bad02e-states )( ..Value $bad02e-ctx ) )
+                            )
                         ]
                     }
                 )

@@ -22,6 +22,51 @@ Prgm
                     }
                 )
             ,
+                ( "/print_twice.$efc5e4"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /print_twice.$efc5e4( Value /msg -> ∀/Data/String )
+                            ( Value /$efc5e4-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$efc5e4-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$efc5e4-states -> ( /io=/Catln/IO ) ) -> /Context
+                            ( /value=()
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /ContextIn
+                                ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /println
+                                    ( Value /msg -> /Catln/CStr = /toString( Value /this -> TVArg /msg = Value /msg ) )
+                                )
+                                ( Value /ctx -> ( /io=/Catln/IO ).. = /( ..Value /$efc5e4-states )( ..Value /$efc5e4-ctx ) )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /ctx=( /io=/Catln/IO )..
+                                    )
+                                ) -> /Context
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /print_twice.$efc5e4.$b377c7( Value /$b377c7-arg -> TVArg /v = Value /v )
+                                ( Value /$b377c7-states -> ( /io=/Catln/IO ).. = /( ..Value /$efc5e4-states )( ..Value /$efc5e4-ctx ) )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/string_length"
                 , ObjectMapItem
                     { omiDecls = []
@@ -107,8 +152,8 @@ Prgm
                                 ) -> /Context
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
-                                ) = /say_hello.$dd8e51( Value /$dd8e51-arg -> TVArg /v = Value /v )
-                                ( Value /$dd8e51-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
+                                ) = /say_hello.$a58126( Value /$a58126-arg -> TVArg /v = Value /v )
+                                ( Value /$a58126-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
                         , /ContextIn
                             ( Value /value -> /print_twice( /msg=∀/Data/String ) = /print_twice( Value /msg -> ∀/Data/String ) )
@@ -137,8 +182,8 @@ Prgm
                                 ) -> /Context
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
-                                ) = /print_twice.$dd8e51( Value /msg -> TVArg /msg = Value /msg )( Value /$dd8e51-arg -> TVArg /v = Value /v )
-                                ( Value /$dd8e51-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
+                                ) = /print_twice.$efc5e4( Value /msg -> TVArg /msg = Value /msg )( Value /$efc5e4-arg -> TVArg /v = Value /v )
+                                ( Value /$efc5e4-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
                         , /ContextIn( Value /value -> /echo = Value /echo )
                             ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
@@ -173,9 +218,8 @@ Prgm
                                 ) -> /Context
                                 ( /value=()
                                 , /ctx=( /io=/Catln/IO )..
-                                ) = /echo.$698ad1
-                                ( Value /$698ad1-arg -> TVArg /v = Value /v )
-                                ( Value /$698ad1-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
+                                ) = /echo.$c20a13( Value /$c20a13-arg -> TVArg /v = Value /v )
+                                ( Value /$c20a13-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
                             )
                         , /ContextIn( Value /value -> /main = Value /main )
                             ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
@@ -281,79 +325,6 @@ Prgm
                     }
                 )
             ,
-                ( "/print_twice.$dd8e51"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /print_twice.$dd8e51( Value /msg -> ∀/Data/String )
-                            ( Value /$dd8e51-arg -> /Context
-                                [ /V=() ]
-                                ( /value=()
-                                , /ctx=( /io=/Catln/IO )..
-                                ) = /Context
-                                ( Value /value -> () )
-                                ( Value /ctx@Value /$dd8e51-ctx -> ( /io=/Catln/IO ).. )
-                            )
-                            ( Value /$dd8e51-states -> ( /io=/Catln/IO ) ) -> /Context
-                            ( /value=()
-                            , /ctx=( /io=/Catln/IO )..
-                            ) = /Data/bindap
-                            ( Value /m -> /Context
-                                [ /V=() ]
-                                ( /value=()
-                                , /ctx=( /io=/Catln/IO )..
-                                ) = /ContextIn
-                                ( Value /value -> /Catln/println( /msg=/Catln/CStr ) = /println
-                                    ( Value /msg -> /Catln/CStr = /toString( Value /this -> TVArg /msg = Value /msg ) )
-                                )
-                                ( Value /ctx -> ( /io=/Catln/IO ).. = /( ..Value /$dd8e51-states )( ..Value /$dd8e51-ctx ) )
-                            )
-                            ( /fn
-                                ( Value /v -> /Context
-                                    [ /V=() ]
-                                    ( /value=()
-                                    , /ctx=( /io=/Catln/IO )..
-                                    )
-                                ) -> /Context
-                                ( /value=()
-                                , /ctx=( /io=/Catln/IO )..
-                                ) = /print_twice.$dd8e51.$dd8e51( Value /$dd8e51-arg -> TVArg /v = Value /v )
-                                ( Value /$dd8e51-states -> ( /io=/Catln/IO ).. = /( ..Value /$dd8e51-states )( ..Value /$dd8e51-ctx ) )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/echo.$698ad1"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /echo.$698ad1
-                            ( Value /$698ad1-arg -> /Context
-                                [ /V=() ]
-                                ( /value=()
-                                , /ctx=( /io=/Catln/IO )..
-                                ) = /Context
-                                ( Value /value -> () )
-                                ( Value /ctx@Value /$698ad1-ctx -> ( /io=/Catln/IO ).. )
-                            )
-                            ( Value /$698ad1-states -> ( /io=/Catln/IO ) ) -> /Context
-                            ( /value=()
-                            , /ctx=( /io=/Catln/IO )..
-                            ) = /Context
-                            ( Value /value -> () = Value / )
-                            ( Value /ctx -> ( /io=/Catln/IO ).. = /
-                                ( ..Value /$698ad1-states )
-                                ( ..Value /$698ad1-ctx )
-                            )
-                        ]
-                    }
-                )
-            ,
                 ( "/PI"
                 , ObjectMapItem
                     { omiDecls = []
@@ -407,31 +378,6 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /int_min( Value /a -> /Data/Primitive/Integer )( Value /b -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /min( Value /l -> TVArg /a = Value /a )( Value /r -> TVArg /b = Value /b ) ]
-                    }
-                )
-            ,
-                ( "/print_twice.$dd8e51.$dd8e51"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /print_twice.$dd8e51.$dd8e51
-                            ( Value /$dd8e51-arg -> /Context
-                                [ /V=() ]
-                                ( /value=()
-                                , /ctx=( /io=/Catln/IO )..
-                                ) = /Context
-                                ( Value /value -> () )
-                                ( Value /ctx@Value /$dd8e51-ctx -> ( /io=/Catln/IO ).. )
-                            )
-                            ( Value /$dd8e51-states -> ( /io=/Catln/IO ).. ) -> /Context
-                            ( /value=()
-                            , /ctx=( /io=/Catln/IO )..
-                            ) = /Context
-                            ( Value /value -> () = Value / )
-                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( ..Value /$dd8e51-states )( ..Value /$dd8e51-ctx ) )
-                        ]
                     }
                 )
             ,
@@ -494,6 +440,31 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /to_bool_from_float( Value /x -> /Data/Primitive/Float ) -> ∀/Data/Primitive/Boolean = /toBool( Value /this -> TVArg /x = Value /x ) ]
+                    }
+                )
+            ,
+                ( "/print_twice.$efc5e4.$b377c7"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /print_twice.$efc5e4.$b377c7
+                            ( Value /$b377c7-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$b377c7-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$b377c7-states -> ( /io=/Catln/IO ).. ) -> /Context
+                            ( /value=()
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Context
+                            ( Value /value -> () = Value / )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( ..Value /$b377c7-states )( ..Value /$b377c7-ctx ) )
+                        ]
                     }
                 )
             ,
@@ -579,31 +550,6 @@ Prgm
                     }
                 )
             ,
-                ( "/say_hello.$dd8e51"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /say_hello.$dd8e51
-                            ( Value /$dd8e51-arg -> /Context
-                                [ /V=() ]
-                                ( /value=()
-                                , /ctx=( /io=/Catln/IO )..
-                                ) = /Context
-                                ( Value /value -> () )
-                                ( Value /ctx@Value /$dd8e51-ctx -> ( /io=/Catln/IO ).. )
-                            )
-                            ( Value /$dd8e51-states -> ( /io=/Catln/IO ) ) -> /Context
-                            ( /value=()
-                            , /ctx=( /io=/Catln/IO )..
-                            ) = /Context
-                            ( Value /value -> () = Value / )
-                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( ..Value /$dd8e51-states )( ..Value /$dd8e51-ctx ) )
-                        ]
-                    }
-                )
-            ,
                 ( "/MAX_SIZE"
                 , ObjectMapItem
                     { omiDecls = []
@@ -612,6 +558,31 @@ Prgm
                     , omiDefs =
                         [ Value /MAX_SIZE -> /Data/Primitive/Integer = CInt
                             { ciValue = 100 }
+                        ]
+                    }
+                )
+            ,
+                ( "/say_hello.$a58126"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /say_hello.$a58126
+                            ( Value /$a58126-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$a58126-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$a58126-states -> ( /io=/Catln/IO ) ) -> /Context
+                            ( /value=()
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Context
+                            ( Value /value -> () = Value / )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( ..Value /$a58126-states )( ..Value /$a58126-ctx ) )
                         ]
                     }
                 )
@@ -633,6 +604,31 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /abs_int( Value /x -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /abs( Value /this -> TVArg /x = Value /x ) ]
+                    }
+                )
+            ,
+                ( "/echo.$c20a13"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /echo.$c20a13
+                            ( Value /$c20a13-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$c20a13-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$c20a13-states -> ( /io=/Catln/IO ) ) -> /Context
+                            ( /value=()
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Context
+                            ( Value /value -> () = Value / )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( ..Value /$c20a13-states )( ..Value /$c20a13-ctx ) )
+                        ]
                     }
                 )
             ,
