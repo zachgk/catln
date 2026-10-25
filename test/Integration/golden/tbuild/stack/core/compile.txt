@@ -23,6 +23,19 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/FieldOf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Catln/FieldOf
+                            ( EAppArg { eaaArg = Value /this } )
+                            ( EAppArg { eaaArg = Value /field -> ∀/Data/String } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/Else"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/Else ]
@@ -368,6 +381,7 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType

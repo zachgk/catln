@@ -53,6 +53,14 @@ paramVarPrefix = spreadParamsPrefix ++ "@"
 paramVarHole :: String
 paramVarHole = paramVarPrefix ++ "param"
 
+-- | A read of one field of a value, @FieldOf(this, field)@: what a name a definition's pattern binds
+-- is, once the definition is answered as the function of its parameters by a guard matching it
+-- ('TreeBuild.BodyPattern'). It is never evaluated, only read by what the body is given to.
+fieldOfName, fieldOfThis, fieldOfField :: String
+fieldOfName = "/Catln/FieldOf"
+fieldOfThis = "/this"
+fieldOfField = "/field"
+
 intPrim, floatPrim, truePrim, falsePrim, strPrim, charPrim, ioPrim :: String
 intPrim = "/Data/Primitive/Integer"
 floatPrim = "/Data/Primitive/Float"

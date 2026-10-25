@@ -873,6 +873,17 @@ objDefinedArgs obj = case H.lookup (partialKey (mkName contextValStr)) (exprAppl
   Just (Just (_, Just v)) | maybe False ((== ContextInStr) . nameStr . makeAbsoluteName) (maybeExprPath obj) -> exprAppliedArgs v
   _ -> exprAppliedArgs obj
 
+-- | The variable a key variable of a call in a body pattern binds (@k@ of @${k}= v@, kept as the
+-- argument @..\@k@), when the name is one.
+keyVarName :: Name -> Maybe Name
+keyVarName n = case npathPath (getPath (nameStr n)) of
+  [] -> Nothing
+  ps -> mkName <$> stripPrefix paramVarPrefix (last ps)
+
+-- | The type a variable binding a name as text is given.
+strT :: Type
+strT = relTypeVal (mkName "/Data/String")
+
 -- | Whether a name is the parameter a spread of parameters is kept as (@..ps@ in @f(..ps)@,
 -- 'spreadParamsPrefix'), which stands for whatever parameters a function has.
 isSpreadParamsName :: Name -> Bool
@@ -912,12 +923,17 @@ bodyPatternSubFns obj = go
 -- the alias of an untyped one, bound as the higher-order parameter it is with the hole's meta its
 -- result. The parameters of the function the pattern is over are not bound: inside the pattern they
 -- refer to that function's parameters, which are not the definition's.
+--
+-- A key variable of a call in the pattern (@${k}= v@, kept as the argument @..\@k@) binds the key
+-- it matches, as a 'String'.
 bodyPatternVarArgs :: (MetaDat m, Show m) => Expr m -> VarArgMap Expr m
 bodyPatternVarArgs = go
   where
     go (AliasExpr base n) = H.insertWith (++) (TVArg $ inExprSingleton n) [(n, getExprMeta base)] (go base)
     go (EWhere _ b _) = go b
     go (TupleApply _ (_, be) arg) = H.unionWith (++) (go be) $ case arg of
+      EAppArg ObjArr{oaObj=Just (Value _ kn), oaArr=Just (Just v, _)}
+        | Just k <- keyVarName kn -> H.insertWith (++) (TVArg $ partialKey (makeAbsoluteName k)) [(Value (emptyMetaT strT) k, emptyMetaT strT)] (go v)
       EAppArg ObjArr{oaArr=Just (Just v, _)} -> go v
       EAppSpread a                           -> go a
       _                                      -> H.empty

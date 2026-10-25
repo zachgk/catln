@@ -521,9 +521,37 @@ desFileImport rawImp = rawImp{
 -- in the input of a guard matching a definition, and every spread of the same name in the
 -- definition is then the same parameters. Any other spread is of a value (@Context(value, ..c)@),
 -- and is left as it is.
+--
+-- Inside a body pattern a call may be written open (@${cont}(${k}= v, ..rest)@): a spread among its
+-- arguments (@..rest@) lets it match a call given more arguments than it lists, and a key variable
+-- (@${k}= v@) matches whichever argument has a value matching its own and binds that argument's key.
+-- Both are kept as arguments named with 'spreadParamsPrefix' and 'paramVarPrefix', read where the
+-- pattern is matched ('TreeBuild.BodyPattern'). Only a definition's input holds patterns, so a spread
+-- in its body (@Pt(..c)@) is left a spread of a value.
 rawSpreadParams :: PObjArr -> PObjArr
-rawSpreadParams roa = if null names then roa else onObjArr roa
+rawSpreadParams roa0 = if null names then roa else onObjArr roa
   where
+    roa = roa0{roaObj = onInput <$> roaObj roa0}
+    onInput e = case e of
+      RawTupleApply m (bm, b) args -> RawTupleApply m (bm, onInput b) (map onInputArg args)
+      RawAliasExpr b a -> RawAliasExpr (onInput b) a
+      RawWhere m b c -> RawWhere m (onInput b) c
+      RawParen e' -> RawParen (onInput e')
+      RawContextApply m (bm, b) ctxs -> RawContextApply m (bm, onInput b) ctxs
+      _ -> e
+    onInputArg (False, a@RawObjArr{roaObj=Just k@RawTupleApply{}, roaArr=Just (Just pat, pm)}) = (False, a{roaObj=Just k, roaArr=Just (Just (inPattern pat), pm)})
+    onInputArg (s, a) = (s, a{roaObj = onInput <$> roaObj a})
+    inPattern e = case e of
+      RawTupleApply m (bm, b) args -> RawTupleApply m (bm, inPattern b) (map inPatternArg args)
+      RawAliasExpr b a -> RawAliasExpr (inPattern b) a
+      RawParen e' -> RawParen (inPattern e')
+      RawMethod m b v -> RawMethod m (inPattern b) (inPattern v)
+      _ -> e
+    inPatternArg (True, a@RawObjArr{roaObj=Just (RawValue m n), roaArr=Nothing}) =
+      let n' = mkName (spreadParamsPrefix ++ nameStr n) in (False, a{roaObj=Just (RawValue (mWithType (relTypeVal n') m) n')})
+    inPatternArg (False, a@RawObjArr{roaObj=Just (RawMacroValue m k), roaArr=Just (Just v, vm)}) =
+      let k' = mkName (paramVarPrefix ++ nameStr k) in (False, a{roaObj=Just (RawValue (mWithType (relTypeVal k') m) k'), roaArr=Just (Just (inPattern v), vm)})
+    inPatternArg (s, a) = (s, a{roaArr = fmap (first (fmap inPattern)) (roaArr a)})
     names = concatMap objArrNames (roaObj roa : map Just (roaAnnots roa) ++ [roaArr roa >>= fst, roaDef roa])
     objArrNames = maybe [] exprNames
     exprNames e = case e of

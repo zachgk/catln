@@ -145,6 +145,13 @@ module(Catln)
   (_ ?-> _) -> Boolean
     #runtime("arrExists")
 
+  data(FieldOf(this, field -> String))
+    # A [FieldOf] is a read of the [field] of the value [this], written where a definition binds a
+      name to a part of what it is given. A guard asking for a definition whose parameters
+      destructure (@\@->@) answers with it as the function of its parameters as given, each name
+      its patterns bind a [FieldOf] of the parameter it is in, as the body it is given to reads it.
+      It is never evaluated.
+
   # ## Result Classes
     What a build produces is declared in @core/result.ct@ rather than here. It is a list of files,
     so declaring it here would make this file reach @core/list.ct@ — and this file is one every

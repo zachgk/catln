@@ -2,32 +2,24 @@ Prgm
     { prgmObjMap = ObjectMapWith
         { omItems = fromList
             [
-                ( "/LLVM/llvmOperand.$73eceb"
+                ( "/LLVM/llvmOperand.$a276be"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /LLVM/llvmOperand.$73eceb
+                        [ /LLVM/llvmOperand.$a276be
                             ( /b( Value /..ps ) )
-                            ( Value $73eceb-arg= /Context( Value value@Value leftOp )
-                                ( Value ctx@Value $73eceb-ctx )
-                            )
-                            ( Value $73eceb-states )= /Data/bindap
+                            ( Value $a276be-arg= /Context( Value value@Value leftOp )( Value ctx@Value $a276be-ctx ) )( Value $a276be-states )= /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= llvmOperand
                                     ( f( Value ..ps )= b( Value ..ps= Value ..ps ) )
                                 )
-                                ( Value ctx= /
-                                    ( ..Value $73eceb-states )
-                                    ( ..Value $73eceb-ctx )
-                                )
+                                ( Value ctx= /( ..Value $a276be-states )( ..Value $a276be-ctx ) )
                             )
-                            ( fn( Value v )= /LLVM/llvmOperand.$73eceb.$fb4f99( Value /leftOp= Value /leftOp )( Value $fb4f99-arg= Value v )
-                                ( Value $fb4f99-states= /
-                                    ( ..Value $73eceb-states )
-                                    ( ..Value $73eceb-ctx )
-                                )
+                            ( fn( Value v )= /LLVM/llvmOperand.$a276be.$796402( Value /leftOp= Value /leftOp )
+                                ( Value $796402-arg= Value v )
+                                ( Value $796402-states= /( ..Value $a276be-states )( ..Value $a276be-ctx ) )
                             )
                         ]
                     }
@@ -36,10 +28,33 @@ Prgm
                 ( "/LLVM/Operand"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /LLVM/Operand( Value /type -> ∀/LLVM/LlvmType )( Value /repr -> ∀/Data/String ) ]
+                        [ Value /LLVM/Operand
+                        , Value /LLVM/Operand
+                        , /LLVM/Operand( Value /type -> ∀/LLVM/LlvmType )( Value /repr -> ∀/Data/String )
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/LLVM/Example/llvmExArith"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /LLVM/Example/llvmExArith( Value x -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/Example/llvmExArith( Value x ) -> /Data/Primitive/Integer = /operator+
+                            ( Value /l= /operator*
+                                ( Value /l= CInt
+                                    { ciValue = 2 }
+                                )
+                                ( Value /r= CInt
+                                    { ciValue = 3 }
+                                )
+                            )( Value /r= Value x )
+                        ]
                     }
                 )
             ,
@@ -49,6 +64,7 @@ Prgm
                         [ /LLVM/LlvmProgram
                             ( Value /todo -> ∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ] )
                             ( Value /functions -> ∀/Data/List/ConsList[ /T=∀/Data/String ] )
+                            ( Value /externs -> ∀/Data/List/ConsList[ /T=∀/Data/String ] )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -75,7 +91,7 @@ Prgm
                                                 ( Value llvmprogram= /LLVM/LlvmProgram
                                                     ( Value todo= /Data/List/Cons
                                                         ( Value /head= /LLVM/LlvmTodo( Value fun= Value c ) )( Value /tail= Value /Data/List/Nil )
-                                                    )( Value functions= Value /Data/List/Nil )
+                                                    )( Value functions= Value /Data/List/Nil )( Value externs= Value /Data/List/Nil )
                                                 )
                                             )
                                         )
@@ -86,158 +102,403 @@ Prgm
                     }
                 )
             ,
-                ( "/LLVM/Example/less"
+                ( "/LLVM/llvmOperand.$c22623"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmOperand.$c22623
+                            ( Value $c22623-arg= /Context( Value value@Value valueOp )( Value ctx@Value $c22623-ctx ) )( Value $c22623-states )= /Context( Value value= Value valueOp )
+                            ( Value ctx= /( ..Value $c22623-states )( ..Value $c22623-ctx ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/llvmProgram.$27c43a"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmProgram.$27c43a( Value /fun )
+                            ( Value $27c43a-arg= /Context( Value value )
+                                ( Value ctx@Value $27c43a-ctx )
+                            )
+                            ( Value $27c43a-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= llvmFunction( Value fun= Value fun ) )
+                                ( Value ctx= /
+                                    ( ..Value $27c43a-states )
+                                    ( ..Value $27c43a-ctx )
+                                )
+                            )
+                            ( fn( Value v )= /LLVM/llvmProgram.$27c43a.$5466ac
+                                ( Value $5466ac-arg= Value v )
+                                ( Value $5466ac-states= /
+                                    ( ..Value $27c43a-states )
+                                    ( ..Value $27c43a-ctx )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/llvmHas"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /LLVM/Example/less( Value x -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean ]
+                        [ /LLVM/llvmHas
+                            ( Value lines -> ∀/Data/List/ConsList[ /T=∀/Data/String ] )( Value line -> ∀/Data/String ) -> ∀/Data/Primitive/Boolean
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /LLVM/Example/less( Value x ) -> ∀/Data/Primitive/Boolean = /operator<( Value /l= Value x )
-                            ( Value /r= CInt
-                                { ciValue = 3 }
-                            )
+                        [ /LLVM/llvmHas( Value lines= Value /Data/List/Nil )( Value line ) -> ∀/Data/Primitive/Boolean = Value False
+                        , /LLVM/llvmHas
+                            ( Value lines= /Data/List/Cons( Value head )( Value tail ) )( Value line ) | /operator==( Value /l= Value head )( Value /r= Value line ) -> ∀/Data/Primitive/Boolean = Value True
+                        , /LLVM/llvmHas
+                            ( Value lines= /Data/List/Cons( Value head )( Value tail ) )( Value line ) -> ∀/Data/Primitive/Boolean = llvmHas( Value lines= Value tail )( Value line= Value line )
                         ]
                     }
                 )
             ,
-                ( "/LLVM/llvmOperand.$bf7ac6.$7b4c98.$22c45a"
+                ( "/LLVM/llvmFunction.$e6656d.$a0643b.$abdd31.$cc9e77.$695715"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /LLVM/llvmOperand.$bf7ac6.$7b4c98.$22c45a
-                            ( Value $22c45a-arg= /Context( Value value@Value instrOp )
-                                ( Value ctx@Value $22c45a-ctx )
+                        [ /LLVM/llvmFunction.$e6656d.$a0643b.$abdd31.$cc9e77.$695715( Value /retOp )( Value /bodyLines )
+                            ( Value $695715-arg= /Context( Value value@Value fnExterns )
+                                ( Value ctx@Value $695715-ctx )
                             )
-                            ( Value $22c45a-states )= /Context( Value value= Value instrOp )
-                            ( Value ctx= /
-                                ( ..Value $22c45a-states )
-                                ( ..Value $22c45a-ctx )
+                            ( Value $695715-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= llvmAddFunction
+                                    ( Value text= llvmDefine
+                                        ( Value ret= llvmOperandType( Value o= Value retOp ) )
+                                        ( Value name= CStr
+                                            { csValue = "main" }
+                                        )
+                                        ( Value body= /Data/List/Cons
+                                            ( Value head= CStr
+                                                { csValue = "entry:" }
+                                            )( Value tail= Value bodyLines )
+                                        )
+                                    )( Value needs= Value fnExterns )
+                                )
+                                ( Value ctx= /
+                                    ( ..Value $695715-states )
+                                    ( ..Value $695715-ctx )
+                                )
+                            )
+                            ( fn( Value v )= /LLVM/llvmFunction.$e6656d.$a0643b.$abdd31.$cc9e77.$695715.$f2c243( Value $f2c243-arg= Value v )
+                                ( Value $f2c243-states= /
+                                    ( ..Value $695715-states )
+                                    ( ..Value $695715-ctx )
+                                )
                             )
                         ]
                     }
                 )
             ,
-                ( "/LLVM/llvmProgram.$304e97.$df509a"
+                ( "/LLVM/llvmOperand.$e6a84b.$c78f6d"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /LLVM/llvmProgram.$304e97.$df509a
-                            ( Value $df509a-arg= /Context( Value value )( Value ctx@Value $df509a-ctx ) )( Value $df509a-states )= /Data/bindap
-                            ( Value m= /ContextIn( Value value= Value llvmProgram )
-                                ( Value ctx= /( ..Value $df509a-states )( ..Value $df509a-ctx ) )
-                            )
-                            ( fn( Value v )= /LLVM/llvmProgram.$304e97.$df509a.$79f533
-                                ( Value $79f533-arg= Value v )
-                                ( Value $79f533-states= /( ..Value $df509a-states )( ..Value $df509a-ctx ) )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/LLVM/llvmOperand.$438d39.$d0617a"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /LLVM/llvmOperand.$438d39.$d0617a( Value /leftOp )
-                            ( Value $d0617a-arg= /Context( Value value@Value rightOp )( Value ctx@Value $d0617a-ctx ) )( Value $d0617a-states )= /Data/bindap
+                        [ /LLVM/llvmOperand.$e6a84b.$c78f6d( Value /leftOp )
+                            ( Value $c78f6d-arg= /Context( Value value@Value rightOp )( Value ctx@Value $c78f6d-ctx ) )( Value $c78f6d-states )= /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= llvmInstr
                                     ( Value op= LlvmCompare
                                         ( Value int= CStr
-                                            { csValue = "icmp sge" }
+                                            { csValue = "icmp slt" }
                                         )
                                         ( Value float= CStr
-                                            { csValue = "fcmp oge" }
+                                            { csValue = "fcmp olt" }
                                         )
                                     )( Value l= Value leftOp )( Value r= Value rightOp )
                                 )
-                                ( Value ctx= /( ..Value $d0617a-states )( ..Value $d0617a-ctx ) )
+                                ( Value ctx= /( ..Value $c78f6d-states )( ..Value $c78f6d-ctx ) )
                             )
-                            ( fn( Value v )= /LLVM/llvmOperand.$438d39.$d0617a.$86dde7
-                                ( Value $86dde7-arg= Value v )
-                                ( Value $86dde7-states= /( ..Value $d0617a-states )( ..Value $d0617a-ctx ) )
+                            ( fn( Value v )= /LLVM/llvmOperand.$e6a84b.$c78f6d.$f61c98( Value $f61c98-arg= Value v )
+                                ( Value $f61c98-states= /( ..Value $c78f6d-states )( ..Value $c78f6d-ctx ) )
                             )
                         ]
                     }
                 )
             ,
-                ( "/LLVM/Example/builtText"
+                ( "/LLVM/llvmOperand.$12e6d2"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /LLVM/Example/builtText
-                            ( Value result= CatlnResult
-                                ( Value files= /Data/List/Cons
-                                    ( Value head= BuildFile( Value path )( Value contents ) )( Value tail )
-                                )
-                            )= Value contents
-                        ]
-                    }
-                )
-            ,
-                ( "/LLVM/llvmOperand.$f8a91d"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /LLVM/llvmOperand.$f8a91d
+                        [ /LLVM/llvmOperand.$12e6d2
                             ( /b( Value /..ps ) )
-                            ( Value $f8a91d-arg= /Context( Value value@Value leftOp )( Value ctx@Value $f8a91d-ctx ) )( Value $f8a91d-states )= /Data/bindap
+                            ( Value $12e6d2-arg= /Context( Value value@Value leftOp )
+                                ( Value ctx@Value $12e6d2-ctx )
+                            )
+                            ( Value $12e6d2-states )= /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= llvmOperand
                                     ( f( Value ..ps )= b( Value ..ps= Value ..ps ) )
                                 )
-                                ( Value ctx= /( ..Value $f8a91d-states )( ..Value $f8a91d-ctx ) )
+                                ( Value ctx= /
+                                    ( ..Value $12e6d2-states )
+                                    ( ..Value $12e6d2-ctx )
+                                )
                             )
-                            ( fn( Value v )= /LLVM/llvmOperand.$f8a91d.$2f7a84( Value /leftOp= Value /leftOp )
-                                ( Value $2f7a84-arg= Value v )
-                                ( Value $2f7a84-states= /( ..Value $f8a91d-states )( ..Value $f8a91d-ctx ) )
+                            ( fn( Value v )= /LLVM/llvmOperand.$12e6d2.$d74f80( Value /leftOp= Value /leftOp )( Value $d74f80-arg= Value v )
+                                ( Value $d74f80-states= /
+                                    ( ..Value $12e6d2-states )
+                                    ( ..Value $12e6d2-ctx )
+                                )
                             )
                         ]
                     }
                 )
             ,
-                ( "/LLVM/llvmOperand.$a45376"
+                ( "/LLVM/llvmFunction.$e6656d.$a0643b.$abdd31.$cc9e77.$695715.$f2c243"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /LLVM/llvmOperand.$a45376
-                            ( /b( Value /..ps ) )
-                            ( Value $a45376-arg= /Context( Value value@Value leftOp )( Value ctx@Value $a45376-ctx ) )( Value $a45376-states )= /Data/bindap
+                        [ /LLVM/llvmFunction.$e6656d.$a0643b.$abdd31.$cc9e77.$695715.$f2c243
+                            ( Value $f2c243-arg= /Context( Value value )( Value ctx@Value $f2c243-ctx ) )( Value $f2c243-states )= /Context( Value value= Value / )
+                            ( Value ctx= /( ..Value $f2c243-states )( ..Value $f2c243-ctx ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/llvmProgram.$27c43a.$5466ac"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmProgram.$27c43a.$5466ac
+                            ( Value $5466ac-arg= /Context( Value value )
+                                ( Value ctx@Value $5466ac-ctx )
+                            )
+                            ( Value $5466ac-states )= /Data/bindap
+                            ( Value m= /ContextIn( Value value= Value llvmProgram )
+                                ( Value ctx= /
+                                    ( ..Value $5466ac-states )
+                                    ( ..Value $5466ac-ctx )
+                                )
+                            )
+                            ( fn( Value v )= /LLVM/llvmProgram.$27c43a.$5466ac.$454715
+                                ( Value $454715-arg= Value v )
+                                ( Value $454715-states= /
+                                    ( ..Value $5466ac-states )
+                                    ( ..Value $5466ac-ctx )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/llvmFunction.$b8c946"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmFunction.$b8c946
+                            ( Value $b8c946-arg= /Context( Value value )( Value ctx@Value $b8c946-ctx ) )( Value $b8c946-states )= /Context( Value value= Value / )
+                            ( Value ctx= /( ..Value $b8c946-states )( ..Value $b8c946-ctx ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/llvmFunction.$e6656d"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmFunction.$e6656d
+                            ( /body( Value /..ps ) )
+                            ( Value $e6656d-arg= /Context( Value value )( Value ctx@Value $e6656d-ctx ) )( Value $e6656d-states )= /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= llvmOperand
-                                    ( f( Value ..ps )= b( Value ..ps= Value ..ps ) )
+                                    ( f( Value ..ps )= body( Value ..ps= Value ..ps ) )
                                 )
-                                ( Value ctx= /( ..Value $a45376-states )( ..Value $a45376-ctx ) )
+                                ( Value ctx= /( ..Value $e6656d-states )( ..Value $e6656d-ctx ) )
                             )
-                            ( fn( Value v )= /LLVM/llvmOperand.$a45376.$c38d19( Value /leftOp= Value /leftOp )( Value $c38d19-arg= Value v )
-                                ( Value $c38d19-states= /( ..Value $a45376-states )( ..Value $a45376-ctx ) )
+                            ( fn( Value v )= /LLVM/llvmFunction.$e6656d.$a0643b( Value $a0643b-arg= Value v )
+                                ( Value $a0643b-states= /( ..Value $e6656d-states )( ..Value $e6656d-ctx ) )
                             )
                         ]
                     }
                 )
             ,
-                ( "/LLVM/llvmOperand.$f8a91d.$2f7a84.$bd316b"
+                ( "/LLVM/llvmOperand.$d6076d.$746254"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /LLVM/llvmOperand.$f8a91d.$2f7a84.$bd316b
-                            ( Value $bd316b-arg= /Context( Value value@Value instrOp )( Value ctx@Value $bd316b-ctx ) )( Value $bd316b-states )= /Context( Value value= Value instrOp )
-                            ( Value ctx= /( ..Value $bd316b-states )( ..Value $bd316b-ctx ) )
+                        [ /LLVM/llvmOperand.$d6076d.$746254
+                            ( Value $746254-arg= /Context( Value value@Value strName )
+                                ( Value ctx@Value $746254-ctx )
+                            )
+                            ( Value $746254-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= llvmEmit
+                                    ( Value line= /operator++
+                                        ( Value /l= /operator++
+                                            ( Value /l= CStr
+                                                { csValue = "  call i32 @puts(ptr " }
+                                            )( Value /r= Value strName )
+                                        )
+                                        ( Value /r= CStr
+                                            { csValue = ")" }
+                                        )
+                                    )
+                                )
+                                ( Value ctx= /
+                                    ( ..Value $746254-states )
+                                    ( ..Value $746254-ctx )
+                                )
+                            )
+                            ( fn( Value v )= /LLVM/llvmOperand.$d6076d.$746254.$d6a663( Value $d6a663-arg= Value v )
+                                ( Value $d6a663-states= /
+                                    ( ..Value $746254-states )
+                                    ( ..Value $746254-ctx )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/llvmOperand.$af411e.$7d3722"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmOperand.$af411e.$7d3722( Value /leftOp )
+                            ( Value $7d3722-arg= /Context( Value value@Value rightOp )
+                                ( Value ctx@Value $7d3722-ctx )
+                            )
+                            ( Value $7d3722-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= llvmInstr
+                                    ( Value op= LlvmCompare
+                                        ( Value int= CStr
+                                            { csValue = "icmp sle" }
+                                        )
+                                        ( Value float= CStr
+                                            { csValue = "fcmp ole" }
+                                        )
+                                    )( Value l= Value leftOp )( Value r= Value rightOp )
+                                )
+                                ( Value ctx= /
+                                    ( ..Value $7d3722-states )
+                                    ( ..Value $7d3722-ctx )
+                                )
+                            )
+                            ( fn( Value v )= /LLVM/llvmOperand.$af411e.$7d3722.$b8b55d( Value $b8b55d-arg= Value v )
+                                ( Value $b8b55d-states= /
+                                    ( ..Value $7d3722-states )
+                                    ( ..Value $7d3722-ctx )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/llvmFunction.$e6656d.$a0643b.$abdd31"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmFunction.$e6656d.$a0643b.$abdd31( Value /retOp )
+                            ( Value $abdd31-arg= /Context( Value value )( Value ctx@Value $abdd31-ctx ) )( Value $abdd31-states )= /Data/bindap
+                            ( Value m= /ContextIn( Value value= Value llvmLines )
+                                ( Value ctx= /( ..Value $abdd31-states )( ..Value $abdd31-ctx ) )
+                            )
+                            ( fn( Value v )= /LLVM/llvmFunction.$e6656d.$a0643b.$abdd31.$cc9e77( Value /retOp= Value /retOp )( Value $cc9e77-arg= Value v )
+                                ( Value $cc9e77-states= /( ..Value $abdd31-states )( ..Value $abdd31-ctx ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/llvmAddNew"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /LLVM/llvmAddNew
+                            ( Value lines -> ∀/Data/List/ConsList[ /T=∀/Data/String ] )
+                            ( Value into -> ∀/Data/List/ConsList[ /T=∀/Data/String ] ) -> ∀/Data/List/ConsList[ /T=∀/Data/String ]
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmAddNew( Value lines= Value /Data/List/Nil )( Value into ) -> ∀/Data/List/ConsList[ /T=∀/Data/String ] = Value into
+                        , /LLVM/llvmAddNew
+                            ( Value lines= /Data/List/Cons( Value head )( Value tail ) )( Value into ) | llvmHas( Value lines= Value into )( Value line= Value head ) -> ∀/Data/List/ConsList[ /T=∀/Data/String ] = llvmAddNew( Value lines= Value tail )( Value into= Value into )
+                        , /LLVM/llvmAddNew
+                            ( Value lines= /Data/List/Cons( Value head )( Value tail ) )( Value into ) -> ∀/Data/List/ConsList[ /T=∀/Data/String ] = llvmAddNew( Value lines= Value tail )
+                            ( Value into= /Data/List/Cons( Value head= Value head )( Value tail= Value into ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/llvmOperand.$f6ce35.$df85b2"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmOperand.$f6ce35.$df85b2
+                            ( Value $df85b2-arg= /Context( Value value@Value narrowOp )( Value ctx@Value $df85b2-ctx ) )( Value $df85b2-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= llvmExtern
+                                    ( Value line= CStr
+                                        { csValue = "declare void @exit(i32)" }
+                                    )
+                                )
+                                ( Value ctx= /( ..Value $df85b2-states )( ..Value $df85b2-ctx ) )
+                            )
+                            ( fn( Value v )= /LLVM/llvmOperand.$f6ce35.$df85b2.$4c1eb7( Value /narrowOp= Value /narrowOp )
+                                ( Value $4c1eb7-arg= Value v )
+                                ( Value $4c1eb7-states= /( ..Value $df85b2-states )( ..Value $df85b2-ctx ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/llvmOperand.$12e6d2.$d74f80"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmOperand.$12e6d2.$d74f80( Value /leftOp )
+                            ( Value $d74f80-arg= /Context( Value value@Value rightOp )( Value ctx@Value $d74f80-ctx ) )( Value $d74f80-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= llvmInstr
+                                    ( Value op= LlvmArith
+                                        ( Value int= CStr
+                                            { csValue = "mul" }
+                                        )
+                                        ( Value float= CStr
+                                            { csValue = "fmul" }
+                                        )
+                                    )( Value l= Value leftOp )( Value r= Value rightOp )
+                                )
+                                ( Value ctx= /( ..Value $d74f80-states )( ..Value $d74f80-ctx ) )
+                            )
+                            ( fn( Value v )= /LLVM/llvmOperand.$12e6d2.$d74f80.$dee250( Value $dee250-arg= Value v )
+                                ( Value $dee250-states= /( ..Value $d74f80-states )( ..Value $d74f80-ctx ) )
+                            )
                         ]
                     }
                 )
@@ -247,7 +508,7 @@ Prgm
                     { omiDecls =
                         [ /ContextIn( Value /value= Value /LLVM/llvmProgram )
                             ( Value /ctx= /
-                                ( Value llvmprogram= LlvmProgram( Value todo )( Value functions )@Value llvmprogram )
+                                ( Value llvmprogram= LlvmProgram( Value todo )( Value functions )( Value externs )@Value llvmprogram )
                                 ( ..Hole TopType HoleActive { haName = Nothing } )
                             ) -> /Context
                             ( /value=∀/Data/String
@@ -256,7 +517,7 @@ Prgm
                         , /ContextIn
                             ( Value /value= /LLVM/llvmFunction( Value fun ) )
                             ( Value /ctx= /
-                                ( Value llvmprogram= LlvmProgram( Value todo )( Value functions )@Value llvmprogram )
+                                ( Value llvmprogram= LlvmProgram( Value todo )( Value functions )( Value externs )@Value llvmprogram )
                                 ( ..Hole TopType HoleActive { haName = Nothing } )
                             ) -> /Context
                             ( /value=()
@@ -267,7 +528,7 @@ Prgm
                                 ( f( Value ..ps ) )
                             )
                             ( Value /ctx= /
-                                ( Value llvmfn= LlvmFn( Value next )( Value lines )@Value llvmfn )
+                                ( Value llvmfn= LlvmFn( Value next )( Value lines )( Value aux )@Value llvmfn )
                                 ( ..Hole TopType HoleActive { haName = Nothing } )
                             ) -> /Context
                             ( /value=/LLVM/Operand..
@@ -276,34 +537,50 @@ Prgm
                         , /ContextIn
                             ( Value /value= /LLVM/llvmInstr( Value op -> ∀/LLVM/LlvmBinOp )( Value l -> /LLVM/Operand.. )( Value r -> /LLVM/Operand.. ) )
                             ( Value /ctx= /
-                                ( Value llvmfn= LlvmFn( Value next )( Value lines )@Value llvmfn )
+                                ( Value llvmfn= LlvmFn( Value next )( Value lines )( Value aux )@Value llvmfn )
                                 ( ..Hole TopType HoleActive { haName = Nothing } )
                             ) -> /Context
                             ( /value=/LLVM/Operand..
                             , /ctx=( /llvmfn=/LLVM/LlvmFn.. )
                             )..
+                        , /ContextIn
+                            ( Value /value= /LLVM/llvmNarrow( Value o -> /LLVM/Operand.. ) )
+                            ( Value /ctx= /
+                                ( Value llvmfn= LlvmFn( Value next )( Value lines )( Value aux )@Value llvmfn )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=/LLVM/Operand..
+                            , /ctx=( /llvmfn=/LLVM/LlvmFn.. )
+                            )..
+                        , /ContextIn( Value /value= Value /LLVM/Example/llvmExGreet )
+                            ( Value /ctx= /( Value io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=()
+                            , /ctx=( /io=/Catln/IO )..
+                            )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /ContextIn( Value /value= Value /LLVM/llvmProgram )
                             ( Value /ctx= /
-                                ( Value llvmprogram= LlvmProgram( Value todo= Value /Data/List/Nil )( Value functions )@Value llvmprogram )
+                                ( Value llvmprogram= LlvmProgram( Value todo= Value /Data/List/Nil )( Value functions )( Value externs )@Value llvmprogram )
                                 ( ..Hole TopType HoleActive { haName = Nothing } )
                             ) -> /Context
                             ( /value=∀/Data/String
                             , /ctx=( /llvmprogram=/LLVM/LlvmProgram.. )..
                             ) = /Context
-                            ( Value /value= llvmModule( Value functions= Value functions ) )
+                            ( Value /value= llvmModule( Value functions= Value functions )( Value externs= Value externs ) )
                             ( Value /ctx= /
-                                ( Value llvmprogram= LlvmProgram( Value todo= Value /Data/List/Nil )( Value functions= Value functions ) )
+                                ( Value llvmprogram= LlvmProgram( Value todo= Value /Data/List/Nil )( Value functions= Value functions )( Value externs= Value externs ) )
                             )
                         , /ContextIn( Value /value= Value /LLVM/llvmProgram )
                             ( Value /ctx= /
                                 ( Value llvmprogram= LlvmProgram
                                     ( Value todo= /Data/List/Cons
                                         ( Value head= LlvmTodo( Value fun ) )( Value tail )
-                                    )( Value functions )@Value llvmprogram
+                                    )( Value functions )( Value externs )@Value llvmprogram
                                 )
                                 ( ..Hole TopType HoleActive { haName = Nothing } )
                             ) -> /Context
@@ -313,19 +590,19 @@ Prgm
                             ( Value m= /ContextIn
                                 ( Value value= /Context( Value /value= Value / )
                                     ( Value /ctx= /
-                                        ( Value llvmprogram= LlvmProgram( Value todo= Value tail )( Value functions= Value functions ) )
+                                        ( Value llvmprogram= LlvmProgram( Value todo= Value tail )( Value functions= Value functions )( Value externs= Value externs ) )
                                     )
                                 )
                                 ( Value ctx= /( Value llvmprogram= Value llvmprogram ) )
                             )
-                            ( fn( Value v )= /LLVM/llvmProgram.$304e97( Value /fun= Value /fun )
-                                ( Value $304e97-arg= Value v )
-                                ( Value $304e97-states= /( Value llvmprogram= Value llvmprogram ) )
+                            ( fn( Value v )= /LLVM/llvmProgram.$27c43a( Value /fun= Value /fun )
+                                ( Value $27c43a-arg= Value v )
+                                ( Value $27c43a-states= /( Value llvmprogram= Value llvmprogram ) )
                             )
                         , /ContextIn
                             ( Value /value= /LLVM/llvmFunction( Value fun ) )
                             ( Value /ctx= /
-                                ( Value llvmprogram= LlvmProgram( Value todo )( Value functions )@Value llvmprogram )
+                                ( Value llvmprogram= LlvmProgram( Value todo )( Value functions )( Value externs )@Value llvmprogram )
                                 ( ..Hole TopType HoleActive { haName = Nothing } )
                             ) | /operator@->
                             ( Value /l= fun( Value ..ps= Value ..ps ) )
@@ -341,19 +618,24 @@ Prgm
                                             ( Value next= CInt
                                                 { ciValue = 0 }
                                             )( Value lines= Value /Data/List/Nil )
+                                            ( Value aux= LlvmAux( Value locals= Value /Data/List/Nil )( Value externs= Value /Data/List/Nil )
+                                                ( Value strings= CInt
+                                                    { ciValue = 0 }
+                                                )
+                                            )
                                         )
                                     )
                                 )
                                 ( Value ctx= /( Value llvmprogram= Value llvmprogram ) )
                             )
-                            ( fn( Value v )= /LLVM/llvmFunction.$b8f074
-                                ( /body( Value /..ps )= /body( Value /..ps= Value /..ps ) )( Value $b8f074-arg= Value v )
-                                ( Value $b8f074-states= /( Value llvmprogram= Value llvmprogram ) )
+                            ( fn( Value v )= /LLVM/llvmFunction.$e6656d
+                                ( /body( Value /..ps )= /body( Value /..ps= Value /..ps ) )( Value $e6656d-arg= Value v )
+                                ( Value $e6656d-states= /( Value llvmprogram= Value llvmprogram ) )
                             )
                         , /ContextIn
                             ( Value /value= /LLVM/llvmFunction( Value fun ) )
                             ( Value /ctx= /
-                                ( Value llvmprogram= LlvmProgram( Value todo )( Value functions )@Value llvmprogram )
+                                ( Value llvmprogram= LlvmProgram( Value todo )( Value functions )( Value externs )@Value llvmprogram )
                                 ( ..Hole TopType HoleActive { haName = Nothing } )
                             ) | /operator@->
                             ( Value /l= fun( Value ..ps= Value ..ps ) )
@@ -385,20 +667,19 @@ Prgm
                                                 )
                                             )
                                         )
-                                    )
+                                    )( Value needs= Value /Data/List/Nil )
                                 )
                                 ( Value ctx= /( Value llvmprogram= Value llvmprogram ) )
                             )
-                            ( fn( Value v )= /LLVM/llvmFunction.$86b2ce
-                                ( Value $86b2ce-arg= Value v )
-                                ( Value $86b2ce-states= /( Value llvmprogram= Value llvmprogram ) )
+                            ( fn( Value v )= /LLVM/llvmFunction.$b8c946( Value $b8c946-arg= Value v )
+                                ( Value $b8c946-states= /( Value llvmprogram= Value llvmprogram ) )
                             )
                         , /ContextIn
                             ( Value /value= /LLVM/llvmOperand
                                 ( f( Value ..ps ) )
                             )
                             ( Value /ctx= /
-                                ( Value llvmfn= LlvmFn( Value next )( Value lines )@Value llvmfn )
+                                ( Value llvmfn= LlvmFn( Value next )( Value lines )( Value aux )@Value llvmfn )
                                 ( ..Hole TopType HoleActive { haName = Nothing } )
                             ) -> /Context
                             ( /value=/LLVM/Operand..
@@ -415,7 +696,7 @@ Prgm
                                         ( Value head= CStr
                                             { csValue = "  ; TODO unsupported: an expression no arm of llvmOperand compiles" }
                                         )( Value tail= Value lines )
-                                    )
+                                    )( Value aux= Value aux )
                                 )
                             )
                         , /ContextIn
@@ -423,7 +704,7 @@ Prgm
                                 ( f( Value ..ps )= Hole /Data/Primitive/Integer HoleActive { haName = Nothing }@Value k )
                             )
                             ( Value /ctx= /
-                                ( Value llvmfn= LlvmFn( Value next )( Value lines )@Value llvmfn )
+                                ( Value llvmfn= LlvmFn( Value next )( Value lines )( Value aux )@Value llvmfn )
                                 ( ..Hole TopType HoleActive { haName = Nothing } )
                             ) -> /Context
                             ( /value=/LLVM/Operand..
@@ -433,14 +714,14 @@ Prgm
                                 ( Value repr= toString( Value /this= Value k ) )
                             )
                             ( Value /ctx= /
-                                ( Value llvmfn= LlvmFn( Value next= Value next )( Value lines= Value lines ) )
+                                ( Value llvmfn= LlvmFn( Value next= Value next )( Value lines= Value lines )( Value aux= Value aux ) )
                             )
                         , /ContextIn
                             ( Value /value= /LLVM/llvmOperand
                                 ( f( Value ..ps )= Hole /Data/Primitive/Float HoleActive { haName = Nothing }@Value k )
                             )
                             ( Value /ctx= /
-                                ( Value llvmfn= LlvmFn( Value next )( Value lines )@Value llvmfn )
+                                ( Value llvmfn= LlvmFn( Value next )( Value lines )( Value aux )@Value llvmfn )
                                 ( ..Hole TopType HoleActive { haName = Nothing } )
                             ) -> /Context
                             ( /value=/LLVM/Operand..
@@ -450,7 +731,7 @@ Prgm
                                 ( Value repr= toString( Value /this= Value k ) )
                             )
                             ( Value /ctx= /
-                                ( Value llvmfn= LlvmFn( Value next= Value next )( Value lines= Value lines ) )
+                                ( Value llvmfn= LlvmFn( Value next= Value next )( Value lines= Value lines )( Value aux= Value aux ) )
                             )
                         , /ContextIn
                             ( Value /value= /LLVM/llvmOperand
@@ -459,21 +740,21 @@ Prgm
                                 )
                             )
                             ( Value /ctx= /
-                                ( Value llvmfn= LlvmFn( Value next )( Value lines )@Value llvmfn )
+                                ( Value llvmfn= LlvmFn( Value next )( Value lines )
+                                    ( Value aux= LlvmAux( Value locals )( Value externs )( Value strings ) )@Value llvmfn
+                                )
                                 ( ..Hole TopType HoleActive { haName = Nothing } )
                             ) -> /Context
                             ( /value=/LLVM/Operand..
                             , /ctx=( /llvmfn=/LLVM/LlvmFn.. )
                             ).. = /Context
-                            ( Value /value= Operand( Value type= Value I64 )
-                                ( Value repr= /operator++
-                                    ( Value /l= CStr
-                                        { csValue = "%" }
-                                    )( Value /r= Value p )
-                                )
+                            ( Value /value= llvmParamValue
+                                ( Value found= llvmFindLocal( Value locals= Value locals )( Value name= Value p ) )( Value name= Value p )
                             )
                             ( Value /ctx= /
-                                ( Value llvmfn= LlvmFn( Value next= Value next )( Value lines= Value lines ) )
+                                ( Value llvmfn= LlvmFn( Value next= Value next )( Value lines= Value lines )
+                                    ( Value aux= LlvmAux( Value locals= Value locals )( Value externs= Value externs )( Value strings= Value strings ) )
+                                )
                             )
                         , /ContextIn
                             ( Value /value= /LLVM/llvmOperand
@@ -483,7 +764,7 @@ Prgm
                                 )
                             )
                             ( Value /ctx= /
-                                ( Value llvmfn= LlvmFn( Value next )( Value lines )@Value llvmfn )
+                                ( Value llvmfn= LlvmFn( Value next )( Value lines )( Value aux )@Value llvmfn )
                                 ( ..Hole TopType HoleActive { haName = Nothing } )
                             ) -> /Context
                             ( /value=/LLVM/Operand..
@@ -495,9 +776,10 @@ Prgm
                                 )
                                 ( Value ctx= /( Value llvmfn= Value llvmfn ) )
                             )
-                            ( fn( Value v )= /LLVM/llvmOperand.$c2a700
-                                ( /b( Value /..ps )= /b( Value /..ps= Value /..ps ) )( Value $c2a700-arg= Value v )
-                                ( Value $c2a700-states= /( Value llvmfn= Value llvmfn ) )
+                            ( fn( Value v )= /LLVM/llvmOperand.$78dba2
+                                ( /b( Value /..ps )= /b( Value /..ps= Value /..ps ) )
+                                ( Value $78dba2-arg= Value v )
+                                ( Value $78dba2-states= /( Value llvmfn= Value llvmfn ) )
                             )
                         , /ContextIn
                             ( Value /value= /LLVM/llvmOperand
@@ -507,7 +789,7 @@ Prgm
                                 )
                             )
                             ( Value /ctx= /
-                                ( Value llvmfn= LlvmFn( Value next )( Value lines )@Value llvmfn )
+                                ( Value llvmfn= LlvmFn( Value next )( Value lines )( Value aux )@Value llvmfn )
                                 ( ..Hole TopType HoleActive { haName = Nothing } )
                             ) -> /Context
                             ( /value=/LLVM/Operand..
@@ -519,9 +801,9 @@ Prgm
                                 )
                                 ( Value ctx= /( Value llvmfn= Value llvmfn ) )
                             )
-                            ( fn( Value v )= /LLVM/llvmOperand.$f8a91d
-                                ( /b( Value /..ps )= /b( Value /..ps= Value /..ps ) )( Value $f8a91d-arg= Value v )
-                                ( Value $f8a91d-states= /( Value llvmfn= Value llvmfn ) )
+                            ( fn( Value v )= /LLVM/llvmOperand.$a031a8
+                                ( /b( Value /..ps )= /b( Value /..ps= Value /..ps ) )( Value $a031a8-arg= Value v )
+                                ( Value $a031a8-states= /( Value llvmfn= Value llvmfn ) )
                             )
                         , /ContextIn
                             ( Value /value= /LLVM/llvmOperand
@@ -531,7 +813,7 @@ Prgm
                                 )
                             )
                             ( Value /ctx= /
-                                ( Value llvmfn= LlvmFn( Value next )( Value lines )@Value llvmfn )
+                                ( Value llvmfn= LlvmFn( Value next )( Value lines )( Value aux )@Value llvmfn )
                                 ( ..Hole TopType HoleActive { haName = Nothing } )
                             ) -> /Context
                             ( /value=/LLVM/Operand..
@@ -543,9 +825,10 @@ Prgm
                                 )
                                 ( Value ctx= /( Value llvmfn= Value llvmfn ) )
                             )
-                            ( fn( Value v )= /LLVM/llvmOperand.$bf7ac6
-                                ( /b( Value /..ps )= /b( Value /..ps= Value /..ps ) )( Value $bf7ac6-arg= Value v )
-                                ( Value $bf7ac6-states= /( Value llvmfn= Value llvmfn ) )
+                            ( fn( Value v )= /LLVM/llvmOperand.$12e6d2
+                                ( /b( Value /..ps )= /b( Value /..ps= Value /..ps ) )
+                                ( Value $12e6d2-arg= Value v )
+                                ( Value $12e6d2-states= /( Value llvmfn= Value llvmfn ) )
                             )
                         , /ContextIn
                             ( Value /value= /LLVM/llvmOperand
@@ -555,7 +838,7 @@ Prgm
                                 )
                             )
                             ( Value /ctx= /
-                                ( Value llvmfn= LlvmFn( Value next )( Value lines )@Value llvmfn )
+                                ( Value llvmfn= LlvmFn( Value next )( Value lines )( Value aux )@Value llvmfn )
                                 ( ..Hole TopType HoleActive { haName = Nothing } )
                             ) -> /Context
                             ( /value=/LLVM/Operand..
@@ -567,10 +850,9 @@ Prgm
                                 )
                                 ( Value ctx= /( Value llvmfn= Value llvmfn ) )
                             )
-                            ( fn( Value v )= /LLVM/llvmOperand.$29080e
-                                ( /b( Value /..ps )= /b( Value /..ps= Value /..ps ) )
-                                ( Value $29080e-arg= Value v )
-                                ( Value $29080e-states= /( Value llvmfn= Value llvmfn ) )
+                            ( fn( Value v )= /LLVM/llvmOperand.$e6a84b
+                                ( /b( Value /..ps )= /b( Value /..ps= Value /..ps ) )( Value $e6a84b-arg= Value v )
+                                ( Value $e6a84b-states= /( Value llvmfn= Value llvmfn ) )
                             )
                         , /ContextIn
                             ( Value /value= /LLVM/llvmOperand
@@ -580,7 +862,7 @@ Prgm
                                 )
                             )
                             ( Value /ctx= /
-                                ( Value llvmfn= LlvmFn( Value next )( Value lines )@Value llvmfn )
+                                ( Value llvmfn= LlvmFn( Value next )( Value lines )( Value aux )@Value llvmfn )
                                 ( ..Hole TopType HoleActive { haName = Nothing } )
                             ) -> /Context
                             ( /value=/LLVM/Operand..
@@ -592,9 +874,10 @@ Prgm
                                 )
                                 ( Value ctx= /( Value llvmfn= Value llvmfn ) )
                             )
-                            ( fn( Value v )= /LLVM/llvmOperand.$ca13e0
-                                ( /b( Value /..ps )= /b( Value /..ps= Value /..ps ) )( Value $ca13e0-arg= Value v )
-                                ( Value $ca13e0-states= /( Value llvmfn= Value llvmfn ) )
+                            ( fn( Value v )= /LLVM/llvmOperand.$769413
+                                ( /b( Value /..ps )= /b( Value /..ps= Value /..ps ) )
+                                ( Value $769413-arg= Value v )
+                                ( Value $769413-states= /( Value llvmfn= Value llvmfn ) )
                             )
                         , /ContextIn
                             ( Value /value= /LLVM/llvmOperand
@@ -604,7 +887,7 @@ Prgm
                                 )
                             )
                             ( Value /ctx= /
-                                ( Value llvmfn= LlvmFn( Value next )( Value lines )@Value llvmfn )
+                                ( Value llvmfn= LlvmFn( Value next )( Value lines )( Value aux )@Value llvmfn )
                                 ( ..Hole TopType HoleActive { haName = Nothing } )
                             ) -> /Context
                             ( /value=/LLVM/Operand..
@@ -616,9 +899,9 @@ Prgm
                                 )
                                 ( Value ctx= /( Value llvmfn= Value llvmfn ) )
                             )
-                            ( fn( Value v )= /LLVM/llvmOperand.$a45376
-                                ( /b( Value /..ps )= /b( Value /..ps= Value /..ps ) )( Value $a45376-arg= Value v )
-                                ( Value $a45376-states= /( Value llvmfn= Value llvmfn ) )
+                            ( fn( Value v )= /LLVM/llvmOperand.$af411e
+                                ( /b( Value /..ps )= /b( Value /..ps= Value /..ps ) )( Value $af411e-arg= Value v )
+                                ( Value $af411e-states= /( Value llvmfn= Value llvmfn ) )
                             )
                         , /ContextIn
                             ( Value /value= /LLVM/llvmOperand
@@ -628,7 +911,7 @@ Prgm
                                 )
                             )
                             ( Value /ctx= /
-                                ( Value llvmfn= LlvmFn( Value next )( Value lines )@Value llvmfn )
+                                ( Value llvmfn= LlvmFn( Value next )( Value lines )( Value aux )@Value llvmfn )
                                 ( ..Hole TopType HoleActive { haName = Nothing } )
                             ) -> /Context
                             ( /value=/LLVM/Operand..
@@ -640,10 +923,9 @@ Prgm
                                 )
                                 ( Value ctx= /( Value llvmfn= Value llvmfn ) )
                             )
-                            ( fn( Value v )= /LLVM/llvmOperand.$438d39
-                                ( /b( Value /..ps )= /b( Value /..ps= Value /..ps ) )
-                                ( Value $438d39-arg= Value v )
-                                ( Value $438d39-states= /( Value llvmfn= Value llvmfn ) )
+                            ( fn( Value v )= /LLVM/llvmOperand.$b9eb53
+                                ( /b( Value /..ps )= /b( Value /..ps= Value /..ps ) )( Value $b9eb53-arg= Value v )
+                                ( Value $b9eb53-states= /( Value llvmfn= Value llvmfn ) )
                             )
                         , /ContextIn
                             ( Value /value= /LLVM/llvmOperand
@@ -653,7 +935,7 @@ Prgm
                                 )
                             )
                             ( Value /ctx= /
-                                ( Value llvmfn= LlvmFn( Value next )( Value lines )@Value llvmfn )
+                                ( Value llvmfn= LlvmFn( Value next )( Value lines )( Value aux )@Value llvmfn )
                                 ( ..Hole TopType HoleActive { haName = Nothing } )
                             ) -> /Context
                             ( /value=/LLVM/Operand..
@@ -665,10 +947,159 @@ Prgm
                                 )
                                 ( Value ctx= /( Value llvmfn= Value llvmfn ) )
                             )
-                            ( fn( Value v )= /LLVM/llvmOperand.$73eceb
-                                ( /b( Value /..ps )= /b( Value /..ps= Value /..ps ) )
-                                ( Value $73eceb-arg= Value v )
-                                ( Value $73eceb-states= /( Value llvmfn= Value llvmfn ) )
+                            ( fn( Value v )= /LLVM/llvmOperand.$a276be
+                                ( /b( Value /..ps )= /b( Value /..ps= Value /..ps ) )( Value $a276be-arg= Value v )
+                                ( Value $a276be-states= /( Value llvmfn= Value llvmfn ) )
+                            )
+                        , /ContextIn
+                            ( Value /value= /LLVM/llvmOperand
+                                ( f( Value ..ps )= /Data/bindap
+                                    ( Value m= /ContextIn
+                                        ( Value value= Hole TopType HoleActive { haName = Nothing }@e( Value ..ps ) )
+                                        ( Value ctx= Hole TopType HoleActive { haName = Nothing }@s( Value ..ps ) )
+                                    )
+                                    ( fn( Value v )=
+                                        ( Hole TopType HoleActive { haName = Nothing }@Value cont )( Value ..@argKey= Value v )( Value ..cargs )
+                                    )
+                                )
+                            )
+                            ( Value /ctx= /
+                                ( Value llvmfn= LlvmFn( Value next )( Value lines )( Value aux )@Value llvmfn )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) | /operator@->
+                            ( Value /l=
+                                ( Hole TopType HoleActive { haName = Nothing }@Value cont )( Value ..ps= Value ..ps )
+                            )
+                            ( Value /r= Hole TopType HoleActive { haName = Nothing } )@Some
+                            ( Value value= Hole TopType HoleActive { haName = Nothing }@contBody( Value /..ps ) ) -> /Context
+                            ( /value=/LLVM/Operand..
+                            , /ctx=( /llvmfn=/LLVM/LlvmFn.. )
+                            ).. = /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= llvmOperand
+                                    ( f( Value ..ps )= e( Value ..ps= Value ..ps ) )
+                                )
+                                ( Value ctx= /( Value llvmfn= Value llvmfn ) )
+                            )
+                            ( fn( Value v )= /LLVM/llvmOperand.$d43e69
+                                ( /contBody( Value /..ps )= /contBody( Value /..ps= Value /..ps ) )( Value /argKey= Value /argKey )( Value $d43e69-arg= Value v )
+                                ( Value $d43e69-states= /( Value llvmfn= Value llvmfn ) )
+                            )
+                        , /ContextIn
+                            ( Value /value= /LLVM/llvmOperand
+                                ( f( Value ..ps )= /Catln/FieldOf
+                                    ( Value this= Hole ∀/Data/String HoleActive
+                                        { haName = Just "..@param" }@Value p
+                                    )
+                                    ( Value field= CStr
+                                        { csValue = "value" }
+                                    )
+                                )
+                            )
+                            ( Value /ctx= /
+                                ( Value llvmfn= LlvmFn( Value next )( Value lines )
+                                    ( Value aux= LlvmAux( Value locals )( Value externs )( Value strings ) )@Value llvmfn
+                                )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=/LLVM/Operand..
+                            , /ctx=( /llvmfn=/LLVM/LlvmFn.. )
+                            ).. = /Context
+                            ( Value /value= llvmContextValue
+                                ( Value found= llvmFindLocal( Value locals= Value locals )( Value name= Value p ) )
+                            )
+                            ( Value /ctx= /
+                                ( Value llvmfn= LlvmFn( Value next= Value next )( Value lines= Value lines )
+                                    ( Value aux= LlvmAux( Value locals= Value locals )( Value externs= Value externs )( Value strings= Value strings ) )
+                                )
+                            )
+                        , /ContextIn
+                            ( Value /value= /LLVM/llvmOperand
+                                ( f( Value ..ps )= /Context
+                                    ( Value value= Hole TopType HoleActive { haName = Nothing }@a( Value ..ps ) )
+                                    ( Value ctx= Hole TopType HoleActive { haName = Nothing }@c( Value ..ps ) )
+                                )
+                            )
+                            ( Value /ctx= /
+                                ( Value llvmfn= LlvmFn( Value next )( Value lines )( Value aux )@Value llvmfn )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=/LLVM/Operand..
+                            , /ctx=( /llvmfn=/LLVM/LlvmFn.. )
+                            ).. = /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= llvmOperand
+                                    ( f( Value ..ps )= a( Value ..ps= Value ..ps ) )
+                                )
+                                ( Value ctx= /( Value llvmfn= Value llvmfn ) )
+                            )
+                            ( fn( Value v )= /LLVM/llvmOperand.$c22623( Value $c22623-arg= Value v )
+                                ( Value $c22623-states= /( Value llvmfn= Value llvmfn ) )
+                            )
+                        , /ContextIn
+                            ( Value /value= /LLVM/llvmOperand
+                                ( f( Value ..ps )= Value / )
+                            )
+                            ( Value /ctx= /
+                                ( Value llvmfn= LlvmFn( Value next )( Value lines )( Value aux )@Value llvmfn )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=/LLVM/Operand..
+                            , /ctx=( /llvmfn=/LLVM/LlvmFn.. )
+                            ).. = /Context
+                            ( Value /value= Operand( Value type= Value I32 )
+                                ( Value repr= CStr
+                                    { csValue = "0" }
+                                )
+                            )
+                            ( Value /ctx= /
+                                ( Value llvmfn= LlvmFn( Value next= Value next )( Value lines= Value lines )( Value aux= Value aux ) )
+                            )
+                        , /ContextIn
+                            ( Value /value= /LLVM/llvmOperand
+                                ( f( Value ..ps )= /Catln/exit
+                                    ( Value val= Hole TopType HoleActive { haName = Nothing }@a( Value ..ps ) )
+                                )
+                            )
+                            ( Value /ctx= /
+                                ( Value llvmfn= LlvmFn( Value next )( Value lines )( Value aux )@Value llvmfn )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=/LLVM/Operand..
+                            , /ctx=( /llvmfn=/LLVM/LlvmFn.. )
+                            ).. = /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= llvmOperand
+                                    ( f( Value ..ps )= a( Value ..ps= Value ..ps ) )
+                                )
+                                ( Value ctx= /( Value llvmfn= Value llvmfn ) )
+                            )
+                            ( fn( Value v )= /LLVM/llvmOperand.$f6ce35( Value $f6ce35-arg= Value v )
+                                ( Value $f6ce35-states= /( Value llvmfn= Value llvmfn ) )
+                            )
+                        , /ContextIn
+                            ( Value /value= /LLVM/llvmOperand
+                                ( f( Value ..ps )= /Catln/println
+                                    ( Value msg= Hole ∀/Data/String HoleActive { haName = Nothing }@Value text )
+                                )
+                            )
+                            ( Value /ctx= /
+                                ( Value llvmfn= LlvmFn( Value next )( Value lines )( Value aux )@Value llvmfn )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=/LLVM/Operand..
+                            , /ctx=( /llvmfn=/LLVM/LlvmFn.. )
+                            ).. = /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= llvmExtern
+                                    ( Value line= CStr
+                                        { csValue = "declare i32 @puts(ptr)" }
+                                    )
+                                )
+                                ( Value ctx= /( Value llvmfn= Value llvmfn ) )
+                            )
+                            ( fn( Value v )= /LLVM/llvmOperand.$d6076d( Value /text= Value /text )( Value $d6076d-arg= Value v )
+                                ( Value $d6076d-states= /( Value llvmfn= Value llvmfn ) )
                             )
                         , /ContextIn
                             ( Value /value= /LLVM/llvmInstr
@@ -677,7 +1108,7 @@ Prgm
                                 ( Value r= Operand( Value type= Value I64 )( Value repr@Value rv ) )
                             )
                             ( Value /ctx= /
-                                ( Value llvmfn= LlvmFn( Value next )( Value lines )@Value llvmfn )
+                                ( Value llvmfn= LlvmFn( Value next )( Value lines )( Value aux )@Value llvmfn )
                                 ( ..Hole TopType HoleActive { haName = Nothing } )
                             ) -> /Context
                             ( /value=/LLVM/Operand..
@@ -726,7 +1157,7 @@ Prgm
                                                 )
                                             )( Value /r= Value rv )
                                         )( Value tail= Value lines )
-                                    )
+                                    )( Value aux= Value aux )
                                 )
                             )
                         , /ContextIn
@@ -736,7 +1167,7 @@ Prgm
                                 ( Value r= Operand( Value type= Value F64 )( Value repr@Value rv ) )
                             )
                             ( Value /ctx= /
-                                ( Value llvmfn= LlvmFn( Value next )( Value lines )@Value llvmfn )
+                                ( Value llvmfn= LlvmFn( Value next )( Value lines )( Value aux )@Value llvmfn )
                                 ( ..Hole TopType HoleActive { haName = Nothing } )
                             ) -> /Context
                             ( /value=/LLVM/Operand..
@@ -785,7 +1216,7 @@ Prgm
                                                 )
                                             )( Value /r= Value rv )
                                         )( Value tail= Value lines )
-                                    )
+                                    )( Value aux= Value aux )
                                 )
                             )
                         , /ContextIn
@@ -795,7 +1226,7 @@ Prgm
                                 ( Value r= Operand( Value type= Value I64 )( Value repr@Value rv ) )
                             )
                             ( Value /ctx= /
-                                ( Value llvmfn= LlvmFn( Value next )( Value lines )@Value llvmfn )
+                                ( Value llvmfn= LlvmFn( Value next )( Value lines )( Value aux )@Value llvmfn )
                                 ( ..Hole TopType HoleActive { haName = Nothing } )
                             ) -> /Context
                             ( /value=/LLVM/Operand..
@@ -844,7 +1275,7 @@ Prgm
                                                 )
                                             )( Value /r= Value rv )
                                         )( Value tail= Value lines )
-                                    )
+                                    )( Value aux= Value aux )
                                 )
                             )
                         , /ContextIn
@@ -854,7 +1285,7 @@ Prgm
                                 ( Value r= Operand( Value type= Value F64 )( Value repr@Value rv ) )
                             )
                             ( Value /ctx= /
-                                ( Value llvmfn= LlvmFn( Value next )( Value lines )@Value llvmfn )
+                                ( Value llvmfn= LlvmFn( Value next )( Value lines )( Value aux )@Value llvmfn )
                                 ( ..Hole TopType HoleActive { haName = Nothing } )
                             ) -> /Context
                             ( /value=/LLVM/Operand..
@@ -903,13 +1334,13 @@ Prgm
                                                 )
                                             )( Value /r= Value rv )
                                         )( Value tail= Value lines )
-                                    )
+                                    )( Value aux= Value aux )
                                 )
                             )
                         , /ContextIn
                             ( Value /value= /LLVM/llvmInstr( Value op )( Value l )( Value r ) )
                             ( Value /ctx= /
-                                ( Value llvmfn= LlvmFn( Value next )( Value lines )@Value llvmfn )
+                                ( Value llvmfn= LlvmFn( Value next )( Value lines )( Value aux )@Value llvmfn )
                                 ( ..Hole TopType HoleActive { haName = Nothing } )
                             ) -> /Context
                             ( /value=/LLVM/Operand..
@@ -926,40 +1357,241 @@ Prgm
                                         ( Value head= CStr
                                             { csValue = "  ; TODO unsupported: an operator of operands of different types" }
                                         )( Value tail= Value lines )
-                                    )
+                                    )( Value aux= Value aux )
                                 )
                             )
                         , /ContextIn
-                            ( Value /value= /LLVM/llvmAddFunction( Value text -> ∀/Data/String ) )
+                            ( Value /value= /LLVM/llvmAddFunction( Value text -> ∀/Data/String )
+                                ( Value needs -> ∀/Data/List/ConsList[ /T=∀/Data/String ] )
+                            )
                             ( Value /ctx= /
-                                ( Value llvmprogram= LlvmProgram( Value todo )( Value functions )@Value llvmprogram )
+                                ( Value llvmprogram= LlvmProgram( Value todo )( Value functions )( Value externs )@Value llvmprogram )
                                 ( ..Hole TopType HoleActive { haName = Nothing } )
                             )= /Context( Value /value= Value / )
                             ( Value /ctx= /
                                 ( Value llvmprogram= LlvmProgram( Value todo= Value todo )
                                     ( Value functions= /Data/List/Cons( Value head= Value text )( Value tail= Value functions ) )
+                                    ( Value externs= llvmAddNew( Value lines= Value needs )( Value into= Value externs ) )
+                                )
+                            )
+                        , /ContextIn
+                            ( Value /value= /LLVM/llvmNarrow
+                                ( Value o= Operand( Value type= Value I64 )( Value repr ) )
+                            )
+                            ( Value /ctx= /
+                                ( Value llvmfn= LlvmFn( Value next )( Value lines )( Value aux )@Value llvmfn )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=/LLVM/Operand..
+                            , /ctx=( /llvmfn=/LLVM/LlvmFn.. )
+                            ).. = /Context
+                            ( Value /value= Operand( Value type= Value I32 )
+                                ( Value repr= /operator++
+                                    ( Value /l= CStr
+                                        { csValue = "%r" }
+                                    )
+                                    ( Value /r= toString( Value /this= Value next ) )
+                                )
+                            )
+                            ( Value /ctx= /
+                                ( Value llvmfn= LlvmFn
+                                    ( Value next= /operator+( Value /l= Value next )
+                                        ( Value /r= CInt
+                                            { ciValue = 1 }
+                                        )
+                                    )
+                                    ( Value lines= /Data/List/Cons
+                                        ( Value head= /operator++
+                                            ( Value /l= /operator++
+                                                ( Value /l= /operator++
+                                                    ( Value /l= /operator++
+                                                        ( Value /l= CStr
+                                                            { csValue = "  %r" }
+                                                        )
+                                                        ( Value /r= toString( Value /this= Value next ) )
+                                                    )
+                                                    ( Value /r= CStr
+                                                        { csValue = " = trunc i64 " }
+                                                    )
+                                                )( Value /r= Value repr )
+                                            )
+                                            ( Value /r= CStr
+                                                { csValue = " to i32" }
+                                            )
+                                        )( Value tail= Value lines )
+                                    )( Value aux= Value aux )
+                                )
+                            )
+                        , /ContextIn
+                            ( Value /value= /LLVM/llvmNarrow
+                                ( Value o= Operand( Value type= Value I32 )( Value repr ) )
+                            )
+                            ( Value /ctx= /
+                                ( Value llvmfn= LlvmFn( Value next )( Value lines )( Value aux )@Value llvmfn )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=/LLVM/Operand..
+                            , /ctx=( /llvmfn=/LLVM/LlvmFn.. )
+                            ).. = /Context
+                            ( Value /value= Operand( Value type= Value I32 )( Value repr= Value repr ) )
+                            ( Value /ctx= /
+                                ( Value llvmfn= LlvmFn( Value next= Value next )( Value lines= Value lines )( Value aux= Value aux ) )
+                            )
+                        , /ContextIn
+                            ( Value /value= /LLVM/llvmNarrow( Value o ) )
+                            ( Value /ctx= /
+                                ( Value llvmfn= LlvmFn( Value next )( Value lines )( Value aux )@Value llvmfn )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=/LLVM/Operand..
+                            , /ctx=( /llvmfn=/LLVM/LlvmFn.. )
+                            ).. = /Context
+                            ( Value /value= Operand( Value type= Value I32 )
+                                ( Value repr= CStr
+                                    { csValue = "undef" }
+                                )
+                            )
+                            ( Value /ctx= /
+                                ( Value llvmfn= LlvmFn( Value next= Value next )
+                                    ( Value lines= /Data/List/Cons
+                                        ( Value head= CStr
+                                            { csValue = "  ; TODO unsupported: an exit code that is not an integer" }
+                                        )( Value tail= Value lines )
+                                    )( Value aux= Value aux )
                                 )
                             )
                         , /ContextIn
                             ( Value /value= /LLVM/llvmEmit( Value line -> ∀/Data/String ) )
                             ( Value /ctx= /
-                                ( Value llvmfn= LlvmFn( Value next )( Value lines )@Value llvmfn )
+                                ( Value llvmfn= LlvmFn( Value next )( Value lines )( Value aux )@Value llvmfn )
                                 ( ..Hole TopType HoleActive { haName = Nothing } )
                             )= /Context( Value /value= Value / )
                             ( Value /ctx= /
                                 ( Value llvmfn= LlvmFn( Value next= Value next )
-                                    ( Value lines= /Data/List/Cons( Value head= Value line )( Value tail= Value lines ) )
+                                    ( Value lines= /Data/List/Cons( Value head= Value line )( Value tail= Value lines ) )( Value aux= Value aux )
                                 )
                             )
                         , /ContextIn( Value /value= Value /LLVM/llvmLines )
                             ( Value /ctx= /
-                                ( Value llvmfn= LlvmFn( Value next )( Value lines )@Value llvmfn )
+                                ( Value llvmfn= LlvmFn( Value next )( Value lines )( Value aux )@Value llvmfn )
                                 ( ..Hole TopType HoleActive { haName = Nothing } )
                             )= /Context
                             ( Value /value= llvmReversed( Value lines= Value lines )( Value acc= Value /Data/List/Nil ) )
                             ( Value /ctx= /
-                                ( Value llvmfn= LlvmFn( Value next= Value next )( Value lines= Value lines ) )
+                                ( Value llvmfn= LlvmFn( Value next= Value next )( Value lines= Value lines )( Value aux= Value aux ) )
                             )
+                        , /ContextIn
+                            ( Value /value= /LLVM/llvmBindLocal( Value name -> ∀/Data/String )( Value val -> ∀/LLVM/LlvmVal ) )
+                            ( Value /ctx= /
+                                ( Value llvmfn= LlvmFn( Value next )( Value lines )
+                                    ( Value aux= LlvmAux( Value locals )( Value externs )( Value strings ) )@Value llvmfn
+                                )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Context( Value /value= Value / )
+                            ( Value /ctx= /
+                                ( Value llvmfn= LlvmFn( Value next= Value next )( Value lines= Value lines )
+                                    ( Value aux= LlvmAux
+                                        ( Value locals= /Data/List/Cons
+                                            ( Value head= LlvmLocal( Value name= Value name )( Value val= Value val ) )( Value tail= Value locals )
+                                        )( Value externs= Value externs )( Value strings= Value strings )
+                                    )
+                                )
+                            )
+                        , /ContextIn
+                            ( Value /value= /LLVM/llvmExtern( Value line -> ∀/Data/String ) )
+                            ( Value /ctx= /
+                                ( Value llvmfn= LlvmFn( Value next )( Value lines )
+                                    ( Value aux= LlvmAux( Value locals )( Value externs )( Value strings ) )@Value llvmfn
+                                )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Context( Value /value= Value / )
+                            ( Value /ctx= /
+                                ( Value llvmfn= LlvmFn( Value next= Value next )( Value lines= Value lines )
+                                    ( Value aux= LlvmAux( Value locals= Value locals )
+                                        ( Value externs= llvmAddNew
+                                            ( Value lines= /Data/List/Cons( Value /head= Value line )( Value /tail= Value /Data/List/Nil ) )( Value into= Value externs )
+                                        )( Value strings= Value strings )
+                                    )
+                                )
+                            )
+                        , /ContextIn
+                            ( Value /value= /LLVM/llvmString( Value text -> ∀/Data/String ) )
+                            ( Value /ctx= /
+                                ( Value llvmfn= LlvmFn( Value next )( Value lines )
+                                    ( Value aux= LlvmAux( Value locals )( Value externs )( Value strings ) )@Value llvmfn
+                                )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Context
+                            ( Value /value= /operator++
+                                ( Value /l= CStr
+                                    { csValue = "@.str" }
+                                )
+                                ( Value /r= toString( Value /this= Value strings ) )
+                            )
+                            ( Value /ctx= /
+                                ( Value llvmfn= LlvmFn( Value next= Value next )( Value lines= Value lines )
+                                    ( Value aux= LlvmAux( Value locals= Value locals )
+                                        ( Value externs= /Data/List/Cons
+                                            ( Value head= llvmStringConstant
+                                                ( Value name= /operator++
+                                                    ( Value /l= CStr
+                                                        { csValue = "@.str" }
+                                                    )
+                                                    ( Value /r= toString( Value /this= Value strings ) )
+                                                )( Value text= Value text )
+                                            )( Value tail= Value externs )
+                                        )
+                                        ( Value strings= /operator+( Value /l= Value strings )
+                                            ( Value /r= CInt
+                                                { ciValue = 1 }
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        , /ContextIn( Value /value= Value /LLVM/llvmFnExterns )
+                            ( Value /ctx= /
+                                ( Value llvmfn= LlvmFn( Value next )( Value lines )
+                                    ( Value aux= LlvmAux( Value locals )( Value externs )( Value strings ) )@Value llvmfn
+                                )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Context( Value /value= Value externs )
+                            ( Value /ctx= /
+                                ( Value llvmfn= LlvmFn( Value next= Value next )( Value lines= Value lines )
+                                    ( Value aux= LlvmAux( Value locals= Value locals )( Value externs= Value externs )( Value strings= Value strings ) )
+                                )
+                            )
+                        , /ContextIn( Value /value= Value /LLVM/Example/llvmExGreet )
+                            ( Value /ctx= /( Value io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=()
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= println
+                                    ( Value msg= CStr
+                                        { csValue = "hello" }
+                                    )
+                                )
+                                ( Value ctx= /( Value io= Value io ) )
+                            )
+                            ( fn( Value v )= /LLVM/Example/llvmExGreet.$a64a9c( Value $a64a9c-arg= Value v )
+                                ( Value $a64a9c-states= /( Value io= Value io ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/llvmOperand.$af411e.$7d3722.$b8b55d"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmOperand.$af411e.$7d3722.$b8b55d
+                            ( Value $b8b55d-arg= /Context( Value value@Value instrOp )( Value ctx@Value $b8b55d-ctx ) )( Value $b8b55d-states )= /Context( Value value= Value instrOp )
+                            ( Value ctx= /( ..Value $b8b55d-states )( ..Value $b8b55d-ctx ) )
                         ]
                     }
                 )
@@ -971,64 +1603,21 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /LLVM/Example/llvmText( Value c ) -> ∀/Data/String = builtText
+                        [ /LLVM/Example/llvmText( Value c ) -> ∀/Data/String = llvmBuiltText
                             ( Value result= /Catln/llvm( Value c= Value c ) )
                         ]
                     }
                 )
             ,
-                ( "/LLVM/llvmOperand.$f8a91d.$2f7a84"
+                ( "/LLVM/llvmOperand.$12e6d2.$d74f80.$dee250"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /LLVM/llvmOperand.$f8a91d.$2f7a84( Value /leftOp )
-                            ( Value $2f7a84-arg= /Context( Value value@Value rightOp )
-                                ( Value ctx@Value $2f7a84-ctx )
-                            )
-                            ( Value $2f7a84-states )= /Data/bindap
-                            ( Value m= /ContextIn
-                                ( Value value= llvmInstr
-                                    ( Value op= LlvmArith
-                                        ( Value int= CStr
-                                            { csValue = "sub" }
-                                        )
-                                        ( Value float= CStr
-                                            { csValue = "fsub" }
-                                        )
-                                    )( Value l= Value leftOp )( Value r= Value rightOp )
-                                )
-                                ( Value ctx= /
-                                    ( ..Value $2f7a84-states )
-                                    ( ..Value $2f7a84-ctx )
-                                )
-                            )
-                            ( fn( Value v )= /LLVM/llvmOperand.$f8a91d.$2f7a84.$bd316b( Value $bd316b-arg= Value v )
-                                ( Value $bd316b-states= /
-                                    ( ..Value $2f7a84-states )
-                                    ( ..Value $2f7a84-ctx )
-                                )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/LLVM/llvmOperand.$29080e.$4b55f8.$4554f7"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /LLVM/llvmOperand.$29080e.$4b55f8.$4554f7
-                            ( Value $4554f7-arg= /Context( Value value@Value instrOp )
-                                ( Value ctx@Value $4554f7-ctx )
-                            )
-                            ( Value $4554f7-states )= /Context( Value value= Value instrOp )
-                            ( Value ctx= /
-                                ( ..Value $4554f7-states )
-                                ( ..Value $4554f7-ctx )
-                            )
+                        [ /LLVM/llvmOperand.$12e6d2.$d74f80.$dee250
+                            ( Value $dee250-arg= /Context( Value value@Value instrOp )( Value ctx@Value $dee250-ctx ) )( Value $dee250-states )= /Context( Value value= Value instrOp )
+                            ( Value ctx= /( ..Value $dee250-states )( ..Value $dee250-ctx ) )
                         ]
                     }
                 )
@@ -1045,13 +1634,12 @@ Prgm
             ,
                 ( "/LLVM/llvmRet"
                 , ObjectMapItem
-                    { omiDecls =
-                        [ /LLVM/llvmRet( Value o -> /LLVM/Operand.. ) -> ∀/Data/String ]
+                    { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /LLVM/llvmRet
-                            ( Value o= Operand( Value type )( Value repr ) ) -> ∀/Data/String = /operator++
+                            ( Value o= Operand( Value type )( Value repr ) )= /operator++
                             ( Value /l= /operator++
                                 ( Value /l= /operator++
                                     ( Value /l= CStr
@@ -1067,33 +1655,66 @@ Prgm
                     }
                 )
             ,
-                ( "/LLVM/llvmFunction.$b8f074.$c83817.$ad5981.$dc1ab6.$d03cfd"
+                ( "/LLVM/llvmOperand.$f6ce35.$df85b2.$4c1eb7"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /LLVM/llvmFunction.$b8f074.$c83817.$ad5981.$dc1ab6.$d03cfd
-                            ( Value $d03cfd-arg= /Context( Value value )( Value ctx@Value $d03cfd-ctx ) )( Value $d03cfd-states )= /Context( Value value= Value / )
-                            ( Value ctx= /( ..Value $d03cfd-states )( ..Value $d03cfd-ctx ) )
+                        [ /LLVM/llvmOperand.$f6ce35.$df85b2.$4c1eb7( Value /narrowOp )
+                            ( Value $4c1eb7-arg= /Context( Value value )
+                                ( Value ctx@Value $4c1eb7-ctx )
+                            )
+                            ( Value $4c1eb7-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= llvmEmit
+                                    ( Value line= /operator++
+                                        ( Value /l= /operator++
+                                            ( Value /l= CStr
+                                                { csValue = "  call void @exit(" }
+                                            )
+                                            ( Value /r= llvmOperandText( Value o= Value narrowOp ) )
+                                        )
+                                        ( Value /r= CStr
+                                            { csValue = ")" }
+                                        )
+                                    )
+                                )
+                                ( Value ctx= /
+                                    ( ..Value $4c1eb7-states )
+                                    ( ..Value $4c1eb7-ctx )
+                                )
+                            )
+                            ( fn( Value v )= /LLVM/llvmOperand.$f6ce35.$df85b2.$4c1eb7.$91d51d
+                                ( Value $91d51d-arg= Value v )
+                                ( Value $91d51d-states= /
+                                    ( ..Value $4c1eb7-states )
+                                    ( ..Value $4c1eb7-ctx )
+                                )
+                            )
                         ]
                     }
                 )
             ,
-                ( "/LLVM/llvmProgram.$304e97.$df509a.$79f533"
+                ( "/LLVM/llvmOperand.$d43e69"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /LLVM/llvmProgram.$304e97.$df509a.$79f533
-                            ( Value $79f533-arg= /Context( Value value@Value text )
-                                ( Value ctx@Value $79f533-ctx )
+                        [ /LLVM/llvmOperand.$d43e69
+                            ( /contBody( Value /..ps ) )( Value /argKey -> ∀/Data/String )
+                            ( Value $d43e69-arg= /Context( Value value@Value boundOp )( Value ctx@Value $d43e69-ctx ) )( Value $d43e69-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= llvmBindLocal( Value name= Value argKey )
+                                    ( Value val= LlvmContextVal( Value value= Value boundOp ) )
+                                )
+                                ( Value ctx= /( ..Value $d43e69-states )( ..Value $d43e69-ctx ) )
                             )
-                            ( Value $79f533-states )= /Context( Value value= Value text )
-                            ( Value ctx= /
-                                ( ..Value $79f533-states )
-                                ( ..Value $79f533-ctx )
+                            ( fn( Value v )= /LLVM/llvmOperand.$d43e69.$78c97c
+                                ( /contBody( Value /..ps )= /contBody( Value /..ps= Value /..ps ) )
+                                ( Value $78c97c-arg= Value v )
+                                ( Value $78c97c-states= /( ..Value $d43e69-states )( ..Value $d43e69-ctx ) )
                             )
                         ]
                     }
@@ -1123,84 +1744,135 @@ Prgm
                     }
                 )
             ,
-                ( "/LLVM/llvmFunction.$b8f074.$c83817"
+                ( "/LLVM/llvmOperand.$a276be.$796402"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /LLVM/llvmFunction.$b8f074.$c83817
-                            ( Value $c83817-arg= /Context( Value value@Value retOp )( Value ctx@Value $c83817-ctx ) )( Value $c83817-states )= /Data/bindap
+                        [ /LLVM/llvmOperand.$a276be.$796402( Value /leftOp )
+                            ( Value $796402-arg= /Context( Value value@Value rightOp )
+                                ( Value ctx@Value $796402-ctx )
+                            )
+                            ( Value $796402-states )= /Data/bindap
                             ( Value m= /ContextIn
-                                ( Value value= llvmEmit
-                                    ( Value line= llvmRet( Value o= Value retOp ) )
+                                ( Value value= llvmInstr
+                                    ( Value op= LlvmCompare
+                                        ( Value int= CStr
+                                            { csValue = "icmp eq" }
+                                        )
+                                        ( Value float= CStr
+                                            { csValue = "fcmp oeq" }
+                                        )
+                                    )( Value l= Value leftOp )( Value r= Value rightOp )
                                 )
-                                ( Value ctx= /( ..Value $c83817-states )( ..Value $c83817-ctx ) )
+                                ( Value ctx= /
+                                    ( ..Value $796402-states )
+                                    ( ..Value $796402-ctx )
+                                )
                             )
-                            ( fn( Value v )= /LLVM/llvmFunction.$b8f074.$c83817.$ad5981( Value /retOp= Value /retOp )( Value $ad5981-arg= Value v )
-                                ( Value $ad5981-states= /( ..Value $c83817-states )( ..Value $c83817-ctx ) )
+                            ( fn( Value v )= /LLVM/llvmOperand.$a276be.$796402.$c14328( Value $c14328-arg= Value v )
+                                ( Value $c14328-states= /
+                                    ( ..Value $796402-states )
+                                    ( ..Value $796402-ctx )
+                                )
                             )
                         ]
                     }
                 )
             ,
-                ( "/LLVM/llvmOperand.$438d39.$d0617a.$86dde7"
+                ( "/LLVM/Example/llvmExGreet.$a64a9c"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /LLVM/llvmOperand.$438d39.$d0617a.$86dde7
-                            ( Value $86dde7-arg= /Context( Value value@Value instrOp )
-                                ( Value ctx@Value $86dde7-ctx )
+                        [ /LLVM/Example/llvmExGreet.$a64a9c
+                            ( Value $a64a9c-arg= /Context( Value value )( Value ctx@Value $a64a9c-ctx ) )( Value $a64a9c-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= exit
+                                    ( Value val= CInt
+                                        { ciValue = 3 }
+                                    )
+                                )
+                                ( Value ctx= /( ..Value $a64a9c-states )( ..Value $a64a9c-ctx ) )
                             )
-                            ( Value $86dde7-states )= /Context( Value value= Value instrOp )
-                            ( Value ctx= /
-                                ( ..Value $86dde7-states )
-                                ( ..Value $86dde7-ctx )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/LLVM/llvmFunction.$b8f074.$c83817.$ad5981"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /LLVM/llvmFunction.$b8f074.$c83817.$ad5981( Value /retOp )
-                            ( Value $ad5981-arg= /Context( Value value )( Value ctx@Value $ad5981-ctx ) )( Value $ad5981-states )= /Data/bindap
-                            ( Value m= /ContextIn( Value value= Value llvmLines )
-                                ( Value ctx= /( ..Value $ad5981-states )( ..Value $ad5981-ctx ) )
-                            )
-                            ( fn( Value v )= /LLVM/llvmFunction.$b8f074.$c83817.$ad5981.$dc1ab6( Value /retOp= Value /retOp )( Value $dc1ab6-arg= Value v )
-                                ( Value $dc1ab6-states= /( ..Value $ad5981-states )( ..Value $ad5981-ctx ) )
+                            ( fn( Value v )= /LLVM/Example/llvmExGreet.$a64a9c.$6c214e
+                                ( Value $6c214e-arg= Value v )
+                                ( Value $6c214e-states= /( ..Value $a64a9c-states )( ..Value $a64a9c-ctx ) )
                             )
                         ]
                     }
                 )
             ,
-                ( "/LLVM/Example/floats"
+                ( "/LLVM/llvmFindLocal"
                 , ObjectMapItem
                     { omiDecls =
-                        [ /LLVM/Example/floats( Value x -> /Data/Primitive/Float ) -> /Data/Primitive/Float ]
+                        [ /LLVM/llvmFindLocal
+                            ( Value locals -> ∀/Data/List/ConsList[ /T=/LLVM/LlvmLocal.. ] )( Value name -> ∀/Data/String ) -> ∀/LLVM/LlvmFound
+                        ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /LLVM/Example/floats( Value x ) -> /Data/Primitive/Float = /operator-
-                            ( Value /l= /operator*
-                                ( Value /l= CFloat
-                                    { cfValue = 1.5 }
+                        [ /LLVM/llvmFindLocal( Value locals= Value /Data/List/Nil )( Value name ) -> ∀/LLVM/LlvmFound = Value NoLocal
+                        , /LLVM/llvmFindLocal
+                            ( Value locals= /Data/List/Cons
+                                ( Value head= LlvmLocal( Value name@Value bound )( Value val ) )( Value tail )
+                            )( Value name ) | /operator==( Value /l= Value bound )( Value /r= Value name ) -> ∀/LLVM/LlvmFound = Value val
+                        , /LLVM/llvmFindLocal
+                            ( Value locals= /Data/List/Cons
+                                ( Value head= LlvmLocal( Value name@Value bound )( Value val ) )( Value tail )
+                            )( Value name ) -> ∀/LLVM/LlvmFound = llvmFindLocal( Value locals= Value tail )( Value name= Value name )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/llvmOperandText"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmOperandText
+                            ( Value o= Operand( Value type )( Value repr ) )= /operator++
+                            ( Value /l= /operator++
+                                ( Value /l= llvmTypeText( Value t= Value type ) )
+                                ( Value /r= CStr
+                                    { csValue = " " }
                                 )
-                                ( Value /r= CFloat
-                                    { cfValue = 2.0 }
-                                )
+                            )( Value /r= Value repr )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/llvmOperand.$d43e69.$78c97c.$21ce71"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmOperand.$d43e69.$78c97c.$21ce71
+                            ( Value $21ce71-arg= /Context( Value value@Value restOp )
+                                ( Value ctx@Value $21ce71-ctx )
                             )
-                            ( Value /r= CFloat
-                                { cfValue = 0.5 }
+                            ( Value $21ce71-states )= /Context( Value value= Value restOp )
+                            ( Value ctx= /
+                                ( ..Value $21ce71-states )
+                                ( ..Value $21ce71-ctx )
                             )
                         ]
+                    }
+                )
+            ,
+                ( "/LLVM/NoLocal"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Value /LLVM/NoLocal
+                        , Value /LLVM/NoLocal
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
                     }
                 )
             ,
@@ -1220,16 +1892,49 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /LLVM/llvmModule
-                            ( Value functions -> ∀/Data/List/ConsList[ /T=∀/Data/String ] ) -> ∀/Data/String
+                            ( Value functions -> ∀/Data/List/ConsList[ /T=∀/Data/String ] )
+                            ( Value externs -> ∀/Data/List/ConsList[ /T=∀/Data/String ] ) -> ∀/Data/String
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /LLVM/llvmModule( Value functions ) -> ∀/Data/String = /operator++
+                        [ /LLVM/llvmModule( Value functions )( Value externs= Value /Data/List/Nil ) -> ∀/Data/String = /operator++
                             ( Value /l= CStr
                                 { csValue = "; ModuleID = 'catln'
 
                                 " }
+                            )
+                            ( Value /r= join
+                                ( Value sep= CStr
+                                    { csValue = "
+                                    " }
+                                )
+                                ( Value parts= llvmReversed( Value lines= Value functions )( Value acc= Value /Data/List/Nil ) )
+                            )
+                        , /LLVM/llvmModule( Value functions )
+                            ( Value externs= /Data/List/Cons( Value head )( Value tail ) ) -> ∀/Data/String = /operator++
+                            ( Value /l= /operator++
+                                ( Value /l= /operator++
+                                    ( Value /l= CStr
+                                        { csValue = "; ModuleID = 'catln'
+
+                                        " }
+                                    )
+                                    ( Value /r= join
+                                        ( Value sep= CStr
+                                            { csValue = "
+                                            " }
+                                        )
+                                        ( Value parts= llvmReversed
+                                            ( Value lines= /Data/List/Cons( Value head= Value head )( Value tail= Value tail ) )( Value acc= Value /Data/List/Nil )
+                                        )
+                                    )
+                                )
+                                ( Value /r= CStr
+                                    { csValue = "
+
+                                    " }
+                                )
                             )
                             ( Value /r= join
                                 ( Value sep= CStr
@@ -1286,24 +1991,93 @@ Prgm
                     }
                 )
             ,
-                ( "/LLVM/llvmOperand.$ca13e0"
+                ( "/LLVM/llvmOperand.$a031a8.$5d60c9"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /LLVM/llvmOperand.$ca13e0
-                            ( /b( Value /..ps ) )
-                            ( Value $ca13e0-arg= /Context( Value value@Value leftOp )( Value ctx@Value $ca13e0-ctx ) )( Value $ca13e0-states )= /Data/bindap
+                        [ /LLVM/llvmOperand.$a031a8.$5d60c9( Value /leftOp )
+                            ( Value $5d60c9-arg= /Context( Value value@Value rightOp )
+                                ( Value ctx@Value $5d60c9-ctx )
+                            )
+                            ( Value $5d60c9-states )= /Data/bindap
                             ( Value m= /ContextIn
-                                ( Value value= llvmOperand
-                                    ( f( Value ..ps )= b( Value ..ps= Value ..ps ) )
+                                ( Value value= llvmInstr
+                                    ( Value op= LlvmArith
+                                        ( Value int= CStr
+                                            { csValue = "sub" }
+                                        )
+                                        ( Value float= CStr
+                                            { csValue = "fsub" }
+                                        )
+                                    )( Value l= Value leftOp )( Value r= Value rightOp )
                                 )
-                                ( Value ctx= /( ..Value $ca13e0-states )( ..Value $ca13e0-ctx ) )
+                                ( Value ctx= /
+                                    ( ..Value $5d60c9-states )
+                                    ( ..Value $5d60c9-ctx )
+                                )
                             )
-                            ( fn( Value v )= /LLVM/llvmOperand.$ca13e0.$b1b98d( Value /leftOp= Value /leftOp )( Value $b1b98d-arg= Value v )
-                                ( Value $b1b98d-states= /( ..Value $ca13e0-states )( ..Value $ca13e0-ctx ) )
+                            ( fn( Value v )= /LLVM/llvmOperand.$a031a8.$5d60c9.$da69d5( Value $da69d5-arg= Value v )
+                                ( Value $da69d5-states= /
+                                    ( ..Value $5d60c9-states )
+                                    ( ..Value $5d60c9-ctx )
+                                )
                             )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/llvmEscaped"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /LLVM/llvmEscaped( Value text -> ∀/Data/String ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmEscaped( Value text ) -> ∀/Data/String = join
+                            ( Value sep= CStr
+                                { csValue = "\0A" }
+                            )
+                            ( Value parts= split
+                                ( Value sep= CStr
+                                    { csValue = "
+                                    " }
+                                )
+                                ( Value /this= join
+                                    ( Value sep= CStr
+                                        { csValue = "\22" }
+                                    )
+                                    ( Value parts= split
+                                        ( Value sep= CStr
+                                            { csValue = """ }
+                                        )
+                                        ( Value /this= join
+                                            ( Value sep= CStr
+                                                { csValue = "\5C" }
+                                            )
+                                            ( Value parts= split
+                                                ( Value sep= CStr
+                                                    { csValue = "\" }
+                                                )( Value /this= Value text )
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/llvmOperand.$a276be.$796402.$c14328"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmOperand.$a276be.$796402.$c14328
+                            ( Value $c14328-arg= /Context( Value value@Value instrOp )( Value ctx@Value $c14328-ctx ) )( Value $c14328-states )= /Context( Value value= Value instrOp )
+                            ( Value ctx= /( ..Value $c14328-states )( ..Value $c14328-ctx ) )
                         ]
                     }
                 )
@@ -1312,7 +2086,7 @@ Prgm
                 , ObjectMapItem
                     { omiDecls =
                         [ /LLVM/LlvmFn( Value /next -> /Data/Primitive/Integer )
-                            ( Value /lines -> ∀/Data/List/ConsList[ /T=∀/Data/String ] )
+                            ( Value /lines -> ∀/Data/List/ConsList[ /T=∀/Data/String ] )( Value /aux -> /LLVM/LlvmAux.. )
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -1320,43 +2094,39 @@ Prgm
                     }
                 )
             ,
-                ( "/LLVM/llvmOperand.$a45376.$c38d19"
+                ( "/LLVM/llvmOperand.$f6ce35.$df85b2.$4c1eb7.$91d51d"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /LLVM/llvmOperand.$a45376.$c38d19( Value /leftOp )
-                            ( Value $c38d19-arg= /Context( Value value@Value rightOp )( Value ctx@Value $c38d19-ctx ) )( Value $c38d19-states )= /Data/bindap
-                            ( Value m= /ContextIn
-                                ( Value value= llvmInstr
-                                    ( Value op= LlvmCompare
-                                        ( Value int= CStr
-                                            { csValue = "icmp sle" }
-                                        )
-                                        ( Value float= CStr
-                                            { csValue = "fcmp ole" }
-                                        )
-                                    )( Value l= Value leftOp )( Value r= Value rightOp )
-                                )
-                                ( Value ctx= /( ..Value $c38d19-states )( ..Value $c38d19-ctx ) )
+                        [ /LLVM/llvmOperand.$f6ce35.$df85b2.$4c1eb7.$91d51d
+                            ( Value $91d51d-arg= /Context( Value value )
+                                ( Value ctx@Value $91d51d-ctx )
                             )
-                            ( fn( Value v )= /LLVM/llvmOperand.$a45376.$c38d19.$ecf0f7( Value $ecf0f7-arg= Value v )
-                                ( Value $ecf0f7-states= /( ..Value $c38d19-states )( ..Value $c38d19-ctx ) )
+                            ( Value $91d51d-states )= /Context
+                            ( Value value= Operand( Value type= Value I32 )
+                                ( Value repr= CStr
+                                    { csValue = "0" }
+                                )
+                            )
+                            ( Value ctx= /
+                                ( ..Value $91d51d-states )
+                                ( ..Value $91d51d-ctx )
                             )
                         ]
                     }
                 )
             ,
-                ( "/LLVM/llvmOperand.$a45376.$c38d19.$ecf0f7"
+                ( "/LLVM/llvmOperand.$e6a84b.$c78f6d.$f61c98"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /LLVM/llvmOperand.$a45376.$c38d19.$ecf0f7
-                            ( Value $ecf0f7-arg= /Context( Value value@Value instrOp )( Value ctx@Value $ecf0f7-ctx ) )( Value $ecf0f7-states )= /Context( Value value= Value instrOp )
-                            ( Value ctx= /( ..Value $ecf0f7-states )( ..Value $ecf0f7-ctx ) )
+                        [ /LLVM/llvmOperand.$e6a84b.$c78f6d.$f61c98
+                            ( Value $f61c98-arg= /Context( Value value@Value instrOp )( Value ctx@Value $f61c98-ctx ) )( Value $f61c98-states )= /Context( Value value= Value instrOp )
+                            ( Value ctx= /( ..Value $f61c98-states )( ..Value $f61c98-ctx ) )
                         ]
                     }
                 )
@@ -1380,93 +2150,38 @@ Prgm
                     }
                 )
             ,
-                ( "/LLVM/llvmOperand.$c2a700"
+                ( "/LLVM/llvmOperand.$d6076d"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /LLVM/llvmOperand.$c2a700
-                            ( /b( Value /..ps ) )
-                            ( Value $c2a700-arg= /Context( Value value@Value leftOp )( Value ctx@Value $c2a700-ctx ) )( Value $c2a700-states )= /Data/bindap
+                        [ /LLVM/llvmOperand.$d6076d( Value /text -> ∀/Data/String )
+                            ( Value $d6076d-arg= /Context( Value value )( Value ctx@Value $d6076d-ctx ) )( Value $d6076d-states )= /Data/bindap
                             ( Value m= /ContextIn
-                                ( Value value= llvmOperand
-                                    ( f( Value ..ps )= b( Value ..ps= Value ..ps ) )
-                                )
-                                ( Value ctx= /( ..Value $c2a700-states )( ..Value $c2a700-ctx ) )
+                                ( Value value= llvmString( Value text= Value text ) )
+                                ( Value ctx= /( ..Value $d6076d-states )( ..Value $d6076d-ctx ) )
                             )
-                            ( fn( Value v )= /LLVM/llvmOperand.$c2a700.$98595a( Value /leftOp= Value /leftOp )
-                                ( Value $98595a-arg= Value v )
-                                ( Value $98595a-states= /( ..Value $c2a700-states )( ..Value $c2a700-ctx ) )
+                            ( fn( Value v )= /LLVM/llvmOperand.$d6076d.$746254
+                                ( Value $746254-arg= Value v )
+                                ( Value $746254-states= /( ..Value $d6076d-states )( ..Value $d6076d-ctx ) )
                             )
                         ]
                     }
                 )
             ,
-                ( "/LLVM/llvmOperand.$73eceb.$fb4f99.$fa6b6a"
+                ( "/LLVM/Example/llvmBuiltText"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /LLVM/llvmOperand.$73eceb.$fb4f99.$fa6b6a
-                            ( Value $fa6b6a-arg= /Context( Value value@Value instrOp )( Value ctx@Value $fa6b6a-ctx ) )( Value $fa6b6a-states )= /Context( Value value= Value instrOp )
-                            ( Value ctx= /( ..Value $fa6b6a-states )( ..Value $fa6b6a-ctx ) )
-                        ]
-                    }
-                )
-            ,
-                ( "/LLVM/llvmOperand.$bf7ac6"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /LLVM/llvmOperand.$bf7ac6
-                            ( /b( Value /..ps ) )
-                            ( Value $bf7ac6-arg= /Context( Value value@Value leftOp )( Value ctx@Value $bf7ac6-ctx ) )( Value $bf7ac6-states )= /Data/bindap
-                            ( Value m= /ContextIn
-                                ( Value value= llvmOperand
-                                    ( f( Value ..ps )= b( Value ..ps= Value ..ps ) )
+                        [ /LLVM/Example/llvmBuiltText
+                            ( Value result= CatlnResult
+                                ( Value files= /Data/List/Cons
+                                    ( Value head= BuildFile( Value path )( Value contents ) )( Value tail )
                                 )
-                                ( Value ctx= /( ..Value $bf7ac6-states )( ..Value $bf7ac6-ctx ) )
-                            )
-                            ( fn( Value v )= /LLVM/llvmOperand.$bf7ac6.$7b4c98( Value /leftOp= Value /leftOp )
-                                ( Value $7b4c98-arg= Value v )
-                                ( Value $7b4c98-states= /( ..Value $bf7ac6-states )( ..Value $bf7ac6-ctx ) )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/LLVM/llvmOperand.$29080e"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /LLVM/llvmOperand.$29080e
-                            ( /b( Value /..ps ) )
-                            ( Value $29080e-arg= /Context( Value value@Value leftOp )
-                                ( Value ctx@Value $29080e-ctx )
-                            )
-                            ( Value $29080e-states )= /Data/bindap
-                            ( Value m= /ContextIn
-                                ( Value value= llvmOperand
-                                    ( f( Value ..ps )= b( Value ..ps= Value ..ps ) )
-                                )
-                                ( Value ctx= /
-                                    ( ..Value $29080e-states )
-                                    ( ..Value $29080e-ctx )
-                                )
-                            )
-                            ( fn( Value v )= /LLVM/llvmOperand.$29080e.$4b55f8( Value /leftOp= Value /leftOp )
-                                ( Value $4b55f8-arg= Value v )
-                                ( Value $4b55f8-states= /
-                                    ( ..Value $29080e-states )
-                                    ( ..Value $29080e-ctx )
-                                )
-                            )
+                            )= Value contents
                         ]
                     }
                 )
@@ -1495,39 +2210,24 @@ Prgm
                     }
                 )
             ,
-                ( "/LLVM/llvmOperand.$bf7ac6.$7b4c98"
+                ( "/LLVM/llvmOperand.$af411e"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /LLVM/llvmOperand.$bf7ac6.$7b4c98( Value /leftOp )
-                            ( Value $7b4c98-arg= /Context( Value value@Value rightOp )
-                                ( Value ctx@Value $7b4c98-ctx )
-                            )
-                            ( Value $7b4c98-states )= /Data/bindap
+                        [ /LLVM/llvmOperand.$af411e
+                            ( /b( Value /..ps ) )
+                            ( Value $af411e-arg= /Context( Value value@Value leftOp )( Value ctx@Value $af411e-ctx ) )( Value $af411e-states )= /Data/bindap
                             ( Value m= /ContextIn
-                                ( Value value= llvmInstr
-                                    ( Value op= LlvmArith
-                                        ( Value int= CStr
-                                            { csValue = "mul" }
-                                        )
-                                        ( Value float= CStr
-                                            { csValue = "fmul" }
-                                        )
-                                    )( Value l= Value leftOp )( Value r= Value rightOp )
+                                ( Value value= llvmOperand
+                                    ( f( Value ..ps )= b( Value ..ps= Value ..ps ) )
                                 )
-                                ( Value ctx= /
-                                    ( ..Value $7b4c98-states )
-                                    ( ..Value $7b4c98-ctx )
-                                )
+                                ( Value ctx= /( ..Value $af411e-states )( ..Value $af411e-ctx ) )
                             )
-                            ( fn( Value v )= /LLVM/llvmOperand.$bf7ac6.$7b4c98.$22c45a
-                                ( Value $22c45a-arg= Value v )
-                                ( Value $22c45a-states= /
-                                    ( ..Value $7b4c98-states )
-                                    ( ..Value $7b4c98-ctx )
-                                )
+                            ( fn( Value v )= /LLVM/llvmOperand.$af411e.$7d3722( Value /leftOp= Value /leftOp )
+                                ( Value $7d3722-arg= Value v )
+                                ( Value $7d3722-states= /( ..Value $af411e-states )( ..Value $af411e-ctx ) )
                             )
                         ]
                     }
@@ -1551,92 +2251,236 @@ Prgm
                     }
                 )
             ,
-                ( "/LLVM/llvmOperand.$438d39"
+                ( "/LLVM/llvmOperand.$d6076d.$746254.$d6a663"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /LLVM/llvmOperand.$438d39
-                            ( /b( Value /..ps ) )
-                            ( Value $438d39-arg= /Context( Value value@Value leftOp )
-                                ( Value ctx@Value $438d39-ctx )
-                            )
-                            ( Value $438d39-states )= /Data/bindap
-                            ( Value m= /ContextIn
-                                ( Value value= llvmOperand
-                                    ( f( Value ..ps )= b( Value ..ps= Value ..ps ) )
-                                )
-                                ( Value ctx= /
-                                    ( ..Value $438d39-states )
-                                    ( ..Value $438d39-ctx )
+                        [ /LLVM/llvmOperand.$d6076d.$746254.$d6a663
+                            ( Value $d6a663-arg= /Context( Value value )( Value ctx@Value $d6a663-ctx ) )( Value $d6a663-states )= /Context
+                            ( Value value= Operand( Value type= Value I32 )
+                                ( Value repr= CStr
+                                    { csValue = "0" }
                                 )
                             )
-                            ( fn( Value v )= /LLVM/llvmOperand.$438d39.$d0617a( Value /leftOp= Value /leftOp )( Value $d0617a-arg= Value v )
-                                ( Value $d0617a-states= /
-                                    ( ..Value $438d39-states )
-                                    ( ..Value $438d39-ctx )
-                                )
+                            ( Value ctx= /( ..Value $d6a663-states )( ..Value $d6a663-ctx ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/llvmOperand.$b9eb53.$68beb3.$6e9393"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmOperand.$b9eb53.$68beb3.$6e9393
+                            ( Value $6e9393-arg= /Context( Value value@Value instrOp )
+                                ( Value ctx@Value $6e9393-ctx )
+                            )
+                            ( Value $6e9393-states )= /Context( Value value= Value instrOp )
+                            ( Value ctx= /
+                                ( ..Value $6e9393-states )
+                                ( ..Value $6e9393-ctx )
                             )
                         ]
                     }
                 )
             ,
-                ( "/LLVM/llvmOperand.$73eceb.$fb4f99"
+                ( "/LLVM/LlvmAux"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /LLVM/LlvmAux
+                            ( Value /locals -> ∀/Data/List/ConsList[ /T=/LLVM/LlvmLocal.. ] )
+                            ( Value /externs -> ∀/Data/List/ConsList[ /T=∀/Data/String ] )( Value /strings -> /Data/Primitive/Integer )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/LLVM/LlvmContextVal"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Value /LLVM/LlvmContextVal
+                        , /LLVM/LlvmContextVal( Value /value -> /LLVM/Operand.. )
+                        , Value /LLVM/LlvmContextVal
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/LLVM/llvmFunction.$e6656d.$a0643b"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /LLVM/llvmOperand.$73eceb.$fb4f99( Value /leftOp )
-                            ( Value $fb4f99-arg= /Context( Value value@Value rightOp )( Value ctx@Value $fb4f99-ctx ) )( Value $fb4f99-states )= /Data/bindap
+                        [ /LLVM/llvmFunction.$e6656d.$a0643b
+                            ( Value $a0643b-arg= /Context( Value value@Value retOp )( Value ctx@Value $a0643b-ctx ) )( Value $a0643b-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= llvmEmit
+                                    ( Value line= llvmRet( Value o= Value retOp ) )
+                                )
+                                ( Value ctx= /( ..Value $a0643b-states )( ..Value $a0643b-ctx ) )
+                            )
+                            ( fn( Value v )= /LLVM/llvmFunction.$e6656d.$a0643b.$abdd31( Value /retOp= Value /retOp )( Value $abdd31-arg= Value v )
+                                ( Value $abdd31-states= /( ..Value $a0643b-states )( ..Value $a0643b-ctx ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/llvmOperand.$b9eb53.$68beb3"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmOperand.$b9eb53.$68beb3( Value /leftOp )
+                            ( Value $68beb3-arg= /Context( Value value@Value rightOp )
+                                ( Value ctx@Value $68beb3-ctx )
+                            )
+                            ( Value $68beb3-states )= /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= llvmInstr
                                     ( Value op= LlvmCompare
                                         ( Value int= CStr
-                                            { csValue = "icmp eq" }
+                                            { csValue = "icmp sge" }
                                         )
                                         ( Value float= CStr
-                                            { csValue = "fcmp oeq" }
+                                            { csValue = "fcmp oge" }
                                         )
                                     )( Value l= Value leftOp )( Value r= Value rightOp )
                                 )
-                                ( Value ctx= /( ..Value $fb4f99-states )( ..Value $fb4f99-ctx ) )
+                                ( Value ctx= /
+                                    ( ..Value $68beb3-states )
+                                    ( ..Value $68beb3-ctx )
+                                )
                             )
-                            ( fn( Value v )= /LLVM/llvmOperand.$73eceb.$fb4f99.$fa6b6a( Value $fa6b6a-arg= Value v )
-                                ( Value $fa6b6a-states= /( ..Value $fb4f99-states )( ..Value $fb4f99-ctx ) )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/LLVM/llvmOperand.$ca13e0.$b1b98d.$3df7b4"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /LLVM/llvmOperand.$ca13e0.$b1b98d.$3df7b4
-                            ( Value $3df7b4-arg= /Context( Value value@Value instrOp )
-                                ( Value ctx@Value $3df7b4-ctx )
-                            )
-                            ( Value $3df7b4-states )= /Context( Value value= Value instrOp )
-                            ( Value ctx= /
-                                ( ..Value $3df7b4-states )
-                                ( ..Value $3df7b4-ctx )
+                            ( fn( Value v )= /LLVM/llvmOperand.$b9eb53.$68beb3.$6e9393
+                                ( Value $6e9393-arg= Value v )
+                                ( Value $6e9393-states= /
+                                    ( ..Value $68beb3-states )
+                                    ( ..Value $68beb3-ctx )
+                                )
                             )
                         ]
                     }
                 )
             ,
-                ( "/LLVM/llvmOperand.$ca13e0.$b1b98d"
+                ( "/LLVM/llvmParamValue"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /LLVM/llvmOperand.$ca13e0.$b1b98d( Value /leftOp )
-                            ( Value $b1b98d-arg= /Context( Value value@Value rightOp )( Value ctx@Value $b1b98d-ctx ) )( Value $b1b98d-states )= /Data/bindap
+                        [ /LLVM/llvmParamValue
+                            ( Value found= Operand( Value type )( Value repr ) )( Value name )= Operand( Value type= Value type )( Value repr= Value repr )
+                        , /LLVM/llvmParamValue
+                            ( Value found= LlvmContextVal( Value value ) )( Value name )= Value value
+                        , /LLVM/llvmParamValue( Value found= Value NoLocal )( Value name )= Operand( Value type= Value I64 )
+                            ( Value repr= /operator++
+                                ( Value /l= CStr
+                                    { csValue = "%" }
+                                )( Value /r= Value name )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/llvmOperand.$f6ce35"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmOperand.$f6ce35
+                            ( Value $f6ce35-arg= /Context( Value value@Value exitOp )( Value ctx@Value $f6ce35-ctx ) )( Value $f6ce35-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= llvmNarrow( Value o= Value exitOp ) )
+                                ( Value ctx= /( ..Value $f6ce35-states )( ..Value $f6ce35-ctx ) )
+                            )
+                            ( fn( Value v )= /LLVM/llvmOperand.$f6ce35.$df85b2( Value $df85b2-arg= Value v )
+                                ( Value $df85b2-states= /( ..Value $f6ce35-states )( ..Value $f6ce35-ctx ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/Example/llvmExFloats"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /LLVM/Example/llvmExFloats( Value x -> /Data/Primitive/Float ) -> /Data/Primitive/Float ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/Example/llvmExFloats( Value x ) -> /Data/Primitive/Float = /operator-
+                            ( Value /l= /operator*
+                                ( Value /l= CFloat
+                                    { cfValue = 1.5 }
+                                )
+                                ( Value /r= CFloat
+                                    { cfValue = 2.0 }
+                                )
+                            )
+                            ( Value /r= CFloat
+                                { cfValue = 0.5 }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/llvmStringConstant"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /LLVM/llvmStringConstant( Value name -> ∀/Data/String )( Value text -> ∀/Data/String ) -> ∀/Data/String ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmStringConstant( Value name )( Value text ) -> ∀/Data/String = /operator++
+                            ( Value /l= /operator++
+                                ( Value /l= /operator++
+                                    ( Value /l= /operator++
+                                        ( Value /l= /operator++( Value /l= Value name )
+                                            ( Value /r= CStr
+                                                { csValue = " = private unnamed_addr constant [" }
+                                            )
+                                        )
+                                        ( Value /r= toString
+                                            ( Value /this= /operator+
+                                                ( Value /l= length( Value /this= Value text ) )
+                                                ( Value /r= CInt
+                                                    { ciValue = 1 }
+                                                )
+                                            )
+                                        )
+                                    )
+                                    ( Value /r= CStr
+                                        { csValue = " x i8] c"" }
+                                    )
+                                )
+                                ( Value /r= llvmEscaped( Value text= Value text ) )
+                            )
+                            ( Value /r= CStr
+                                { csValue = "\00"" }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/llvmOperand.$769413.$c8d5f3"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmOperand.$769413.$c8d5f3( Value /leftOp )
+                            ( Value $c8d5f3-arg= /Context( Value value@Value rightOp )( Value ctx@Value $c8d5f3-ctx ) )( Value $c8d5f3-states )= /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= llvmInstr
                                     ( Value op= LlvmCompare
@@ -1648,49 +2492,68 @@ Prgm
                                         )
                                     )( Value l= Value leftOp )( Value r= Value rightOp )
                                 )
-                                ( Value ctx= /( ..Value $b1b98d-states )( ..Value $b1b98d-ctx ) )
+                                ( Value ctx= /( ..Value $c8d5f3-states )( ..Value $c8d5f3-ctx ) )
                             )
-                            ( fn( Value v )= /LLVM/llvmOperand.$ca13e0.$b1b98d.$3df7b4
-                                ( Value $3df7b4-arg= Value v )
-                                ( Value $3df7b4-states= /( ..Value $b1b98d-states )( ..Value $b1b98d-ctx ) )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/LLVM/llvmFunction.$b8f074"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /LLVM/llvmFunction.$b8f074
-                            ( /body( Value /..ps ) )
-                            ( Value $b8f074-arg= /Context( Value value )( Value ctx@Value $b8f074-ctx ) )( Value $b8f074-states )= /Data/bindap
-                            ( Value m= /ContextIn
-                                ( Value value= llvmOperand
-                                    ( f( Value ..ps )= body( Value ..ps= Value ..ps ) )
-                                )
-                                ( Value ctx= /( ..Value $b8f074-states )( ..Value $b8f074-ctx ) )
-                            )
-                            ( fn( Value v )= /LLVM/llvmFunction.$b8f074.$c83817( Value $c83817-arg= Value v )
-                                ( Value $c83817-states= /( ..Value $b8f074-states )( ..Value $b8f074-ctx ) )
+                            ( fn( Value v )= /LLVM/llvmOperand.$769413.$c8d5f3.$b28c47( Value $b28c47-arg= Value v )
+                                ( Value $b28c47-states= /( ..Value $c8d5f3-states )( ..Value $c8d5f3-ctx ) )
                             )
                         ]
                     }
                 )
             ,
-                ( "/LLVM/llvmOperand.$c2a700.$98595a"
+                ( "/LLVM/llvmContextValue"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /LLVM/llvmOperand.$c2a700.$98595a( Value /leftOp )
-                            ( Value $98595a-arg= /Context( Value value@Value rightOp )
-                                ( Value ctx@Value $98595a-ctx )
+                        [ /LLVM/llvmContextValue
+                            ( Value found= LlvmContextVal( Value value ) )= Value value
+                        , /LLVM/llvmContextValue( Value found )= Operand( Value type= Value I32 )
+                            ( Value repr= CStr
+                                { csValue = "undef" }
                             )
-                            ( Value $98595a-states )= /Data/bindap
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/llvmProgram.$27c43a.$5466ac.$454715"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmProgram.$27c43a.$5466ac.$454715
+                            ( Value $454715-arg= /Context( Value value@Value text )
+                                ( Value ctx@Value $454715-ctx )
+                            )
+                            ( Value $454715-states )= /Context( Value value= Value text )
+                            ( Value ctx= /
+                                ( ..Value $454715-states )
+                                ( ..Value $454715-ctx )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/LlvmLocal"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /LLVM/LlvmLocal( Value /name -> ∀/Data/String )( Value /val -> ∀/LLVM/LlvmVal ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/LLVM/llvmOperand.$78dba2.$d6c87d"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmOperand.$78dba2.$d6c87d( Value /leftOp )
+                            ( Value $d6c87d-arg= /Context( Value value@Value rightOp )( Value ctx@Value $d6c87d-ctx ) )( Value $d6c87d-states )= /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= llvmInstr
                                     ( Value op= LlvmArith
@@ -1702,53 +2565,114 @@ Prgm
                                         )
                                     )( Value l= Value leftOp )( Value r= Value rightOp )
                                 )
-                                ( Value ctx= /
-                                    ( ..Value $98595a-states )
-                                    ( ..Value $98595a-ctx )
-                                )
+                                ( Value ctx= /( ..Value $d6c87d-states )( ..Value $d6c87d-ctx ) )
                             )
-                            ( fn( Value v )= /LLVM/llvmOperand.$c2a700.$98595a.$bae2b1( Value $bae2b1-arg= Value v )
-                                ( Value $bae2b1-states= /
-                                    ( ..Value $98595a-states )
-                                    ( ..Value $98595a-ctx )
-                                )
+                            ( fn( Value v )= /LLVM/llvmOperand.$78dba2.$d6c87d.$75e581
+                                ( Value $75e581-arg= Value v )
+                                ( Value $75e581-states= /( ..Value $d6c87d-states )( ..Value $d6c87d-ctx ) )
                             )
                         ]
                     }
                 )
             ,
-                ( "/LLVM/llvmOperand.$29080e.$4b55f8"
+                ( "/LLVM/llvmFunction.$e6656d.$a0643b.$abdd31.$cc9e77"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /LLVM/llvmOperand.$29080e.$4b55f8( Value /leftOp )
-                            ( Value $4b55f8-arg= /Context( Value value@Value rightOp )
-                                ( Value ctx@Value $4b55f8-ctx )
+                        [ /LLVM/llvmFunction.$e6656d.$a0643b.$abdd31.$cc9e77( Value /retOp )
+                            ( Value $cc9e77-arg= /Context( Value value@Value bodyLines )( Value ctx@Value $cc9e77-ctx ) )( Value $cc9e77-states )= /Data/bindap
+                            ( Value m= /ContextIn( Value value= Value llvmFnExterns )
+                                ( Value ctx= /( ..Value $cc9e77-states )( ..Value $cc9e77-ctx ) )
                             )
-                            ( Value $4b55f8-states )= /Data/bindap
+                            ( fn( Value v )= /LLVM/llvmFunction.$e6656d.$a0643b.$abdd31.$cc9e77.$695715( Value /retOp= Value /retOp )( Value /bodyLines= Value /bodyLines )
+                                ( Value $695715-arg= Value v )
+                                ( Value $695715-states= /( ..Value $cc9e77-states )( ..Value $cc9e77-ctx ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/Example/llvmExGreet.$a64a9c.$6c214e"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/Example/llvmExGreet.$a64a9c.$6c214e
+                            ( Value $6c214e-arg= /Context( Value value )
+                                ( Value ctx@Value $6c214e-ctx )
+                            )
+                            ( Value $6c214e-states )= /Context( Value value= Value / )
+                            ( Value ctx= /
+                                ( ..Value $6c214e-states )
+                                ( ..Value $6c214e-ctx )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/llvmOperand.$a031a8.$5d60c9.$da69d5"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmOperand.$a031a8.$5d60c9.$da69d5
+                            ( Value $da69d5-arg= /Context( Value value@Value instrOp )( Value ctx@Value $da69d5-ctx ) )( Value $da69d5-states )= /Context( Value value= Value instrOp )
+                            ( Value ctx= /( ..Value $da69d5-states )( ..Value $da69d5-ctx ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/llvmOperand.$e6a84b"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmOperand.$e6a84b
+                            ( /b( Value /..ps ) )
+                            ( Value $e6a84b-arg= /Context( Value value@Value leftOp )( Value ctx@Value $e6a84b-ctx ) )( Value $e6a84b-states )= /Data/bindap
                             ( Value m= /ContextIn
-                                ( Value value= llvmInstr
-                                    ( Value op= LlvmCompare
-                                        ( Value int= CStr
-                                            { csValue = "icmp slt" }
-                                        )
-                                        ( Value float= CStr
-                                            { csValue = "fcmp olt" }
-                                        )
-                                    )( Value l= Value leftOp )( Value r= Value rightOp )
+                                ( Value value= llvmOperand
+                                    ( f( Value ..ps )= b( Value ..ps= Value ..ps ) )
+                                )
+                                ( Value ctx= /( ..Value $e6a84b-states )( ..Value $e6a84b-ctx ) )
+                            )
+                            ( fn( Value v )= /LLVM/llvmOperand.$e6a84b.$c78f6d( Value /leftOp= Value /leftOp )( Value $c78f6d-arg= Value v )
+                                ( Value $c78f6d-states= /( ..Value $e6a84b-states )( ..Value $e6a84b-ctx ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/llvmOperand.$769413"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmOperand.$769413
+                            ( /b( Value /..ps ) )
+                            ( Value $769413-arg= /Context( Value value@Value leftOp )
+                                ( Value ctx@Value $769413-ctx )
+                            )
+                            ( Value $769413-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= llvmOperand
+                                    ( f( Value ..ps )= b( Value ..ps= Value ..ps ) )
                                 )
                                 ( Value ctx= /
-                                    ( ..Value $4b55f8-states )
-                                    ( ..Value $4b55f8-ctx )
+                                    ( ..Value $769413-states )
+                                    ( ..Value $769413-ctx )
                                 )
                             )
-                            ( fn( Value v )= /LLVM/llvmOperand.$29080e.$4b55f8.$4554f7
-                                ( Value $4554f7-arg= Value v )
-                                ( Value $4554f7-states= /
-                                    ( ..Value $4b55f8-states )
-                                    ( ..Value $4b55f8-ctx )
+                            ( fn( Value v )= /LLVM/llvmOperand.$769413.$c8d5f3( Value /leftOp= Value /leftOp )( Value $c8d5f3-arg= Value v )
+                                ( Value $c8d5f3-states= /
+                                    ( ..Value $769413-states )
+                                    ( ..Value $769413-ctx )
                                 )
                             )
                         ]
@@ -1757,46 +2681,25 @@ Prgm
             ,
                 ( "/LLVM/llvmOperandType"
                 , ObjectMapItem
-                    { omiDecls =
-                        [ /LLVM/llvmOperandType( Value o -> /LLVM/Operand.. ) -> ∀/Data/String ]
+                    { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /LLVM/llvmOperandType
-                            ( Value o= Operand( Value type )( Value repr ) ) -> ∀/Data/String = llvmTypeText( Value t= Value type )
+                            ( Value o= Operand( Value type )( Value repr ) )= llvmTypeText( Value t= Value type )
                         ]
                     }
                 )
             ,
-                ( "/LLVM/Example/arith"
-                , ObjectMapItem
-                    { omiDecls =
-                        [ /LLVM/Example/arith( Value x -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /LLVM/Example/arith( Value x ) -> /Data/Primitive/Integer = /operator+
-                            ( Value /l= /operator*
-                                ( Value /l= CInt
-                                    { ciValue = 2 }
-                                )
-                                ( Value /r= CInt
-                                    { ciValue = 3 }
-                                )
-                            )( Value /r= Value x )
-                        ]
-                    }
-                )
-            ,
-                ( "/LLVM/llvmOperand.$c2a700.$98595a.$bae2b1"
+                ( "/LLVM/llvmOperand.$769413.$c8d5f3.$b28c47"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /LLVM/llvmOperand.$c2a700.$98595a.$bae2b1
-                            ( Value $bae2b1-arg= /Context( Value value@Value instrOp )( Value ctx@Value $bae2b1-ctx ) )( Value $bae2b1-states )= /Context( Value value= Value instrOp )
-                            ( Value ctx= /( ..Value $bae2b1-states )( ..Value $bae2b1-ctx ) )
+                        [ /LLVM/llvmOperand.$769413.$c8d5f3.$b28c47
+                            ( Value $b28c47-arg= /Context( Value value@Value instrOp )( Value ctx@Value $b28c47-ctx ) )( Value $b28c47-states )= /Context( Value value= Value instrOp )
+                            ( Value ctx= /( ..Value $b28c47-states )( ..Value $b28c47-ctx ) )
                         ]
                     }
                 )
@@ -1813,79 +2716,144 @@ Prgm
                     }
                 )
             ,
-                ( "/LLVM/llvmProgram.$304e97"
+                ( "/LLVM/llvmOperand.$78dba2.$d6c87d.$75e581"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /LLVM/llvmProgram.$304e97( Value /fun )
-                            ( Value $304e97-arg= /Context( Value value )
-                                ( Value ctx@Value $304e97-ctx )
+                        [ /LLVM/llvmOperand.$78dba2.$d6c87d.$75e581
+                            ( Value $75e581-arg= /Context( Value value@Value instrOp )
+                                ( Value ctx@Value $75e581-ctx )
                             )
-                            ( Value $304e97-states )= /Data/bindap
-                            ( Value m= /ContextIn
-                                ( Value value= llvmFunction( Value fun= Value fun ) )
-                                ( Value ctx= /
-                                    ( ..Value $304e97-states )
-                                    ( ..Value $304e97-ctx )
-                                )
-                            )
-                            ( fn( Value v )= /LLVM/llvmProgram.$304e97.$df509a( Value $df509a-arg= Value v )
-                                ( Value $df509a-states= /
-                                    ( ..Value $304e97-states )
-                                    ( ..Value $304e97-ctx )
-                                )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/LLVM/llvmFunction.$86b2ce"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /LLVM/llvmFunction.$86b2ce
-                            ( Value $86b2ce-arg= /Context( Value value )
-                                ( Value ctx@Value $86b2ce-ctx )
-                            )
-                            ( Value $86b2ce-states )= /Context( Value value= Value / )
+                            ( Value $75e581-states )= /Context( Value value= Value instrOp )
                             ( Value ctx= /
-                                ( ..Value $86b2ce-states )
-                                ( ..Value $86b2ce-ctx )
+                                ( ..Value $75e581-states )
+                                ( ..Value $75e581-ctx )
                             )
                         ]
                     }
                 )
             ,
-                ( "/LLVM/llvmFunction.$b8f074.$c83817.$ad5981.$dc1ab6"
+                ( "/LLVM/Example/llvmExLess"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /LLVM/Example/llvmExLess( Value x -> /Data/Primitive/Integer ) -> ∀/Data/Primitive/Boolean ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/Example/llvmExLess( Value x ) -> ∀/Data/Primitive/Boolean = /operator<( Value /l= Value x )
+                            ( Value /r= CInt
+                                { ciValue = 3 }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/llvmOperand.$a031a8"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /LLVM/llvmFunction.$b8f074.$c83817.$ad5981.$dc1ab6( Value /retOp )
-                            ( Value $dc1ab6-arg= /Context( Value value@Value bodyLines )( Value ctx@Value $dc1ab6-ctx ) )( Value $dc1ab6-states )= /Data/bindap
+                        [ /LLVM/llvmOperand.$a031a8
+                            ( /b( Value /..ps ) )
+                            ( Value $a031a8-arg= /Context( Value value@Value leftOp )( Value ctx@Value $a031a8-ctx ) )( Value $a031a8-states )= /Data/bindap
                             ( Value m= /ContextIn
-                                ( Value value= llvmAddFunction
-                                    ( Value text= llvmDefine
-                                        ( Value ret= llvmOperandType( Value o= Value retOp ) )
-                                        ( Value name= CStr
-                                            { csValue = "main" }
-                                        )
-                                        ( Value body= /Data/List/Cons
-                                            ( Value head= CStr
-                                                { csValue = "entry:" }
-                                            )( Value tail= Value bodyLines )
-                                        )
-                                    )
+                                ( Value value= llvmOperand
+                                    ( f( Value ..ps )= b( Value ..ps= Value ..ps ) )
                                 )
-                                ( Value ctx= /( ..Value $dc1ab6-states )( ..Value $dc1ab6-ctx ) )
+                                ( Value ctx= /( ..Value $a031a8-states )( ..Value $a031a8-ctx ) )
                             )
-                            ( fn( Value v )= /LLVM/llvmFunction.$b8f074.$c83817.$ad5981.$dc1ab6.$d03cfd( Value $d03cfd-arg= Value v )
-                                ( Value $d03cfd-states= /( ..Value $dc1ab6-states )( ..Value $dc1ab6-ctx ) )
+                            ( fn( Value v )= /LLVM/llvmOperand.$a031a8.$5d60c9( Value /leftOp= Value /leftOp )
+                                ( Value $5d60c9-arg= Value v )
+                                ( Value $5d60c9-states= /( ..Value $a031a8-states )( ..Value $a031a8-ctx ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/llvmOperand.$d43e69.$78c97c"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmOperand.$d43e69.$78c97c
+                            ( /contBody( Value /..ps ) )
+                            ( Value $78c97c-arg= /Context( Value value )
+                                ( Value ctx@Value $78c97c-ctx )
+                            )
+                            ( Value $78c97c-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= llvmOperand
+                                    ( f( Value ..ps )= contBody( Value ..ps= Value ..ps ) )
+                                )
+                                ( Value ctx= /
+                                    ( ..Value $78c97c-states )
+                                    ( ..Value $78c97c-ctx )
+                                )
+                            )
+                            ( fn( Value v )= /LLVM/llvmOperand.$d43e69.$78c97c.$21ce71
+                                ( Value $21ce71-arg= Value v )
+                                ( Value $21ce71-states= /
+                                    ( ..Value $78c97c-states )
+                                    ( ..Value $78c97c-ctx )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/llvmOperand.$b9eb53"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmOperand.$b9eb53
+                            ( /b( Value /..ps ) )
+                            ( Value $b9eb53-arg= /Context( Value value@Value leftOp )( Value ctx@Value $b9eb53-ctx ) )( Value $b9eb53-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= llvmOperand
+                                    ( f( Value ..ps )= b( Value ..ps= Value ..ps ) )
+                                )
+                                ( Value ctx= /( ..Value $b9eb53-states )( ..Value $b9eb53-ctx ) )
+                            )
+                            ( fn( Value v )= /LLVM/llvmOperand.$b9eb53.$68beb3( Value /leftOp= Value /leftOp )
+                                ( Value $68beb3-arg= Value v )
+                                ( Value $68beb3-states= /( ..Value $b9eb53-states )( ..Value $b9eb53-ctx ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/LLVM/llvmOperand.$78dba2"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmOperand.$78dba2
+                            ( /b( Value /..ps ) )
+                            ( Value $78dba2-arg= /Context( Value value@Value leftOp )
+                                ( Value ctx@Value $78dba2-ctx )
+                            )
+                            ( Value $78dba2-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= llvmOperand
+                                    ( f( Value ..ps )= b( Value ..ps= Value ..ps ) )
+                                )
+                                ( Value ctx= /
+                                    ( ..Value $78dba2-states )
+                                    ( ..Value $78dba2-ctx )
+                                )
+                            )
+                            ( fn( Value v )= /LLVM/llvmOperand.$78dba2.$d6c87d( Value /leftOp= Value /leftOp )( Value $d6c87d-arg= Value v )
+                                ( Value $d6c87d-states= /
+                                    ( ..Value $78dba2-states )
+                                    ( ..Value $78dba2-ctx )
+                                )
                             )
                         ]
                     }
@@ -1895,6 +2863,35 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -1967,6 +2964,16 @@ Prgm
             }
         , CGClass
             { cgcSealed = True
+            , cgcPartial = /LLVM/LlvmFound
+            , cgcExtends =
+                [ /LLVM/Operand..
+                , /LLVM/LlvmContextVal..
+                , /LLVM/NoLocal
+                ]
+            , cgcDoc = Just "An [LlvmFound] is what looking a name up finds: an [LlvmVal], or [NoLocal]."
+            }
+        , CGClass
+            { cgcSealed = True
             , cgcPartial = /LLVM/LlvmType
             , cgcExtends =
                 [ /LLVM/I64
@@ -1976,6 +2983,16 @@ Prgm
                 ]
             , cgcDoc = Just "An [LlvmType] is the type of an [Operand]: a 64-bit integer ([I64]), a double ([F64]), a
               boolean ([I1]), or a 32-bit integer ([I32])."
+            }
+        , CGClass
+            { cgcSealed = True
+            , cgcPartial = /LLVM/LlvmVal
+            , cgcExtends =
+                [ /LLVM/Operand..
+                , /LLVM/LlvmContextVal..
+                ]
+            , cgcDoc = Just "An [LlvmVal] is what a name stands for while a function is compiled: an [Operand], or a
+              [Context] whose value is one ([LlvmContextVal])."
             }
         ]
     , prgmAnnots =
@@ -1997,6 +3014,15 @@ Prgm
             )
         , /Catln/#md
             ( Value /text= CStr
+                { csValue = "An [LlvmVal] is what a name stands for while a function is compiled: an [Operand], or a
+                [Context] whose value is one ([LlvmContextVal])." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "An [LlvmFound] is what looking a name up finds: an [LlvmVal], or [NoLocal]." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
                 { csValue = "## Compiling an expression" }
             )
         , /Catln/#md
@@ -2015,6 +3041,23 @@ Prgm
             )
         , /Catln/#md
             ( Value /text= CStr
+                { csValue = "### Binds and contexts
+                A body running in a context is a chain of binds: each runs an expression in the body's states
+                and hands what it answers to a continuation, a function of its own whose parameter destructures
+                the [Context] it is given ([/Data/bindap]). The expression is compiled, and so is the body of
+                the continuation, found by the guard asking for its definition: its parameters are as given, and
+                each name its pattern binds is a read of a field of one of them ([/Catln/FieldOf]). The
+                continuation's parameter is bound to a [Context] holding what the expression compiled to, so the
+                names it binds read that." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "### Input and output
+                [exit] and [println] are calls of C's @exit@ and @puts@, declared once in the module. A message
+                is a constant of the module, so only one written in the program is printed for now." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
                 { csValue = "An [LlvmBinOp] is an instruction of two operands." }
             )
         , /Catln/#md
@@ -2029,6 +3072,15 @@ Prgm
         , /Catln/#md
             ( Value /text= CStr
                 { csValue = "## Compiling a function" }
+            )
+        , /Catln/#print
+            ( Value /p= llvmEscaped
+                ( Value text= CStr
+                    { csValue = "a"b" }
+                )
+            )
+            ( Value /result= CStr
+                { csValue = "a\22b" }
             )
         , /Catln/#print
             ( Value /p= join
@@ -2082,7 +3134,7 @@ Prgm
                             )
                         )
                     )( Value /tail= Value /Data/List/Nil )
-                )
+                )( Value externs= Value /Data/List/Nil )
             )
             ( Value /result= CStr
                 { csValue = "; ModuleID = 'catln'
@@ -2099,7 +3151,7 @@ Prgm
                 What [llvm] compiles a function to, read as the text of the module it writes ([llvmText])." }
             )
         , /Catln/#print
-            ( Value /p= llvmText( Value c= Value /LLVM/Example/arith ) )
+            ( Value /p= llvmText( Value c= Value /LLVM/Example/llvmExArith ) )
             ( Value /result= CStr
                 { csValue = "; ModuleID = 'catln'
 
@@ -2112,7 +3164,7 @@ Prgm
                 " }
             )
         , /Catln/#print
-            ( Value /p= llvmText( Value c= Value /LLVM/Example/floats ) )
+            ( Value /p= llvmText( Value c= Value /LLVM/Example/llvmExFloats ) )
             ( Value /result= CStr
                 { csValue = "; ModuleID = 'catln'
 
@@ -2125,7 +3177,7 @@ Prgm
                 " }
             )
         , /Catln/#print
-            ( Value /p= llvmText( Value c= Value /LLVM/Example/less ) )
+            ( Value /p= llvmText( Value c= Value /LLVM/Example/llvmExLess ) )
             ( Value /result= CStr
                 { csValue = "; ModuleID = 'catln'
 
@@ -2133,6 +3185,24 @@ Prgm
                 entry:
                   %r0 = icmp slt i64 %x, 3
                   ret i1 %r0
+                }
+                " }
+            )
+        , /Catln/#print
+            ( Value /p= llvmText( Value c= Value /LLVM/Example/llvmExGreet ) )
+            ( Value /result= CStr
+                { csValue = "; ModuleID = 'catln'
+
+                declare void @exit(i32)
+                @.str0 = private unnamed_addr constant [6 x i8] c"hello\00"
+                declare i32 @puts(ptr)
+
+                define i32 @main() {
+                entry:
+                  call i32 @puts(ptr @.str0)
+                  %r0 = trunc i64 3 to i32
+                  call void @exit(i32 %r0)
+                  ret i32 0
                 }
                 " }
             )

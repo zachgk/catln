@@ -23,7 +23,7 @@ module TreeBuild.BodyPattern (
 import           Control.Monad
 import qualified Data.HashMap.Strict as H
 import qualified Data.HashSet        as S
-import           Data.List           (partition)
+import           Data.List           (partition, sortOn)
 import           Data.Maybe
 import           Text.Printf
 
@@ -96,10 +96,15 @@ instantiateBodyPatterns env@TBEnv{tbLambdas} srcType oa
     -- a closure the call was given: a function an arm bound and passed on to a helper of its own,
     -- 'instantiate') is that function's body, of its parameters, which are the body's too.
     throughClosure body = case exprHead body of
-      Value _ n | (cParams, cBody):_ <- [ (H.keys (exprAppliedArgsMap cObj), cBody) | ObjArr{oaObj=Just cObj, oaArr=Just (Just cBody, _)} <- tbLambdas, sameName (pkName (inExprSingleton cObj)) n ] ->
+      Value _ n | (cParams, cBody):_ <- [ (H.keys (exprAppliedArgsMap cObj), cBody) | ObjArr{oaObj=Just cObj, oaArr=Just (Just cBody, _)} <- tbLambdas, sameName (pkName (inExprSingleton cObj)) n, not (passesOn n cBody) ] ->
         let args = H.fromList [ (makeAbsoluteName (pkName k), v) | (k, Just (_, Just v)) <- H.toList (exprAppliedArgsMap body), not (isSpreadParamsName (pkName k)) ]
         in ([ p | p <- cParams, not (isSpreadParamsName (pkName p)) ], substParams cParams args cBody)
       _ -> ([], body)
+    -- A closure passing on the function of its own name (@body(..ps)= body(..ps)@) holds no body of
+    -- its own: the one it passes on, captured beside it, does.
+    passesOn n cBody = case exprHead cBody of
+      Value _ cn -> sameName cn n
+      _          -> False
 
 -- | The guards of an object that match an arrow's definition ('arrowDefGuardParts').
 objDefGuards :: BPExpr -> [(BPExpr, BPExpr, BPExpr)]
@@ -187,7 +192,10 @@ resolveDefGuard TBEnv{tbResEnv, tbTypeEnv} srcType oa Bindings{bLiterals} (defIn
     argType e = guardErr $ printf "the value %s it gives is neither an argument of the call nor a constant" (show e)
 
     -- A definition is the function of its parameters it is when each of them is only named. One
-    -- that destructures or guards what it is given is one case of a function, not all of it.
+    -- that guards what it is given is one case of a function, not all of it. One that destructures
+    -- them is all of the function when it is its only definition: a name its patterns bind is then a
+    -- read of the field of the parameter it is in ('fieldOfName'), so its body is a function of the
+    -- parameters as given.
     defFunction d@ObjArr{oaObj=Just dObj, oaArr=Just (Just dBody, _)}
       -- A function in a context (@ContextIn(value= main, ctx= (io -> IO, ..))@) is the function of
       -- its states, when each is only named.
@@ -195,6 +203,7 @@ resolveDefGuard TBEnv{tbResEnv, tbTypeEnv} srcType oa Bindings{bLiterals} (defIn
           Just (Just (_, Just states)) | all keyOnly (exprAppliedArgs states) -> return (H.keys (exprAppliedArgsMap states), dBody)
           _ -> guardErr $ printf "the definition at %s is not a function of its states alone" (show $ getMetaPos $ getExprMeta $ oaObjExpr d)
       | all keyOnly (exprAppliedArgs dObj) && isNothing (exprWhereCond dObj) = return (H.keys (exprAppliedArgsMap dObj), dBody)
+      | isNothing (exprWhereCond dObj) = return (H.keys (exprAppliedArgsMap dObj), readFields (concat [ fieldReads (Value emptyMetaN (pkName k)) v | (k, Just (_, Just v)) <- H.toList (exprAppliedArgsMap dObj) ]) dBody)
       | otherwise = guardErr $ printf "the definition at %s is not a function of its parameters alone" (show $ getMetaPos $ getExprMeta $ oaObjExpr d)
     defFunction d = guardErr $ printf "the definition %s has no body" (show $ oaObjPath d)
     keyOnly ObjArr{oaObj=Just k, oaArr=Just (Nothing, _)} = exprIsName k
@@ -212,6 +221,34 @@ resolveDefGuard TBEnv{tbResEnv, tbTypeEnv} srcType oa Bindings{bLiterals} (defIn
         ([(_, Just (_, Just (AliasExpr HoleExpr{} _)))], Nothing) -> return Nothing
         _ -> guardErr $ printf "its pattern %s is not Some(value@name)" (show pat)
       _ -> guardErr $ printf "its pattern %s is neither Some(value@name) nor Nothing" (show pat)
+
+-- | The names a pattern binds, each with the read of the part of @base@ it is bound to: a field
+-- bound as itself (@Context(value)@) or under an alias (@ctx\@c@) is the read of that field, and one
+-- destructured further is read through.
+fieldReads :: BPExpr -> BPExpr -> [(Name, BPExpr)]
+fieldReads base pat = case pat of
+  AliasExpr p (Value _ a) -> (makeAbsoluteName a, base) : fieldReads base p
+  TupleApply{} -> concat [ argReads k a | (k, a) <- H.toList (exprAppliedArgsMap pat) ]
+  _ -> []
+  where
+    argReads k a = case a of
+      Just (_, Just sub) -> fieldReads (fieldOf k) sub
+      _ -> case [ n | ObjArr{oaObj=Just o} <- exprAppliedArgs pat, inExprSingleton (stripAlias o) == k, Just n <- [aliasName o] ] of
+        (n:_) -> [(makeAbsoluteName n, fieldOf k)]
+        []    -> [ (makeAbsoluteName (pkName k), fieldOf k) | not (isSpreadParamsName (pkName k)) ]
+    fieldOf k = TupleApply emptyMetaN (emptyMetaN, TupleApply emptyMetaN (emptyMetaN, Value emptyMetaN (mkName fieldOfName)) (EAppArg (mkOArg fieldOfThis base))) (EAppArg (mkOArg fieldOfField (CExpr (emptyMetaT (constantType (CStr (keyText k)))) (CStr (keyText k)))))
+    mkOArg key v = ObjArr (Just (Value emptyMetaN (mkName key))) ArgObj Nothing [] (Just (Just v, emptyMetaN))
+    keyText k = case npathPath (getPath (nameStr (pkName k))) of
+      [] -> nameStr (pkName k)
+      ps -> last ps
+    stripAlias (AliasExpr b _) = b
+    stripAlias e               = e
+    aliasName (AliasExpr _ (Value _ n)) = Just n
+    aliasName _                         = Nothing
+
+-- | A body with each name a pattern bound read as the part of the value it was bound to.
+readFields :: [(Name, BPExpr)] -> BPExpr -> BPExpr
+readFields fieldsRead = substParams [ partialKey n | (n, _) <- fieldsRead ] (H.fromList fieldsRead)
 
 -- | A function's body with each of its parameters given the argument for it. A parameter given
 -- none is left as it is, the parameter of the function the body is passed on in.
@@ -275,15 +312,33 @@ matchBody TBEnv{tbTypeEnv} patParams bodyParams0 pat0 body0 = (spreadBindings <>
       (Just p, Just bp) -> if makeAbsoluteName (pkName p) == makeAbsoluteName (pkName bp) then Just mempty else Nothing
       (Nothing, Nothing) -> if sameName n bn then Just mempty else Nothing
       _ -> Nothing
+    -- A call matches a call of the same keys. An open one (a spread among its arguments) matches one
+    -- given more besides, and a key variable among them (@${k}= v@) matches the argument the rest do
+    -- not whose value matches its own, binding its key.
     go pat@TupleApply{} body@TupleApply{} = do
       headBindings <- go (exprHead pat) (exprHead body)
       guard (all (isJust . oaObj) (exprAppliedArgs body))
       let patArgs = keyed (exprAppliedArgsMap pat)
           bodyArgs = keyed (exprAppliedArgsMap body)
-      guard (H.keysSet patArgs == H.keysSet bodyArgs)
-      fmap ((headBindings <>) . mconcat) $ forM (H.toList patArgs) $ \(k, patArg) -> case (patArg, H.lookup k bodyArgs) of
+          isKeyVar k = isJust (keyVarName k)
+          isOpen k = isSpreadParamsName k && not (isKeyVar k) && isNothing (paramNamed patParams k)
+          open = any isOpen (H.keys patArgs)
+          fixedArgs = H.filterWithKey (\k _ -> not (isOpen k) && not (isKeyVar k)) patArgs
+          keyVarArgs = [ (v, a) | (k, a) <- H.toList patArgs, Just v <- [keyVarName k] ]
+      guard (H.keysSet fixedArgs `S.isSubsetOf` H.keysSet bodyArgs)
+      fixedBindings <- forM (H.toList fixedArgs) $ \(k, patArg) -> case (patArg, H.lookup k bodyArgs) of
         (Just (_, Just patV), Just (Just (_, Just bodyV))) -> go patV bodyV
         _                                                  -> Nothing
+      let rest0 = H.difference bodyArgs fixedArgs
+      (keyBindings, rest) <- foldM matchKeyVar ([], rest0) keyVarArgs
+      guard (open || H.null rest)
+      return (headBindings <> mconcat fixedBindings <> mconcat keyBindings)
+      where
+        matchKeyVar (acc, rest) (v, patArg) = case patArg of
+          Just (_, Just patV) -> case [ (k, b) | (k, Just (_, Just bodyV)) <- sortOn (show . fst) (H.toList rest), Just b <- [go patV bodyV] ] of
+            ((k, b):_) -> let s = paramText (partialKey k) in Just (b <> mempty{bLiterals=H.singleton (makeAbsoluteName v) (CExpr (emptyMetaT (constantType (CStr s))) (CStr s))} : acc, H.delete k rest)
+            [] -> Nothing
+          _ -> Nothing
     go _ _ = Nothing
     keyed = H.fromList . map (\(k, v) -> (makeAbsoluteName (pkName k), v)) . H.toList
     -- A parameter's name as it is written, without the path it is kept under.
@@ -321,9 +376,17 @@ instantiate Bindings{bLiterals, bSubFns, bSpreads} oa = oa{
     substArg (EAppArg a@ObjArr{oaArr=Just (Just (Value _ n), am)})
       | (k, (params, part)):_ <- [ kv | kv@(k', _) <- H.toList bSubFns, makeAbsoluteName (pkName k') == makeAbsoluteName n ]
       = EAppArg a{oaObj = Just (subFnKey k params), oaArr = Just (Just part, mWithType (getExprType part) am)}
-    substArg (EAppArg a) = EAppArg a{oaObj = fmap withSpreadParams (oaObj a), oaArr = fmap (\(e, m) -> (fmap subst e, m)) (oaArr a)}
+    substArg (EAppArg a) = EAppArg a{oaObj = fmap (lambdaKey (oaArr a)) (oaObj a), oaArr = fmap (\(e, m) -> (fmap subst e, m)) (oaArr a)}
+
     substArg (EAppSpread a) = EAppSpread (subst a)
     substArg a@EAppVar{} = a
+
+    -- A lambda passing on a sub-function variable (@f(..ps)= body(..ps)@) is a function of the
+    -- parameters of the part it bound, whatever its spread was bound to elsewhere; any other is a
+    -- function of the parameters its spread was bound to.
+    lambdaKey (Just (Just b, _)) key
+      | Just (params, _) <- subFnApplied b, any (isSpreadParamsName . pkName) (H.keys (exprAppliedArgsMap key)) = foldl addParam key [ p | p <- params, not (isSpreadParamsName (pkName p)) ]
+    lambdaKey _ key = withSpreadParams key
 
     -- The key of the lambda a sub-function variable is passed as: its name, with the parameters it
     -- is written with (a spread of them among them) and those of the part it bound.

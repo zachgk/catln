@@ -1175,7 +1175,9 @@ valClosureArrows _ = []
 valClosureLambdas :: Val -> [ObjArr Expr EvalMetaDat]
 valClosureLambdas (TupleVal _ args) = concatMap lambdasOf (H.elems args)
   where
-    lambdasOf (ObjArrVal oa _) = maybeToList (texprObjArrToExpr oa)
+    -- And the closures it captured: one passing a function on (@f(x)= f(x= x)@, as a parent's
+    -- higher-order argument is curried into a sub function) holds the function it passes on.
+    lambdasOf (ObjArrVal oa captured) = maybeToList (texprObjArrToExpr oa) ++ concatMap lambdasOf (H.elems captured)
     lambdasOf v                = valClosureLambdas v
 valClosureLambdas _ = []
 
