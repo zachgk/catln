@@ -76,7 +76,13 @@ evalBuildable _                      = False
 -- It also will pass the function name back through EvalMode in order to convert 'PRelativeName' into the matching 'PTypeName'
 -- TODO The use of listToMaybe will secretly discard if multiple evalTargetModes or function names are found. Instead, an error should be thrown
 evalPrgmTargetMode :: String -> EPrgm -> EvalMode
-evalPrgmTargetMode function prgm =
+evalPrgmTargetMode function prgm = evalTargetModeIn (mkTypeEnv prgm) function
+
+-- | 'evalPrgmTargetMode' against the type environment of the program, made once by whoever asks it of
+-- many functions of one program ('evalAllTargetModes'). Making it is a walk of the whole program, so
+-- making it for each function asked about is that walk once per function.
+evalTargetModeIn :: TypeEnv (ObjArrTypeGraph Expr EvalMetaDat) -> String -> EvalMode
+evalTargetModeIn typeEnv function =
   case maybeGetSingleton $ expandRelPartial typeEnv H.empty (partialVal (mkName function)) of
     Nothing -> NoEval (reachesPartials reachEnv [partialVal (mkName function)]) (reachesPartials reachEnv [partialVal (mkName function)])
     Just f ->
@@ -92,7 +98,6 @@ evalPrgmTargetMode function prgm =
            (_, rt) | reachesHasCutSubtypeOf typeEnv H.empty rt ioType -> EvalRun (nameStr function') -- Should require isShowable for run result
            _ -> NoEval funCtxReaches funReaches
   where
-    typeEnv = mkTypeEnv prgm
     reachEnv = ReachesEnv typeEnv H.empty S.empty
 
 -- | What a function run in an io answers with: a 'ContextStr' holding its value, of the type given,
@@ -120,10 +125,11 @@ evalAllTargetModes prgm@Prgm{prgmObjMap} = H.fromList $ mapMaybe targetMode $ fl
     targetMode oa = case nameStr (oaObjPath oa) of
       ContextInStr -> case H.lookupDefault Nothing (partialKey (mkName contextValStr)) $ exprAppliedArgsMap $ oaObjExpr oa of
         Just (_, Just valE) -> case maybeExprPath valE of
-          Just valName -> Just (getMetaId $ getExprMeta $ oaObjExpr oa, evalPrgmTargetMode (nameStr valName) prgm)
+          Just valName -> Just (getMetaId $ getExprMeta $ oaObjExpr oa, evalTargetModeIn typeEnv (nameStr valName))
           _ -> Nothing
         _ -> Nothing
-      _ -> Just (getMetaId $ getExprMeta $ oaObjExpr oa, evalPrgmTargetMode (nameStr (oaObjPath oa)) prgm)
+      _ -> Just (getMetaId $ getExprMeta $ oaObjExpr oa, evalTargetModeIn typeEnv (nameStr (oaObjPath oa)))
+    typeEnv = mkTypeEnv prgm
 
 -- | evaluate annotations such as assertions that require compiler verification
 --
