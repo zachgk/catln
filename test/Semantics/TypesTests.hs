@@ -132,7 +132,8 @@ propCompactIdempotent gPrgm = property $ do
   vaenv <- forAll $ genVaenv prgm
   a <- forAll $ genType prgm
   compact1 <- timed "compact a" $ compactType typeEnv vaenv a
-  compact2 <- timed "compact (compact a)" $ compactType typeEnv vaenv compact1
+  -- Recompacted from scratch: the flag compaction leaves on its output would answer otherwise.
+  compact2 <- timed "compact (compact a)" $ compactType typeEnv vaenv (forgetCompacted compact1)
   annotate $ printf "compact once to %s" (show compact1)
   annotate $ printf "compact twice to %s" (show compact2)
   eqTimed "compact idempotent" compact1 compact2

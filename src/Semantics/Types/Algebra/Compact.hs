@@ -538,16 +538,28 @@ compactSameFormPredExprLeafs = map merge
 -- |
 -- Used to simplify and reduce the size of a 'Type'.
 -- TODO: This should merge type partials into class partials
+--
+-- A type compaction produced is compact under every environment ('typeCompacted'), so it is
+-- handed back as it is, and so is every compacted type nested in one being compacted: a meet or
+-- union over compacted operands walks only what it built itself. One holding a value predicate is
+-- not flagged: the predicate is decided through arrows a later epoch may have narrowed ('Type').
 compactType :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
 compactType TypeEnv{teDisableCompact=True} _ t = t
+compactType _ _ t | typeCompacted t = t
+compactType typeEnv vaenv t
+  | holdsPredExpr t' = t'
+  | otherwise = markCompacted t'
+  where t' = compactTypeRaw typeEnv vaenv t
+
+compactTypeRaw :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> Type -> Type
 -- Idempotence fast paths for already-canonical trivial types. 'compactType' is provably the
 -- identity on each of these, yet the set algebra re-compacts them constantly — most calls are
 -- on types with at most one leaf, many on the empty 'BottomType'. Short-circuiting here avoids
 -- rebuilding the same structure through the whole pipeline.
 --   * 'BottomType' (empty Nothing-top): 'compactPartialLeafs' on empty is empty, 'foldRecursiveType' leaves it.
 --   * a single predicate-free partial with no args/vars: nothing to filter, join, overlap, or recurse into.
-compactType _ _ t@BottomType = t
-compactType _ _ t@(UnionType Nothing pos [])
+compactTypeRaw _ _ t@BottomType = t
+compactTypeRaw _ _ t@(UnionType Nothing pos [])
   | [PartialArgsOption vars args PredsNone _] <- concatMap S.toList (H.elems pos)
   , H.null vars
   , H.null args = t
@@ -557,7 +569,7 @@ compactType _ _ t@(UnionType Nothing pos [])
 -- @[/T=⊤]@ and a difference-side symbolic @[/T=$_/T]@ otherwise denote equal sets that
 -- 'isEqType' cannot join, breaking the intersect/difference laws. Guarded by a cheap scan;
 -- the rewrite's output has no such references, so this clause re-enters at most once.
-compactType typeEnv vaenv t@UnionType{}
+compactTypeRaw typeEnv vaenv t@UnionType{}
   | hasOutOfScopeTVExt vaenv t = compactType typeEnv vaenv (dropOutOfScopeTVExt typeEnv vaenv t)
 -- Contradictory top: the universe filtered by an unsatisfiable predicate is empty, so
 -- (∅ - neg) ∪ pos = pos. Two detectors: the syntactic 'isPredsContradictory' (e.g.
@@ -572,7 +584,7 @@ compactType typeEnv vaenv t@UnionType{}
 -- otherwise return such a top unchanged. 'predsEmpty' itself gates to >=2-atom conjunctions and
 -- decides symbolically first, so this stays cheap and non-recursive for any atom mix (e.g. two
 -- distinct PredRel atoms - a value has ONE name, so the conjunction is empty).
-compactType typeEnv vaenv (UnionType (Just (preds, _, _)) pos cs)
+compactTypeRaw typeEnv vaenv (UnionType (Just (preds, _, _)) pos cs)
   | isPredsContradictory preds || predsEmpty typeEnv vaenv preds = compactType typeEnv vaenv (UnionType Nothing pos cs)
 -- Class-graph unsatisfiable top: a negated conjunct implied by the rest (@p ∧ ¬q = ∅@ when @p ⟹ q@),
 -- e.g. @PredClass C[/T=a] ∧ ¬PredClass C[/T=b]@ with @a ⊆ b@. The syntactic 'isPredsContradictory'
@@ -580,7 +592,7 @@ compactType typeEnv vaenv (UnionType (Just (preds, _, _)) pos cs)
 -- parameterized-class pair — the difference @C[a] − C[b]@ when @a ⊆ b@ (which otherwise leaves an
 -- unreduced @C[a] ∧ ¬C[b]@ residue). Gated on a present negation so the common all-positive
 -- conjunctions never pay the 'predImplies' pass.
-compactType typeEnv vaenv (UnionType (Just (PredsAnd ps, _, _)) pos cs)
+compactTypeRaw typeEnv vaenv (UnionType (Just (PredsAnd ps, _, _)) pos cs)
   | any isNeg ps
   , or [ predImplies typeEnv vaenv (mkAnd rest) q | (PredsNot q, rest) <- picks ps ] =
       compactType typeEnv vaenv (UnionType Nothing pos cs)
@@ -601,7 +613,7 @@ compactType typeEnv vaenv (UnionType (Just (PredsAnd ps, _, _)) pos cs)
 -- already reduced to ∅. Placed BEFORE the exclusion-canonicalization clause below (which
 -- returns terminally for a no-change exclusion set and would strand tops that carry
 -- exclusions with an unpropagated formula).
-compactType typeEnv vaenv (UnionType (Just (PredsAnd ps, negPartials, ncs)) posLeafs cs)
+compactTypeRaw typeEnv vaenv (UnionType (Just (PredsAnd ps, negPartials, ncs)) posLeafs cs)
   | any isNegConjunct ps
   , let ps' = [unitProp x rest | (x, rest) <- conjPicks ps]
   , ps' /= ps =
@@ -622,14 +634,14 @@ compactType typeEnv vaenv (UnionType (Just (PredsAnd ps, negPartials, ncs)) posL
     conjsOf x             = [x]
 -- Two spellings of one value-predicate atom in a top's conjunction are the one atom
 -- ('mergeSameFormPredExprs'): a declared refinement met with the same condition written on the body.
-compactType typeEnv vaenv (UnionType (Just (preds@PredsAnd{}, negPartials, ncs)) posLeafs cs)
+compactTypeRaw typeEnv vaenv (UnionType (Just (preds@PredsAnd{}, negPartials, ncs)) posLeafs cs)
   | preds' <- mergeSameFormPredExprs preds
   , preds' /= preds =
       compactType typeEnv vaenv $ UnionType (Just (preds', negPartials, ncs)) posLeafs cs
 -- Pure ¬(single relation) top: re-express as the universe minus the relation's expansion.
 -- Matched on exactly this shape (no catch-all) so other pure-top predicates flow on to the
 -- ¬(unsatisfiable) and PredsAnd-simplification clauses below.
-compactType typeEnv vaenv t@(UnionType (Just (PredsNot (PredsOne (PredRel rp)), negPartials, [])) posLeafs [])
+compactTypeRaw typeEnv vaenv t@(UnionType (Just (PredsNot (PredsOne (PredRel rp)), negPartials, [])) posLeafs [])
   | H.null negPartials && H.null posLeafs = case expandRelPartial typeEnv vaenv rp of
       (UnionType Nothing rp' []) -> UnionType (Just (PredsNone, rp', [])) H.empty []
       _               -> t
@@ -639,7 +651,7 @@ compactType typeEnv vaenv t@(UnionType (Just (PredsNot (PredsOne (PredRel rp)), 
 -- constant, so @⊤|P − {c}@ and @⊤|P − (/Integer | PredConstEq c ∧ P)@ are one type. A residual
 -- the top does not state (a predicate of its own) keeps the leaf: it excludes @c@ only where that
 -- holds.
-compactType typeEnv vaenv (UnionType (Just (preds, negLeafs, negConsts)) posLeafs cs)
+compactTypeRaw typeEnv vaenv (UnionType (Just (preds, negLeafs, negConsts)) posLeafs cs)
   | not (H.null negLeafs)
   , (asConsts@(_:_), keptLeafs) <- partitionEithers (map constOrLeaf (splitUnionType negLeafs)) =
       compactType typeEnv vaenv $ UnionType (Just (preds, joinUnionType keptLeafs, L.nub (negConsts ++ asConsts))) posLeafs cs
@@ -663,7 +675,7 @@ compactType typeEnv vaenv (UnionType (Just (preds, negLeafs, negConsts)) posLeaf
 --    @Top(PredRel /Cons, {/Cons..})@ and @~/Cons ⊆ /Cons..@, so ∅ (without this the difference stays
 --    an unreduced symbolic subtraction). 'isSubtypeOfWithEnv' is sound (no false positives), so this
 --    never empties a genuinely inhabited residual.
-compactType typeEnv vaenv t@(UnionType (Just (preds, negPartials, negConsts)) posLeafs [])
+compactTypeRaw typeEnv vaenv t@(UnionType (Just (preds, negPartials, negConsts)) posLeafs [])
   | H.null posLeafs && preds /= PredsNone
   , not (H.null negPartials) || not (null negConsts) =
       if not (H.null keptNegLeafs) && isSubtypeOfWithEnv typeEnv vaenv predUniverse (UnionType Nothing keptNegLeafs [])
@@ -681,14 +693,14 @@ compactType typeEnv vaenv t@(UnionType (Just (preds, negPartials, negConsts)) po
     negLeafIntersects p = not $ isBottomType $ intersectTypesEnv typeEnv vaenv (singletonType p) predUniverse
 -- ¬(unsatisfiable) = everything: top component is U, simplify to PredsNone (same oracle pair
 -- as the pure-top clause above).
-compactType typeEnv vaenv (UnionType (Just (PredsNot p, negLeafs, ncs)) posLeafs cs)
+compactTypeRaw typeEnv vaenv (UnionType (Just (PredsNot p, negLeafs, ncs)) posLeafs cs)
   | isPredsContradictory p || predsEmpty typeEnv vaenv p = compactType typeEnv vaenv (UnionType (Just (PredsNone, negLeafs, ncs)) posLeafs cs)
 -- Cancel pos/neg overlap: an excluded region the positive side re-adds is a vacuous exclusion
 -- ((T − neg' − C) ∪ pos' ∪ C = (T − neg') ∪ pos' ∪ C), so the common part drops from the NEG
 -- side unconditionally. Its positive listing drops only when the reduced top already contains
 -- it (e.g. (U − {X}) ∪ {X} = U for X inside U); a piece outside the predicate universe must
 -- survive positively (dropping both sides would LOSE it: (U¬A − A) ∪ A = U¬A ∪ A, not U¬A).
-compactType typeEnv vaenv (UnionType (Just (preds, negLeafs, ncs)) posLeafs cs)
+compactTypeRaw typeEnv vaenv (UnionType (Just (preds, negLeafs, ncs)) posLeafs cs)
   | not (H.null posLeafs), not (H.null negLeafs)
   , let common = H.filter (not . S.null) $ H.intersectionWith S.intersection posLeafs negLeafs
   , not (H.null common) =
@@ -703,7 +715,7 @@ compactType typeEnv vaenv (UnionType (Just (preds, negLeafs, ncs)) posLeafs cs)
 -- point the top holds there, so it is redundant — and if the top excludes @c@, the two cancel
 -- (@(⊤|¬P − {c}) ∪ (/Integer | PredConstEq c ∧ ¬P)@ is @⊤|¬P@). The dual of the excluded-leaf
 -- rule above, so the two spellings a union's operand order produces are one.
-compactType typeEnv vaenv (UnionType (Just (preds, negLeafs, negConsts)) posLeafs cs)
+compactTypeRaw typeEnv vaenv (UnionType (Just (preds, negLeafs, negConsts)) posLeafs cs)
   | not (H.null posLeafs)
   , (reAdded@(_:_), keptLeafs) <- partitionEithers (map constOrLeaf (splitUnionType posLeafs)) =
       compactType typeEnv vaenv $ UnionType (Just (preds, negLeafs, filter (`notElem` reAdded) negConsts)) (joinUnionType keptLeafs) cs
@@ -722,7 +734,7 @@ compactType typeEnv vaenv (UnionType (Just (preds, negLeafs, negConsts)) posLeaf
 --    point); if the point lies outside that region the exclusion is vacuous and drops while the
 --    positive listing survives;
 --  * a positive constant the top or the positive leafs already contain is redundant and drops.
-compactType typeEnv vaenv (UnionType (Just (preds, negLeafs, negConsts)) posLeafs posConsts)
+compactTypeRaw typeEnv vaenv (UnionType (Just (preds, negLeafs, negConsts)) posLeafs posConsts)
   | not (null posConsts)
   , let (negConsts', posConsts') = foldr cancelConst (negConsts, []) posConsts
   , (negConsts', posConsts') /= (negConsts, posConsts) =
@@ -740,7 +752,7 @@ compactType typeEnv vaenv (UnionType (Just (preds, negLeafs, negConsts)) posLeaf
 -- e.g. PredsAnd[PredClass /Boolean, PredRel Boolean] → PredsOne (PredClass /Boolean)
 -- Soundness: expandRelPartial r includes classPartial c in its expansion, so U_PredClass c ⊆ U_PredRel r
 -- when r's name path is a suffix of c's name path.
-compactType typeEnv vaenv (UnionType (Just (PredsAnd ps, negPartials, ncs)) posLeafs cs)
+compactTypeRaw typeEnv vaenv (UnionType (Just (PredsAnd ps, negPartials, ncs)) posLeafs cs)
   | not (null predClassAtoms)
   , let simplified = filter (not . isDominatedByPredClass) ps
   , length simplified < length ps =
@@ -759,7 +771,7 @@ compactType typeEnv vaenv (UnionType (Just (PredsAnd ps, negPartials, ncs)) posL
 -- parameterized @Ord[X] ∧ Eq[Y]@ would need @X ⊆ Y@, which the name-only edge does not check).
 -- Without this an element bound like @Cons[/T=(Ord∧Eq)]@ stays un-canonical and re-derives each
 -- epoch, blocking convergence. Positive-only complement of the negation-gated clause below.
-compactType typeEnv vaenv (UnionType (Just (PredsAnd ps, negPartials, ncs)) posLeafs cs)
+compactTypeRaw typeEnv vaenv (UnionType (Just (PredsAnd ps, negPartials, ncs)) posLeafs cs)
   | length bareClasses >= 2
   , let simplified = filter (not . isSuperclassOfSibling) ps
   , length simplified < length ps =
@@ -776,7 +788,7 @@ compactType typeEnv vaenv (UnionType (Just (PredsAnd ps, negPartials, ncs)) posL
 -- type accumulates when its constructor is a member of two related classes). Gated to conjunctions
 -- containing a 'PredsNot' (the disjunction/complement form) so the common atom-only conjunctions
 -- never pay the pairwise 'predImplies'.
-compactType typeEnv vaenv (UnionType (Just (PredsAnd ps, negPartials, ncs)) posLeafs cs)
+compactTypeRaw typeEnv vaenv (UnionType (Just (PredsAnd ps, negPartials, ncs)) posLeafs cs)
   | any isPredsNotConjunct ps
   , let simplified = dropImpliedConjuncts ps
   , length simplified < length ps =
@@ -801,7 +813,7 @@ compactType typeEnv vaenv (UnionType (Just (PredsAnd ps, negPartials, ncs)) posL
 -- @U_P@ already, so refining them out of the leaf changes the union by nothing. The meet
 -- route builds exactly this form (@(a∪b) ∩ a@ distributes @a@'s ¬-refinement onto @b@'s
 -- leafs) while the union route keeps the bare leaf; stripping restores the union spelling.
-compactType typeEnv vaenv (UnionType (Just (preds, (H.null -> True), [])) pos cs)
+compactTypeRaw typeEnv vaenv (UnionType (Just (preds, (H.null -> True), [])) pos cs)
   | preds /= PredsNone
   , not (H.null pos)
   , let pos' = joinUnionType (map stripLeaf (splitUnionType pos))
@@ -833,7 +845,7 @@ compactType typeEnv vaenv (UnionType (Just (preds, (H.null -> True), [])) pos cs
 -- the solver converges — the mixed-form complement of 'foldRecursiveType', which folds pure
 -- positive unions. Candidates are name-gated to the declared constituents of the predicate's
 -- class atoms so unrelated leaves never pay the subtype check.
-compactType typeEnv vaenv (UnionType (Just topData@(preds, _, _)) pos cs)
+compactTypeRaw typeEnv vaenv (UnionType (Just topData@(preds, _, _)) pos cs)
   | not (H.null pos)
   , not (S.null constituentNames) || not (null topClassAtoms)
   , ((_:_), kept) <- L.partition absorbable (splitUnionType pos) =
@@ -872,10 +884,10 @@ compactType typeEnv vaenv (UnionType (Just topData@(preds, _, _)) pos cs)
 -- Also compact the pos component for structural canonicalization (ensures union commutativity
 -- holds structurally: different union orderings that mix Just and Nothing forms produce
 -- equivalent pos components after compaction).
-compactType typeEnv vaenv (UnionType (Just topData) pos cs)
+compactTypeRaw typeEnv vaenv (UnionType (Just topData) pos cs)
   | (pos', eqCs@(_:_)) <- compactConstEqLeafs typeEnv vaenv cs pos = compactType typeEnv vaenv (UnionType (Just topData) pos' (L.nub (cs ++ eqCs)))
   | (pos', []) <- compactConstEqLeafs typeEnv vaenv cs pos, pos' /= pos = compactType typeEnv vaenv (UnionType (Just topData) pos' cs)
-compactType typeEnv vaenv (UnionType (Just topData) pos cs)
+compactTypeRaw typeEnv vaenv (UnionType (Just topData) pos cs)
   | not (H.null pos) =
       -- Recurse into each leaf's nested arg/var types (as the Nothing-pos branch does), so a nested
       -- bound like @Cons[/T=(Ord∧Eq)]@ canonicalises (→ @Cons[/T=∀Ord]@) instead of re-deriving an
@@ -888,7 +900,7 @@ compactType typeEnv vaenv (UnionType (Just topData) pos cs)
       in if pos' /= pos
            then compactType typeEnv vaenv (UnionType (Just topData) pos' cs)
            else UnionType (Just topData) pos' cs
-compactType _ _ t@(UnionType (Just _) _ _) = t
+compactTypeRaw _ _ t@(UnionType (Just _) _ _) = t
 -- TypeVar: an occurrence denotes @var ∩ inner@, so compact the inner and reduce the whole
 -- occurrence to ⊥ whenever that meet is empty — either because the inner alone is, or because
 -- the inner and the variable's value in this environment are disjoint. The second case is the
@@ -900,8 +912,8 @@ compactType _ _ t@(UnionType (Just _) _ _) = t
 -- would re-enter this clause on a var reachable from its own value, and a variable-valued
 -- binding (including the self-referential entry an unconstrained var acquires) carries no
 -- concrete value to contradict.
-compactType _ _ t@(TypeVar _ _ PTopType) = t
-compactType typeEnv vaenv (TypeVar v loc i) = case compactType typeEnv vaenv i of
+compactTypeRaw _ _ t@(TypeVar _ _ PTopType) = t
+compactTypeRaw typeEnv vaenv (TypeVar v loc i) = case compactType typeEnv vaenv i of
   i'@BottomType -> i'
   i' | envRejects i' -> BottomType
      | otherwise     -> TypeVar v loc i'
@@ -912,7 +924,7 @@ compactType typeEnv vaenv (TypeVar v loc i) = case compactType typeEnv vaenv i o
           isBottomType $ intersectTypesEnv typeEnv vaenv l i'
       | otherwise = False
 -- PosPartials with constants: compact leafs, remove constants covered by leafs
-compactType typeEnv vaenv (UnionType Nothing partials0 consts0) =
+compactTypeRaw typeEnv vaenv (UnionType Nothing partials0 consts0) =
   let (partials, eqConsts) = compactConstEqLeafs typeEnv vaenv consts0 partials0
       consts = L.nub (consts0 ++ eqConsts)
       -- Compact the nested argument/variable types (bottom-up) so a recursive arg already

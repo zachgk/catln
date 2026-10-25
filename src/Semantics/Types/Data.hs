@@ -377,8 +377,17 @@ type PartialLeafs = H.HashMap TypeName (S.HashSet PartialArgsOption)
 -- variable reads the same under every environment, and every traversal that resolves, renames or
 -- erases variables is the identity on it, so they can stop there rather than walk it to its leaves
 -- and build it again.
+--
+-- And whether 'compactType' produced it ('typeCompacted'). A compact type stays compact whatever
+-- environment it is later read in, so compaction hands a flagged type back as it is rather than
+-- walking it again; building a union through 'UnionType' leaves the flag off, since a new union
+-- is compact only once compaction says so. The exception is a value predicate ('PredExpr'):
+-- compaction decides one by following its expression through the program's arrows, which an
+-- early epoch has not narrowed far enough to decide, so a type holding one is never flagged
+-- ('holdsPredExpr'). Like the hash it is a note about the type and not part
+-- of it: no comparison, hash, order or serialization reads it.
 data Type
-  = UnionTypeH Int Bool (Maybe (TypePredicates, PartialLeafs, [Constant])) PartialLeafs [Constant]
+  = UnionTypeH Int Bool Bool (Maybe (TypePredicates, PartialLeafs, [Constant])) PartialLeafs [Constant]
   -- | A type-variable OCCURRENCE: the variable reference plus occurrence-local knowledge.
   -- The occurrence denotes @⟦var⟧ ∩ ⟦inner⟧@ — the third ('tvInner') component is an upper bound
   -- this particular occurrence is known to satisfy, carried WITH the reference so traversals
@@ -392,8 +401,8 @@ data Type
 
 -- | A union: its subtractive top, its positive leafs and its positive constants (see 'Type').
 pattern UnionType :: Maybe (TypePredicates, PartialLeafs, [Constant]) -> PartialLeafs -> [Constant] -> Type
-pattern UnionType top leafs consts <- UnionTypeH _ _ top leafs consts
-  where UnionType top leafs consts = UnionTypeH (unionTypeHash top leafs consts) (unionMentionsVars top leafs) top leafs consts
+pattern UnionType top leafs consts <- UnionTypeH _ _ _ top leafs consts
+  where UnionType top leafs consts = UnionTypeH (unionTypeHash top leafs consts) (unionMentionsVars top leafs) False top leafs consts
 
 -- | A type-variable occurrence: which variable, where it is defined, and the inner it is known to
 -- be within (see 'Type').
@@ -415,8 +424,8 @@ pattern TypeVar aux loc inner <- TypeVarH _ aux loc inner
 -- them in one bucket and told them apart with a deep '=='. A @toString@ over a sixty-element list
 -- spent sixty percent of its arrow builds doing that.
 typeHash :: Type -> Int
-typeHash (UnionTypeH h _ _ _ _) = h
-typeHash (TypeVarH h _ _ _)     = h
+typeHash (UnionTypeH h _ _ _ _ _) = h
+typeHash (TypeVarH h _ _ _)       = h
 
 -- | Order-independent, as the maps and sets it reads are equal whatever order they hold their
 -- entries in: each entry is hashed on its own and the entries summed.
@@ -432,8 +441,60 @@ typeVarHash aux loc inner = (0 :: Int) `hashWithSalt` aux `hashWithSalt` loc `ha
 -- | Whether a 'TypeVar' occurs anywhere in a type: in a slot value, a predicate's partial, or an
 -- excluded leaf. Held on the union ('Type') rather than worked out when asked.
 typeMentionsVars :: Type -> Bool
-typeMentionsVars (UnionTypeH _ v _ _ _) = v
-typeMentionsVars TypeVarH{}             = True
+typeMentionsVars (UnionTypeH _ v _ _ _ _) = v
+typeMentionsVars TypeVarH{}               = True
+
+-- | Whether 'compactType' produced this type (see 'Type'). A variable occurrence is never flagged:
+-- whether it is empty is read from the environment it sits in.
+typeCompacted :: Type -> Bool
+typeCompacted (UnionTypeH _ _ c _ _ _) = c
+typeCompacted TypeVarH{}               = False
+
+-- | The type, flagged as compacted. Only 'compactType' flags a type.
+markCompacted :: Type -> Type
+markCompacted (UnionTypeH h v _ top leafs consts) = UnionTypeH h v True top leafs consts
+markCompacted t                                   = t
+
+-- | Whether a value predicate ('PredExpr') sits anywhere in the type outside its flagged parts —
+-- a flagged type holds none, as compaction does not flag one that does.
+holdsPredExpr :: Type -> Bool
+holdsPredExpr t | typeCompacted t = False
+holdsPredExpr (UnionType top leafs _) = leafsHoldPredExpr leafs || maybe False (\(preds, negLeafs, _) -> predsHoldPredExpr preds || leafsHoldPredExpr negLeafs) top
+holdsPredExpr (TypeVar aux _ inner) = auxHolds aux || holdsPredExpr inner
+  where auxHolds (TVApplied b m) = auxHolds b || any holdsPredExpr m
+        auxHolds _               = False
+
+leafsHoldPredExpr :: PartialLeafs -> Bool
+leafsHoldPredExpr = any (any optHolds)
+  where optHolds (PartialArgsOption vars args preds _) = any holdsPredExpr vars || any holdsPredExpr args || predsHoldPredExpr preds
+
+predsHoldPredExpr :: TypePredicates -> Bool
+predsHoldPredExpr (PredsOne p)  = predHolds p
+  where predHolds PredExpr{}    = True
+        predHolds PredConstEq{} = False
+        predHolds (PredClass q) = partialHolds q
+        predHolds (PredRel q)   = partialHolds q
+        partialHolds PartialType{ptVars, ptArgs, ptPreds} = any holdsPredExpr ptVars || any holdsPredExpr ptArgs || predsHoldPredExpr ptPreds
+predsHoldPredExpr (PredsAnd ps) = any predsHoldPredExpr ps
+predsHoldPredExpr (PredsNot p)  = predsHoldPredExpr p
+
+-- | The type with every flag at every depth cleared, so compaction walks all of it again. For the
+-- checks of compaction itself (that its output is already compact), which a flag would answer
+-- without asking.
+forgetCompacted :: Type -> Type
+forgetCompacted (UnionType top leafs consts) = UnionType (fmap onTop top) (forgetLeafs leafs) consts
+  where onTop (preds, negLeafs, negConsts) = (forgetPreds preds, forgetLeafs negLeafs, negConsts)
+forgetCompacted (TypeVar aux loc inner) = TypeVar (forgetAux aux) loc (forgetCompacted inner)
+  where forgetAux (TVApplied b m) = TVApplied (forgetAux b) (fmap forgetCompacted m)
+        forgetAux a               = a
+
+forgetLeafs :: PartialLeafs -> PartialLeafs
+forgetLeafs = fmap (S.map forgetOpt)
+  where forgetOpt (PartialArgsOption vars args preds mode) = PartialArgsOption (fmap forgetCompacted vars) (fmap forgetCompacted args) (forgetPreds preds) mode
+
+forgetPreds :: TypePredicates -> TypePredicates
+forgetPreds = mapTypePreds (mapTypePred forgetPartial)
+  where forgetPartial p@PartialType{ptVars, ptArgs, ptPreds} = p{ptVars = fmap forgetCompacted ptVars, ptArgs = fmap forgetCompacted ptArgs, ptPreds = forgetPreds ptPreds}
 
 -- | 'typeMentionsVars' of a union built from these parts, from the flags its nested types hold.
 unionMentionsVars :: Maybe (TypePredicates, PartialLeafs, [Constant]) -> PartialLeafs -> Bool
@@ -477,9 +538,9 @@ typeMapHash = H.foldlWithKey' (\acc k t -> acc + (hash k `hashWithSalt` typeHash
 -- answers yes; two equal types in different objects are compared as before.
 instance Eq Type where
   a == b | isTrue# (reallyUnsafePtrEquality# a b) = True
-  UnionTypeH h1 _ t1 l1 c1 == UnionTypeH h2 _ t2 l2 c2 = h1 == h2 && l1 == l2 && c1 == c2 && t1 == t2
-  TypeVarH h1 a1 o1 i1 == TypeVarH h2 a2 o2 i2     = h1 == h2 && a1 == a2 && o1 == o2 && i1 == i2
-  _ == _                                           = False
+  UnionTypeH h1 _ _ t1 l1 c1 == UnionTypeH h2 _ _ t2 l2 c2 = h1 == h2 && l1 == l2 && c1 == c2 && t1 == t2
+  TypeVarH h1 a1 o1 i1 == TypeVarH h2 a2 o2 i2         = h1 == h2 && a1 == a2 && o1 == o2 && i1 == i2
+  _ == _                                               = False
 
 -- | The order of the fields as written, not the hash: a hash says nothing about which type comes
 -- first, and an order read from it would change whenever the hash does.

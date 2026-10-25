@@ -813,7 +813,8 @@ verifyScheme typeEnv vaenv Meta{getMetaDat=VarMetaDat _ _} (TypeCheckResult _ (S
     verifyNoTypeVarLost = not (typeVarLost (dropOutOfScopeTVExt typeEnv vaenv oldAct) act)
     verifySchemeReqLowers  = lowers req oldReq
     verifySchemeReqDeclLowers = lowers reqDecl oldReqDecl
-    verifyCompacted = act == compactType typeEnv vaenv act
+    -- Recompacted from scratch, so the check asks compaction rather than the flag it left.
+    verifyCompacted = act == compactType typeEnv vaenv (forgetCompacted act)
 verifyScheme _ _ _ _ _ = Nothing
 
 
