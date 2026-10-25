@@ -56,7 +56,9 @@ formatExpr (RawHoleExpr _ (HoleActive (Just a))) = "_" ++ nameStr a
 formatExpr (RawHoleExpr _ HoleUndefined) = "undefined"
 formatExpr (RawHoleExpr _ HoleTodefine) = "todefine"
 formatExpr (RawTheExpr t) = printf ":%s" (formatExpr t)
-formatExpr (RawTupleApply _ (_, v@(RawValue _ vn)) [(True, _)]) | nameStr vn /= anonStr = printf "%s.." (formatExpr v)
+-- The type spread @X..@ is a name given only the hole spread; a named spread (@Pt(..c)@) is written
+-- out as the call it is.
+formatExpr (RawTupleApply _ (_, v@(RawValue _ vn)) [(True, RawObjArr{roaObj=Just RawHoleExpr{}})]) | nameStr vn /= anonStr = printf "%s.." (formatExpr v)
 formatExpr (RawAliasExpr base alias) = printf "%s@%s" (formatExpr base) (formatExpr alias)
 formatExpr (RawWhere _ base cond) = printf "%s | %s" (formatExpr base) (formatExpr cond)
 formatExpr (RawTupleApply _ (_, RawValue _ n) args) | operatorPrefix `isPrefixOf` nameStr n = case args of
