@@ -1267,6 +1267,32 @@ applyArgRefBindings typeEnv e bindings t
       Just fv | not (isTypeVar fv), not (bindingConvertsInto typeEnv fv slot) -> intersectTypes typeEnv slot fv
       _ -> slot
 
+-- | 'applyArgRefBindings' through the applications an application's slots hold: a slot valued by a
+-- call (@ContextIn(value= f(fun= fun), ctx)@, how a bind runs a call in its states) is that call
+-- with its own argument references read, as the slot's type is the call's own. A call whose slot
+-- holds the name an enclosing argument is bound to is then built for that name, which is what an
+-- arm answering a guard over the definition it names ('TreeBuild.BodyPattern') is chosen by.
+applyArgRefBindingsDeep :: (TypeGraph tg, ExprClass e, Show m, Show (e m), MetaDat m) => TypeEnv tg -> TypeVarArgEnv -> e m -> Type -> Type
+applyArgRefBindingsDeep typeEnv vaenv e t = case (maybeExprPath e, t') of
+  (Just callee, UnionType Nothing leafs consts) | not (H.null nested) ->
+    UnionType Nothing (joinUnionType [ if relativeNameMatches callee (ptName l) then l{ptArgs = H.mapWithKey readNested (ptArgs l)} else l | l <- splitUnionType leafs ]) consts
+  _ -> t'
+  where
+    t' = applyArgRefBindings typeEnv e (exprArgRefBindings vaenv e) t
+    nested = H.fromList
+      [ (inExprSingleton (oaObjExpr a), valExpr)
+      | a <- exprAppliedArgs e
+      , null (exprAppliedArgs (oaObjExpr a))
+      , Just (Just valExpr, _) <- [oaArr a]
+      , isJust (maybeExprPath valExpr)
+      , not (null (exprAppliedArgs valExpr))
+      -- A construction in a slot (@Cons(head= Text(chars= cs))@) is read as the slot's type is
+      -- declared: its fields would be set on every shape the slot may hold, the ones without them too.
+      , not (isDataConstruction typeEnv valExpr) ]
+    readNested k slot = case H.lookup k nested of
+      Just valExpr -> applyArgRefBindingsDeep typeEnv vaenv valExpr slot
+      Nothing      -> slot
+
 -- | Whether an argument bound to @fv@ is converted on its way into a call slot of type @slot@: some
 -- of what it holds is outside the slot and reaches it. What is outside and reaches nothing in the
 -- slot is not converted — it is the slot's imprecision, as an open class read against another is —

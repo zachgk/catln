@@ -44,11 +44,12 @@ type StatementEnv = (String, [DesCompAnnot])
 
 -- | Flattens a declaration tree (with nested declarations)
 flattenNestedDeclarations :: StatementEnv -> PDeclTree -> CRes (DesObjArr, DesObjectMap)
-flattenNestedDeclarations statementEnv (roa@RawObjArr{roaObj=Just objExpression, roaAnnots}, subStatements) = do
+flattenNestedDeclarations statementEnv (roa0@RawObjArr{roaObj=Just objExpression}, subStatements) = do
+  let roa = rawSpreadParams roa0
   let objDoc = desObjDocComment subStatements
   subStatements' <- mapM (desStatement statementEnv) subStatements
   let (Prgm subDecls _ annots1) = mconcat subStatements'
-  let annots2 = annots1 ++ fmap (semiDesExpr SDOutput (Just objExpression)) roaAnnots
+  let annots2 = annots1 ++ fmap (semiDesExpr SDOutput (Just objExpression)) (roaAnnots roa)
 
   let oa2 = (semiDesObjArr roa){oaAnnots=annots2, oaDoc=objDoc}
 

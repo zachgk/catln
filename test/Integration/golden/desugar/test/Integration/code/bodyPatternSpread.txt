@@ -1,0 +1,420 @@
+Prgm
+    { prgmObjMap = ObjectMapWith
+        { omItems = fromList
+            [
+                ( "/Tally"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Tally( Value /n -> /Data/Primitive/Integer ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/four"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ four( Value x -> /Data/Primitive/Integer )( Value y -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ four( Value x )( Value y ) -> /Data/Primitive/Integer = CInt
+                            { ciValue = 4 }
+                        ]
+                    }
+                )
+            ,
+                ( "/three"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ three( Value x -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ three( Value x ) -> /Data/Primitive/Integer = /operator+
+                            ( Value /l= CInt
+                                { ciValue = 1 }
+                            )
+                            ( Value /r= CInt
+                                { ciValue = 2 }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$88336f"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ main.$88336f
+                            ( Value $88336f-arg= /Context( Value value )
+                                ( Value ctx@Value $88336f-ctx )
+                            )
+                            ( Value $88336f-states )= /Context( Value value= Value / )
+                            ( Value ctx= /
+                                ( ..Value $88336f-states )
+                                ( ..Value $88336f-ctx )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/kind"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ kind
+                            ( f( Value ..ps ) -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ kind
+                            ( f( Value ..ps )= Hole /Data/Primitive/Integer HoleActive { haName = Nothing }@Value k ) -> /Data/Primitive/Integer = Value k
+                        , kind
+                            ( f( Value ..ps )= /operator+
+                                ( Value /l= Hole TopType HoleActive { haName = Nothing }@a( Value ..ps ) )
+                                ( Value /r= Hole TopType HoleActive { haName = Nothing }@b( Value ..ps ) )
+                            ) -> /Data/Primitive/Integer = /operator+
+                            ( Value /l= kind
+                                ( f( Value ..ps )= a( Value ..ps= Value ..ps ) )
+                            )
+                            ( Value /r= kind
+                                ( f( Value ..ps )= b( Value ..ps= Value ..ps ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /ContextIn
+                            ( Value /value= addConst
+                                ( f( Value ..ps ) )
+                            )
+                            ( Value /ctx= /
+                                ( Value tally= Tally( Value n )@Value tally )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=()
+                            , /ctx=( /tally=/Tally.. )
+                            )..
+                        , /ContextIn
+                            ( Value /value= tallied( Value t -> /Named.. ) )
+                            ( Value /ctx= /
+                                ( Value tally= Tally( Value n )@Value tally )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=/Data/Primitive/Integer
+                            , /ctx=( /tally=/Tally.. )..
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn
+                            ( Value /value= addConst
+                                ( f( Value ..ps )= Hole /Data/Primitive/Integer HoleActive { haName = Nothing }@Value k )
+                            )
+                            ( Value /ctx= /
+                                ( Value tally= Tally( Value n )@Value tally )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=()
+                            , /ctx=( /tally=/Tally.. )
+                            ).. = /Context( Value /value= Value / )
+                            ( Value /ctx= /
+                                ( Value tally= Tally
+                                    ( Value n= /operator+( Value /l= Value n )( Value /r= Value k ) )
+                                )
+                            )
+                        , /ContextIn
+                            ( Value /value= addConst
+                                ( f( Value ..ps )= /operator+
+                                    ( Value /l= Hole TopType HoleActive { haName = Nothing }@a( Value ..ps ) )
+                                    ( Value /r= Hole TopType HoleActive { haName = Nothing }@b( Value ..ps ) )
+                                )
+                            )
+                            ( Value /ctx= /
+                                ( Value tally= Tally( Value n )@Value tally )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=()
+                            , /ctx=( /tally=/Tally.. )
+                            ).. = /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= addConst
+                                    ( f( Value ..ps )= a( Value ..ps= Value ..ps ) )
+                                )
+                                ( Value ctx= /( Value tally= Value tally ) )
+                            )
+                            ( fn( Value v )= addConst.$6b39ef
+                                ( /b( Value /..ps )= /b( Value /..ps= Value /..ps ) )
+                                ( Value $6b39ef-arg= Value v )
+                                ( Value $6b39ef-states= /( Value tally= Value tally ) )
+                            )
+                        , /ContextIn( Value /value= Value tallyValue )
+                            ( Value /ctx= /
+                                ( Value tally= Tally( Value n )@Value tally )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            )= /Context( Value /value= Value n )
+                            ( Value /ctx= /
+                                ( Value tally= Tally( Value n ) )
+                            )
+                        , /ContextIn
+                            ( Value /value= tallied
+                                ( Value t= Named( Value fun ) )
+                            )
+                            ( Value /ctx= /
+                                ( Value tally= Tally( Value n )@Value tally )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) | /operator@->
+                            ( Value /l= fun( Value ..ps= Value ..ps ) )( Value /r= Value Integer )@Some
+                            ( Value value= Hole /Data/Primitive/Integer HoleActive { haName = Nothing }@body( Value /..ps ) ) -> /Context
+                            ( /value=/Data/Primitive/Integer
+                            , /ctx=( /tally=/Tally.. )..
+                            ) = /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= addConst
+                                    ( f( Value ..ps )= body( Value ..ps= Value ..ps ) )
+                                )
+                                ( Value ctx= /( Value tally= Value tally ) )
+                            )
+                            ( fn( Value v )= tallied.$6ab200
+                                ( /body( Value /..ps )= /body( Value /..ps= Value /..ps ) )
+                                ( Value $6ab200-arg= Value v )
+                                ( Value $6ab200-states= /( Value tally= Value tally ) )
+                            )
+                        , /ContextIn( Value /value= Value main )
+                            ( Value /ctx= /( Value io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=()
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= exit
+                                    ( Value val= /operator-
+                                        ( Value /l= /operator+
+                                            ( Value /l= /operator+
+                                                ( Value /l= constOf
+                                                    ( Value t= Named( Value fun= Value three ) )
+                                                )
+                                                ( Value /r= constOf
+                                                    ( Value t= Named( Value fun= Value four ) )
+                                                )
+                                            )
+                                            ( Value /r= /Data/Context/unwrap
+                                                ( Value this= /ContextIn
+                                                    ( Value value= tallied
+                                                        ( Value t= Named( Value fun= Value three ) )
+                                                    )
+                                                    ( Value ctx= /
+                                                        ( Value tally= Tally
+                                                            ( Value n= CInt
+                                                                { ciValue = 0 }
+                                                            )
+                                                        )
+                                                    )
+                                                )
+                                            )
+                                        )
+                                        ( Value /r= CInt
+                                            { ciValue = 13 }
+                                        )
+                                    )
+                                )
+                                ( Value ctx= /( Value io= Value io ) )
+                            )
+                            ( fn( Value v )= main.$88336f
+                                ( Value $88336f-arg= Value v )
+                                ( Value $88336f-states= /( Value io= Value io ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/addConst.$6b39ef.$2fb251"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ addConst.$6b39ef.$2fb251
+                            ( Value $2fb251-arg= /Context( Value value )
+                                ( Value ctx@Value $2fb251-ctx )
+                            )
+                            ( Value $2fb251-states )= /Context( Value value= Value / )
+                            ( Value ctx= /
+                                ( ..Value $2fb251-states )
+                                ( ..Value $2fb251-ctx )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/constOf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ constOf( Value t -> /Named.. ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ constOf
+                            ( Value t= Named( Value fun ) ) | /operator@->
+                            ( Value /l= fun( Value ..ps= Value ..ps ) )( Value /r= Value Integer )@Some
+                            ( Value value= Hole /Data/Primitive/Integer HoleActive { haName = Nothing }@body( Value /..ps ) ) -> /Data/Primitive/Integer = kind
+                            ( f( Value ..ps )= body( Value ..ps= Value ..ps ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/tallied.$6ab200.$6ab200"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ tallied.$6ab200.$6ab200
+                            ( Value $6ab200-arg= /Context( Value value )
+                                ( Value ctx@Value $6ab200-ctx )
+                            )
+                            ( Value $6ab200-states )= /Data/bindap
+                            ( Value m= /ContextIn( Value value= Value tallyValue )
+                                ( Value ctx= /
+                                    ( ..Value $6ab200-states )
+                                    ( ..Value $6ab200-ctx )
+                                )
+                            )
+                            ( fn( Value v )= tallied.$6ab200.$6ab200.$e4b5d2( Value $e4b5d2-arg= Value v )
+                                ( Value $e4b5d2-states= /
+                                    ( ..Value $6ab200-states )
+                                    ( ..Value $6ab200-ctx )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Named"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ Named( Value /fun ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/addConst.$6b39ef"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ addConst.$6b39ef
+                            ( /b( Value /..ps ) )
+                            ( Value $6b39ef-arg= /Context( Value value )
+                                ( Value ctx@Value $6b39ef-ctx )
+                            )
+                            ( Value $6b39ef-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= addConst
+                                    ( f( Value ..ps )= b( Value ..ps= Value ..ps ) )
+                                )
+                                ( Value ctx= /
+                                    ( ..Value $6b39ef-states )
+                                    ( ..Value $6b39ef-ctx )
+                                )
+                            )
+                            ( fn( Value v )= addConst.$6b39ef.$2fb251
+                                ( Value $2fb251-arg= Value v )
+                                ( Value $2fb251-states= /
+                                    ( ..Value $6b39ef-states )
+                                    ( ..Value $6b39ef-ctx )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/tallied.$6ab200"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ tallied.$6ab200
+                            ( /body( Value /..ps ) -> /Data/Primitive/Integer )
+                            ( Value $6ab200-arg= /Context( Value value )
+                                ( Value ctx@Value $6ab200-ctx )
+                            )
+                            ( Value $6ab200-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= addConst
+                                    ( f( Value ..ps )= body( Value ..ps= Value ..ps ) )
+                                )
+                                ( Value ctx= /
+                                    ( ..Value $6ab200-states )
+                                    ( ..Value $6ab200-ctx )
+                                )
+                            )
+                            ( fn( Value v )= tallied.$6ab200.$6ab200
+                                ( Value $6ab200-arg= Value v )
+                                ( Value $6ab200-states= /
+                                    ( ..Value $6ab200-states )
+                                    ( ..Value $6ab200-ctx )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/tallied.$6ab200.$6ab200.$e4b5d2"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ tallied.$6ab200.$6ab200.$e4b5d2
+                            ( Value $e4b5d2-arg= /Context( Value value@Value total )( Value ctx@Value $e4b5d2-ctx ) )( Value $e4b5d2-states )= /Context( Value value= Value total )
+                            ( Value ctx= /( ..Value $e4b5d2-states )( ..Value $e4b5d2-ctx ) )
+                        ]
+                    }
+                )
+            ]
+        , omDecls = []
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text= CStr
+                { csValue = "Tests arms chosen by the body of a function of any parameters, and found from a name held as a
+                value. A higher-order parameter written with a spread of parameters (@f(..ps)@) is a function of
+                whatever parameters it has: its arms are chosen by its body whatever they are, and a part of the
+                body over all of them is written @a(..ps)@. A guard @(fun(..ps) \@-> Integer)\@Some(value\@body)@
+                asks for the definition of the function [fun] names, which is an argument holding a name: [body]
+                is the function the definition is, of its own parameters.
+                [kind] adds up the constants of a body, [constOf] finds a body from the name in a [Named], and
+                [tallied] does the same in a context, adding to a [Tally] state: each bind after the first calls a
+                helper the arm hands its part on to, which holds it as a closure." }
+            )
+        ]
+    }

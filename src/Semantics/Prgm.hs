@@ -31,7 +31,7 @@ import           CtConstants
 import           Data.Aeson          hiding (Object)
 import           Data.Bifunctor      (first)
 import           Data.Char           (toLower)
-import           Data.List           (nub, stripPrefix)
+import           Data.List           (isPrefixOf, nub, stripPrefix)
 import           Data.Maybe
 import           Data.UUID
 import           Data.Void           (Void)
@@ -864,6 +864,21 @@ bodyPatternParts :: (MetaDat m, Show m) => ObjArr Expr m -> Maybe (Expr m, Expr 
 bodyPatternParts ObjArr{oaObj=Just obj, oaArr=Just (Just pat, arrM)}
   | not (Prelude.null (exprAppliedArgs obj)) = Just (obj, pat, arrM)
 bodyPatternParts _ = Nothing
+
+-- | The arguments of the function a definition's object defines: its own, except for a function in
+-- a context, which is defined under the context's name (@ContextIn(value= f(x), ctx)@,
+-- 'oaDefinedName') and is given the arguments of the call it holds.
+objDefinedArgs :: (MetaDat m, Show m) => Expr m -> [ObjArr Expr m]
+objDefinedArgs obj = case H.lookup (partialKey (mkName contextValStr)) (exprAppliedArgsMap obj) of
+  Just (Just (_, Just v)) | maybe False ((== ContextInStr) . nameStr . makeAbsoluteName) (maybeExprPath obj) -> exprAppliedArgs v
+  _ -> exprAppliedArgs obj
+
+-- | Whether a name is the parameter a spread of parameters is kept as (@..ps@ in @f(..ps)@,
+-- 'spreadParamsPrefix'), which stands for whatever parameters a function has.
+isSpreadParamsName :: Name -> Bool
+isSpreadParamsName n = case npathPath (getPath (nameStr n)) of
+  [] -> False
+  ps -> spreadParamsPrefix `isPrefixOf` last ps
 
 -- | Whether a node of a body pattern is a sub-function variable: a name applied to exactly the
 -- parameters of the function the pattern is written over, each by its key alone (@a(x, params)@

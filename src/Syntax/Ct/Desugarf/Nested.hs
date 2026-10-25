@@ -114,16 +114,37 @@ scopeSubDeclFunNames _ oa _ = error $ printf "scopeSubDeclFunNames without input
 -- function's signature carrying the parent's declared type meta. Discarding it (leaving the parameter
 -- 'TopType') lets a parent argument a sub function captures but does not use leak 'TopType' into the
 -- file's object union, which fails type checking non-deterministically.
+--
+-- A parent argument that is a function of parameters (a higher-order parameter @f(x)@, or a
+-- sub-function variable a body pattern binds) is curried as the higher-order parameter it is,
+-- keyed by its parameters: its meta is the function's result, and a parameter of that type alone
+-- would be a value of it, which the sub function then calls.
 curryApplyParentArgsSignature :: PSExpr -> ParentArgs -> PSExpr
 curryApplyParentArgsSignature e parentArgs = foldl addParentArg e (H.toList parentArgs)
   where
     addParentArg b (parentArgName, parentArgMetas) = TupleApply (emptyMetaE b) (emptyMetaE b, b) (EAppArg paramObjArr)
       where
-        paramObjArr = ObjArr (Just (Value emptyMetaN (pkName parentArgName))) ArgObj Nothing [] (Just (Nothing, head parentArgMetas))
+        paramObjArr = ObjArr (Just (parentArgKey parentArgName)) ArgObj Nothing [] (Just (Nothing, head parentArgMetas))
 
 -- | Apply args to an output expression
+--
+-- A parent argument that is a function of parameters is passed as the function it is, a lambda of
+-- the same parameters calling it (@f(x)= f(x= x)@), as every higher-order argument is written.
 curryApplyParentArgs :: PSExpr -> ParentArgs -> PSExpr
-curryApplyParentArgs e parentArgs = applyExprIArgs e (map (\(parentArgName, parentArgM) -> (parentArgName, IArgE (Value (emptyMetaM parentArgM) (pkName parentArgName)))) $ H.toList $ fmap head parentArgs)
+curryApplyParentArgs e parentArgs = foldl addParentArg e (H.toList $ fmap head parentArgs)
+  where
+    addParentArg b (parentArgName, parentArgM)
+      | S.null (pkArgs parentArgName) = applyExprIArgs b [(parentArgName, IArgE (Value (emptyMetaM parentArgM) (pkName parentArgName)))]
+      | otherwise = TupleApply (emptyMetaE b) (emptyMetaE b, b) (EAppArg (ObjArr (Just (parentArgKey parentArgName)) ArgObj Nothing [] (Just (Just call, emptyMetaM parentArgM))))
+      where
+        call = applyExprIArgs (Value (emptyMetaM parentArgM) (pkName parentArgName)) [ (k, IArgE (Value emptyMetaN (pkName k))) | k <- S.toList (pkArgs parentArgName) ]
+
+-- | The key a parent argument is written with in a sub function: its name, applied to the
+-- parameters it takes when it is a function of them.
+parentArgKey :: ArgName -> PSExpr
+parentArgKey parentArgName = foldl addParam (Value emptyMetaN (pkName parentArgName)) (S.toList (pkArgs parentArgName))
+  where
+    addParam b k = TupleApply (emptyMetaE b) (emptyMetaE b, b) (EAppArg (ObjArr (Just (Value emptyMetaN (pkName k))) ArgObj Nothing [] (Just (Nothing, emptyMetaN))))
 
 currySubFunctionSignature :: ParentArgs -> DesObjectMapItem -> DesObjectMapItem
 currySubFunctionSignature parentArgs oa@ObjArr{oaObj=Just obj} = oa{oaObj=Just obj'}

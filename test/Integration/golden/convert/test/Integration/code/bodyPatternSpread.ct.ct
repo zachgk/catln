@@ -1,0 +1,51 @@
+import "core"
+
+
+# Tests arms chosen by the body of a function of any parameters, and found from a name held as a
+  value. A higher-order parameter written with a spread of parameters (@f(..ps)@) is a function of
+  whatever parameters it has: its arms are chosen by its body whatever they are, and a part of the
+  body over all of them is written @a(..ps)@. A guard @(fun(..ps) \@-> Integer)\@Some(value\@body)@
+  asks for the definition of the function [fun] names, which is an argument holding a name: [body]
+  is the function the definition is, of its own parameters.
+  [kind] adds up the constants of a body, [constOf] finds a body from the name in a [Named], and
+  [tallied] does the same in a context, adding to a [Tally] state: each bind after the first calls a
+  helper the arm hands its part on to, which holds it as a closure.
+data(Named(fun))
+data(Tally(n -> Integer))
+
+kind(f(..ps) -> Integer) -> Integer
+  #invalid
+kind(f(..ps)= (k :: Integer))= k
+kind(f(..ps)= a(..ps) + b(..ps))= kind(f(..ps)= a(..ps)) + kind(f(..ps)= b(..ps))
+
+three(x -> Integer) -> Integer
+three(x)= 1 + 2
+
+four(x -> Integer, y -> Integer) -> Integer
+four(x, y)= 4
+
+constOf(t -> Named..) -> Integer
+  #invalid
+constOf(t= Named(fun)) | (fun(..ps) @-> Integer)@Some(value@body)= kind(f(..ps)= body(..ps))
+
+addConst{Tally(n)}(f(..ps) -> _) -> /Context..(value -> (), ctx -> (tally -> Tally..))
+  #invalid
+addConst{Tally(n)}(f(..ps)= (k :: Integer))= (){Tally(n= n + k)}
+addConst{Tally(n)}(f(..ps)= a(..ps) + b(..ps)) =
+  _<- addConst(f(..ps)= a(..ps))
+  _<- addConst(f(..ps)= b(..ps))
+  ()
+
+tallyValue{Tally(n)}= n{Tally(n)}
+
+tallied{Tally(n)}(t -> Named..) -> Integer{tally -> Tally..}
+  #invalid
+tallied{Tally(n)}(t= Named(fun)) | (fun(..ps) @-> Integer)@Some(value@body) =
+  _<- addConst(f(..ps)= body(..ps))
+  _<- addConst(f(..ps)= body(..ps))
+  total<- tallyValue
+  total
+
+main{io -> IO} -> (){IO} =
+  _<- exit(val= constOf(t= Named(fun= three)) + constOf(t= Named(fun= four)) + /Data/Context/unwrap(this= /ContextIn(value= tallied(t= Named(fun= three)), ctx= (tally= Tally(n= 0)))) - 13)
+  ()

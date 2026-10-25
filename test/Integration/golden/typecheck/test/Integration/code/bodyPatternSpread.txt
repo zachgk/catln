@@ -1,0 +1,638 @@
+Prgm
+    { prgmObjMap = ObjectMapWith
+        { omItems = fromList
+            [
+                ( "/Tally"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Tally( Value /n -> /Data/Primitive/Integer ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/four"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /four( Value /x -> /Data/Primitive/Integer )( Value /y -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /four( Value /x -> /Data/Primitive/Integer )( Value /y -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = CInt
+                            { ciValue = 4 }
+                        ]
+                    }
+                )
+            ,
+                ( "/three"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /three( Value /x -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /three( Value /x -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer = /operator+
+                            ( Value /l -> /Data/Primitive/Integer = CInt
+                                { ciValue = 1 }
+                            )
+                            ( Value /r -> /Data/Primitive/Integer = CInt
+                                { ciValue = 2 }
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/main.$88336f"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /main.$88336f
+                            ( Value /$88336f-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$88336f-ctx -> ( /io=/Catln/IO ).. )
+                            )
+                            ( Value /$88336f-states -> ( /io=/Catln/IO ) ) -> /Context
+                            ( /value=()
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Context
+                            ( Value /value -> () = Value / )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /
+                                ( ..Value /$88336f-states )
+                                ( ..Value /$88336f-ctx )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/kind"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /kind
+                            ( /f( Value /..ps ) -> /Data/Primitive/Integer ) -> /Data/Primitive/Integer
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /kind
+                            ( /f( Value /..ps )= Hole /Data/Primitive/Integer HoleActive { haName = Nothing }@Value /k ) -> /Data/Primitive/Integer = Value /k
+                        , /kind
+                            ( /f( Value /..ps )= /operator+
+                                ( Value /l= Hole TopType HoleActive { haName = Nothing }@/a( Value /..ps ) )
+                                ( Value /r= Hole TopType HoleActive { haName = Nothing }@/b( Value /..ps ) )
+                            ) -> /Data/Primitive/Integer = /operator+
+                            ( Value /l -> /Data/Primitive/Integer = /kind
+                                ( /f( Value /..ps ) -> /Data/Primitive/Integer = /a( Value /..ps -> TVArg /..ps = Value /..ps ) )
+                            )
+                            ( Value /r -> /Data/Primitive/Integer = /kind
+                                ( /f( Value /..ps ) -> /Data/Primitive/Integer = /b( Value /..ps -> TVArg /..ps = Value /..ps ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/ContextIn"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /ContextIn
+                            ( Value /value -> /addConst
+                                ( /f( /..ps=TopType )=/f( /..ps=TopType ) ) = /addConst
+                                ( /f( Value /..ps ) )
+                            )
+                            ( Value /ctx ->
+                                ( /tally=/Tally( /n=/Data/Primitive/Integer ) ).. = /
+                                ( Value /tally -> /Tally( /n=/Data/Primitive/Integer ) = /Tally( Value /n -> /Data/Primitive/Integer )@Value /tally )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=()
+                            , /ctx=( /tally=/Tally.. )
+                            )..
+                        , /ContextIn
+                            ( Value /value -> /tallied( /t=/Named.. ) = /tallied( Value /t -> /Named.. ) )
+                            ( Value /ctx ->
+                                ( /tally=/Tally( /n=/Data/Primitive/Integer ) ).. = /
+                                ( Value /tally -> /Tally( /n=/Data/Primitive/Integer ) = /Tally( Value /n -> /Data/Primitive/Integer )@Value /tally )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=/Data/Primitive/Integer
+                            , /ctx=( /tally=/Tally.. )..
+                            )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /ContextIn
+                            ( Value /value -> /addConst
+                                ( /f( /..ps=TopType )=/f( /..ps=TopType ) ) = /addConst
+                                ( /f( Value /..ps )= Hole /Data/Primitive/Integer HoleActive { haName = Nothing }@Value /k )
+                            )
+                            ( Value /ctx ->
+                                ( /tally=/Tally( /n=/Data/Primitive/Integer ) ).. = /
+                                ( Value /tally -> /Tally( /n=/Data/Primitive/Integer ) = /Tally( Value /n -> /Data/Primitive/Integer )@Value /tally )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=()
+                            , /ctx=
+                                ( /tally=/Tally( /n=/Data/Primitive/Integer ) )
+                            ) = /Context
+                            ( Value /value -> () = Value / )
+                            ( Value /ctx ->
+                                ( /tally=/Tally( /n=/Data/Primitive/Integer ) ) = /
+                                ( Value /tally -> /Tally( /n=/Data/Primitive/Integer ) = /Tally
+                                    ( Value /n -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /n = Value /n )( Value /r -> TVArg /k = Value /k ) )
+                                )
+                            )
+                        , /ContextIn
+                            ( Value /value -> /addConst
+                                ( /f( /..ps=TopType )=/f( /..ps=TopType ) ) = /addConst
+                                ( /f( Value /..ps )= /operator+
+                                    ( Value /l= Hole TopType HoleActive { haName = Nothing }@/a( Value /..ps ) )
+                                    ( Value /r= Hole TopType HoleActive { haName = Nothing }@/b( Value /..ps ) )
+                                )
+                            )
+                            ( Value /ctx ->
+                                ( /tally=/Tally( /n=/Data/Primitive/Integer ) ).. = /
+                                ( Value /tally -> /Tally( /n=/Data/Primitive/Integer ) = /Tally( Value /n -> /Data/Primitive/Integer )@Value /tally )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=()
+                            , /ctx=( /tally=/Tally.. )
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=
+                                    ( /tally=/Tally( /n=/Data/Primitive/Integer ) )
+                                ) = /ContextIn
+                                ( Value /value -> /addConst
+                                    ( /f( /..ps=TopType )=/f( /..ps=TopType ) ) = /addConst
+                                    ( /f( Value /..ps )= /a( Value /..ps -> TVArg /..ps = Value /..ps ) )
+                                )
+                                ( Value /ctx ->
+                                    ( /tally=/Tally( /n=/Data/Primitive/Integer ) ) = /( Value /tally -> TVArg /tally = Value /tally )
+                                )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /ctx=
+                                        ( /tally=/Tally( /n=/Data/Primitive/Integer ) )
+                                    )
+                                ) -> /Context
+                                ( /value=()
+                                , /ctx=( /tally=/Tally.. )
+                                ) = /addConst.$6b39ef
+                                ( /b( Value /..ps )= /b( Value /..ps -> TVArg /..ps = Value /..ps ) )
+                                ( Value /$6b39ef-arg -> TVArg /v = Value /v )
+                                ( Value /$6b39ef-states ->
+                                    ( /tally=/Tally( /n=/Data/Primitive/Integer ) ) = /( Value /tally -> TVArg /tally = Value /tally )
+                                )
+                            )
+                        , /ContextIn( Value /value -> /tallyValue = Value /tallyValue )
+                            ( Value /ctx ->
+                                ( /tally=/Tally( /n=/Data/Primitive/Integer ) ).. = /
+                                ( Value /tally -> /Tally( /n=/Data/Primitive/Integer ) = /Tally( Value /n -> /Data/Primitive/Integer )@Value /tally )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=/Data/Primitive/Integer
+                            , /ctx=
+                                ( /tally=/Tally( /n=/Data/Primitive/Integer ) )
+                            ) = /Context( Value /value -> TVArg /n = Value /n )
+                            ( Value /ctx ->
+                                ( /tally=/Tally( /n=/Data/Primitive/Integer ) ) = /
+                                ( Value /tally -> /Tally( /n=/Data/Primitive/Integer ) = /Tally( Value /n -> TVArg /n = Value /n ) )
+                            )
+                        , /ContextIn
+                            ( Value /value -> /tallied
+                                ( /t=/Named( /fun=TopType ) ) = /tallied
+                                ( Value /t -> /Named( /fun=TopType ) = /Named( Value /fun ) )
+                            )
+                            ( Value /ctx ->
+                                ( /tally=/Tally( /n=/Data/Primitive/Integer ) ).. = /
+                                ( Value /tally -> /Tally( /n=/Data/Primitive/Integer ) = /Tally( Value /n -> /Data/Primitive/Integer )@Value /tally )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) | /operator@->
+                            ( Value /l= /fun( Value /..ps= Value /..ps ) )( Value /r= Value /Data/Primitive/Integer )@/Data/Maybe/Some
+                            ( Value /value= Hole /Data/Primitive/Integer HoleActive { haName = Nothing }@/body( Value /..ps ) ) -> /Context[ /V=/Data/Primitive/Integer ]
+                            ( /value=/Data/Primitive/Integer
+                            , /ctx=
+                                ( /tally=/Tally( /n=/Data/Primitive/Integer ) )
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=
+                                    ( /tally=/Tally( /n=/Data/Primitive/Integer ) )
+                                ) = /ContextIn
+                                ( Value /value -> /addConst
+                                    ( /f( /..ps=TopType )=/f( /..ps=TopType ) ) = /addConst
+                                    ( /f( Value /..ps ) -> /Data/Primitive/Integer = /body( Value /..ps -> TVArg /..ps = Value /..ps ) )
+                                )
+                                ( Value /ctx ->
+                                    ( /tally=/Tally( /n=/Data/Primitive/Integer ) ) = /( Value /tally -> TVArg /tally = Value /tally )
+                                )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /ctx=
+                                        ( /tally=/Tally( /n=/Data/Primitive/Integer ) )
+                                    )
+                                ) -> /Context[ /V=/Data/Primitive/Integer ]
+                                ( /value=/Data/Primitive/Integer
+                                , /ctx=
+                                    ( /tally=/Tally( /n=/Data/Primitive/Integer ) )
+                                ) = /tallied.$6ab200
+                                ( /body( Value /..ps ) -> /Data/Primitive/Integer = /body( Value /..ps -> TVArg /..ps = Value /..ps ) )
+                                ( Value /$6ab200-arg -> TVArg /v = Value /v )
+                                ( Value /$6ab200-states ->
+                                    ( /tally=/Tally( /n=/Data/Primitive/Integer ) ) = /( Value /tally -> TVArg /tally = Value /tally )
+                                )
+                            )
+                        , /ContextIn( Value /value -> /main = Value /main )
+                            ( Value /ctx -> ( /io=/Catln/IO ).. = /( Value /io -> /Catln/IO )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=()
+                            , /ctx=( /io=/Catln/IO )..
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /ContextIn
+                                ( Value /value -> /Catln/exit( /val=/Data/Primitive/Integer ) = /Catln/exit
+                                    ( Value /val -> /Data/Primitive/Integer = /operator-
+                                        ( Value /l -> /Data/Primitive/Integer = /operator+
+                                            ( Value /l -> /Data/Primitive/Integer = /operator+
+                                                ( Value /l -> /Data/Primitive/Integer = /constOf
+                                                    ( Value /t -> /Named( /fun=/three ) = /Named( Value /fun -> /three = Value /three ) )
+                                                )
+                                                ( Value /r -> /Data/Primitive/Integer = /constOf
+                                                    ( Value /t -> /Named( /fun=/four ) = /Named( Value /fun -> /four = Value /four ) )
+                                                )
+                                            )
+                                            ( Value /r -> /Data/Primitive/Integer = /Data/Context/unwrap
+                                                ( Value /this -> /Context
+                                                    ( /value=/Data/Primitive/Integer
+                                                    , /ctx=( /tally=/Tally.. )..
+                                                    ) = /ContextIn
+                                                    ( Value /value -> /tallied
+                                                        ( /t=/Named( /fun=/three ) ) = /tallied
+                                                        ( Value /t -> /Named( /fun=/three ) = /Named( Value /fun -> /three = Value /three ) )
+                                                    )
+                                                    ( Value /ctx ->
+                                                        ( /tally=/Tally( /n=/Data/Primitive/Integer ) ) = /
+                                                        ( Value /tally -> /Tally( /n=/Data/Primitive/Integer ) = /Tally
+                                                            ( Value /n -> /Data/Primitive/Integer = CInt
+                                                                { ciValue = 0 }
+                                                            )
+                                                        )
+                                                    )
+                                                )
+                                            )
+                                        )
+                                        ( Value /r -> /Data/Primitive/Integer = CInt
+                                            { ciValue = 13 }
+                                        )
+                                    )
+                                )
+                                ( Value /ctx -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /ctx=( /io=/Catln/IO )..
+                                    )
+                                ) -> /Context
+                                ( /value=()
+                                , /ctx=( /io=/Catln/IO )..
+                                ) = /main.$88336f
+                                ( Value /$88336f-arg -> TVArg /v = Value /v )
+                                ( Value /$88336f-states -> ( /io=/Catln/IO ) = /( Value /io -> TVArg /io = Value /io ) )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/addConst.$6b39ef.$2fb251"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /addConst.$6b39ef.$2fb251
+                            ( Value /$2fb251-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=
+                                    ( /tally=/Tally( /n=/Data/Primitive/Integer ) )
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$2fb251-ctx ->
+                                    ( /tally=/Tally( /n=/Data/Primitive/Integer ) )
+                                )
+                            )
+                            ( Value /$2fb251-states ->
+                                ( /tally=/Tally( /n=/Data/Primitive/Integer ) )
+                            ) -> /Context
+                            ( /value=()
+                            , /ctx=
+                                ( /tally=/Tally( /n=/Data/Primitive/Integer ) )
+                            ) = /Context
+                            ( Value /value -> () = Value / )
+                            ( Value /ctx ->
+                                ( /tally=/Tally( /n=/Data/Primitive/Integer ) ) = /
+                                ( ..Value /$2fb251-states )
+                                ( ..Value /$2fb251-ctx )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/constOf"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /constOf( Value /t -> /Named.. ) -> /Data/Primitive/Integer ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /constOf
+                            ( Value /t -> /Named( /fun=TopType ) = /Named( Value /fun ) ) | /operator@->
+                            ( Value /l= /fun( Value /..ps= Value /..ps ) )( Value /r= Value /Data/Primitive/Integer )@/Data/Maybe/Some
+                            ( Value /value= Hole /Data/Primitive/Integer HoleActive { haName = Nothing }@/body( Value /..ps ) ) -> /Data/Primitive/Integer = /kind
+                            ( /f( Value /..ps ) -> /Data/Primitive/Integer = /body( Value /..ps -> TVArg /..ps = Value /..ps ) )
+                        ]
+                    }
+                )
+            ,
+                ( "/tallied.$6ab200.$6ab200"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /tallied.$6ab200.$6ab200
+                            ( Value /$6ab200-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=
+                                    ( /tally=/Tally( /n=/Data/Primitive/Integer ) )
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$6ab200-ctx ->
+                                    ( /tally=/Tally( /n=/Data/Primitive/Integer ) )
+                                )
+                            )
+                            ( Value /$6ab200-states ->
+                                ( /tally=/Tally( /n=/Data/Primitive/Integer ) )
+                            ) -> /Context[ /V=/Data/Primitive/Integer ]
+                            ( /value=/Data/Primitive/Integer
+                            , /ctx=
+                                ( /tally=/Tally( /n=/Data/Primitive/Integer ) )
+                            ) = /Data/bindap
+                            ( Value /m -> /Context[ /V=/Data/Primitive/Integer ]
+                                ( /value=/Data/Primitive/Integer
+                                , /ctx=
+                                    ( /tally=/Tally( /n=/Data/Primitive/Integer ) )
+                                ) = /ContextIn( Value /value -> /tallyValue = Value /tallyValue )
+                                ( Value /ctx ->
+                                    ( /tally=/Tally( /n=/Data/Primitive/Integer ) ) = /
+                                    ( ..Value /$6ab200-states )
+                                    ( ..Value /$6ab200-ctx )
+                                )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context[ /V=/Data/Primitive/Integer ]
+                                    ( /value=/Data/Primitive/Integer
+                                    , /ctx=
+                                        ( /tally=/Tally( /n=/Data/Primitive/Integer ) )
+                                    )
+                                ) -> /Context[ /V=/Data/Primitive/Integer ]
+                                ( /value=/Data/Primitive/Integer
+                                , /ctx=
+                                    ( /tally=/Tally( /n=/Data/Primitive/Integer ) )
+                                ) = /tallied.$6ab200.$6ab200.$e4b5d2( Value /$e4b5d2-arg -> TVArg /v = Value /v )
+                                ( Value /$e4b5d2-states ->
+                                    ( /tally=/Tally( /n=/Data/Primitive/Integer ) ) = /
+                                    ( ..Value /$6ab200-states )
+                                    ( ..Value /$6ab200-ctx )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/Named"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /Named( Value /fun ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
+                ( "/addConst.$6b39ef"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /addConst.$6b39ef
+                            ( /b( Value /..ps ) )
+                            ( Value /$6b39ef-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=
+                                    ( /tally=/Tally( /n=/Data/Primitive/Integer ) )
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$6b39ef-ctx ->
+                                    ( /tally=/Tally( /n=/Data/Primitive/Integer ) )
+                                )
+                            )
+                            ( Value /$6b39ef-states ->
+                                ( /tally=/Tally( /n=/Data/Primitive/Integer ) )
+                            ) -> /Context
+                            ( /value=()
+                            , /ctx=( /tally=/Tally.. )
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=
+                                    ( /tally=/Tally( /n=/Data/Primitive/Integer ) )
+                                ) = /ContextIn
+                                ( Value /value -> /addConst
+                                    ( /f( /..ps=TopType )=/f( /..ps=TopType ) ) = /addConst
+                                    ( /f( Value /..ps )= /b( Value /..ps -> TVArg /..ps = Value /..ps ) )
+                                )
+                                ( Value /ctx ->
+                                    ( /tally=/Tally( /n=/Data/Primitive/Integer ) ) = /
+                                    ( ..Value /$6b39ef-states )
+                                    ( ..Value /$6b39ef-ctx )
+                                )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /ctx=
+                                        ( /tally=/Tally( /n=/Data/Primitive/Integer ) )
+                                    )
+                                ) -> /Context
+                                ( /value=()
+                                , /ctx=
+                                    ( /tally=/Tally( /n=/Data/Primitive/Integer ) )
+                                ) = /addConst.$6b39ef.$2fb251
+                                ( Value /$2fb251-arg -> TVArg /v = Value /v )
+                                ( Value /$2fb251-states ->
+                                    ( /tally=/Tally( /n=/Data/Primitive/Integer ) ) = /
+                                    ( ..Value /$6b39ef-states )
+                                    ( ..Value /$6b39ef-ctx )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/tallied.$6ab200"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /tallied.$6ab200
+                            ( /body( Value /..ps ) -> /Data/Primitive/Integer )
+                            ( Value /$6ab200-arg -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=
+                                    ( /tally=/Tally( /n=/Data/Primitive/Integer ) )
+                                ) = /Context
+                                ( Value /value -> () )
+                                ( Value /ctx@Value /$6ab200-ctx ->
+                                    ( /tally=/Tally( /n=/Data/Primitive/Integer ) )
+                                )
+                            )
+                            ( Value /$6ab200-states ->
+                                ( /tally=/Tally( /n=/Data/Primitive/Integer ) )
+                            ) -> /Context[ /V=/Data/Primitive/Integer ]
+                            ( /value=/Data/Primitive/Integer
+                            , /ctx=
+                                ( /tally=/Tally( /n=/Data/Primitive/Integer ) )
+                            ) = /Data/bindap
+                            ( Value /m -> /Context
+                                [ /V=() ]
+                                ( /value=()
+                                , /ctx=
+                                    ( /tally=/Tally( /n=/Data/Primitive/Integer ) )
+                                ) = /ContextIn
+                                ( Value /value -> /addConst
+                                    ( /f( /..ps=TopType )=/f( /..ps=TopType ) ) = /addConst
+                                    ( /f( Value /..ps ) -> /Data/Primitive/Integer = /body( Value /..ps -> TVArg /..ps = Value /..ps ) )
+                                )
+                                ( Value /ctx ->
+                                    ( /tally=/Tally( /n=/Data/Primitive/Integer ) ) = /
+                                    ( ..Value /$6ab200-states )
+                                    ( ..Value /$6ab200-ctx )
+                                )
+                            )
+                            ( /fn
+                                ( Value /v -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /ctx=
+                                        ( /tally=/Tally( /n=/Data/Primitive/Integer ) )
+                                    )
+                                ) -> /Context[ /V=/Data/Primitive/Integer ]
+                                ( /value=/Data/Primitive/Integer
+                                , /ctx=
+                                    ( /tally=/Tally( /n=/Data/Primitive/Integer ) )
+                                ) = /tallied.$6ab200.$6ab200
+                                ( Value /$6ab200-arg -> TVArg /v = Value /v )
+                                ( Value /$6ab200-states ->
+                                    ( /tally=/Tally( /n=/Data/Primitive/Integer ) ) = /
+                                    ( ..Value /$6ab200-states )
+                                    ( ..Value /$6ab200-ctx )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
+                ( "/tallied.$6ab200.$6ab200.$e4b5d2"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /tallied.$6ab200.$6ab200.$e4b5d2
+                            ( Value /$e4b5d2-arg -> /Context[ /V=/Data/Primitive/Integer ]
+                                ( /value=/Data/Primitive/Integer
+                                , /ctx=
+                                    ( /tally=/Tally( /n=/Data/Primitive/Integer ) )
+                                ) = /Context( Value /value@Value /total -> /Data/Primitive/Integer )
+                                ( Value /ctx@Value /$e4b5d2-ctx ->
+                                    ( /tally=/Tally( /n=/Data/Primitive/Integer ) )
+                                )
+                            )
+                            ( Value /$e4b5d2-states ->
+                                ( /tally=/Tally( /n=/Data/Primitive/Integer ) )
+                            ) -> /Context
+                            ( /value=/Data/Primitive/Integer
+                            , /ctx=
+                                ( /tally=/Tally( /n=/Data/Primitive/Integer ) )
+                            ) = /Context( Value /value -> TVArg /total = Value /total )
+                            ( Value /ctx ->
+                                ( /tally=/Tally( /n=/Data/Primitive/Integer ) ) = /( ..Value /$e4b5d2-states )( ..Value /$e4b5d2-ctx )
+                            )
+                        ]
+                    }
+                )
+            ]
+        , omDecls = []
+        }
+    , prgmCg =
+        [ CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        , CGType
+        ]
+    , prgmAnnots =
+        [ /Catln/#md
+            ( Value /text ->
+                ( /Data/String/Text
+                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                ) = CStr
+                { csValue = "Tests arms chosen by the body of a function of any parameters, and found from a name held as a
+                value. A higher-order parameter written with a spread of parameters (@f(..ps)@) is a function of
+                whatever parameters it has: its arms are chosen by its body whatever they are, and a part of the
+                body over all of them is written @a(..ps)@. A guard @(fun(..ps) \@-> Integer)\@Some(value\@body)@
+                asks for the definition of the function [fun] names, which is an argument holding a name: [body]
+                is the function the definition is, of its own parameters.
+                [kind] adds up the constants of a body, [constOf] finds a body from the name in a [Named], and
+                [tallied] does the same in a context, adding to a [Tally] state: each bind after the first calls a
+                helper the arm hands its part on to, which holds it as a closure." }
+            )
+        ]
+    }

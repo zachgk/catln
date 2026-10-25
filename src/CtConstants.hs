@@ -35,6 +35,12 @@ operatorHasArrow = operatorName "?->"
 operatorArrowDef = operatorName "@->"
 operatorEq = operatorName "=="
 
+-- | The prefix of the parameter a spread of parameters is kept as (@f(..ps)@ is @f@ with the
+-- parameter @..ps@), which stands for whatever parameters a function has
+-- ('Syntax.Ct.Desugarf.Expr.rawSpreadParams').
+spreadParamsPrefix :: String
+spreadParamsPrefix = ".."
+
 intPrim, floatPrim, truePrim, falsePrim, strPrim, charPrim, ioPrim :: String
 intPrim = "/Data/Primitive/Integer"
 floatPrim = "/Data/Primitive/Float"

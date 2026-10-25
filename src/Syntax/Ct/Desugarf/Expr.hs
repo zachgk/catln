@@ -166,6 +166,9 @@ semiDesExpr sdm obj (RawTupleApply m'' (bm, be) args) = (`setExprMeta` m'') $ sn
         -- Currently uses oaObj as "first and only expr"
         -- This disambiguates it between whether the only expression is an obj or an arr
         arg' = case (sdm, arg) of
+          -- A spread of parameters ('rawSpreadParams') passes them on under their own key.
+          (SDOutput, ObjArr{oaObj=Just (RawValue vm n), oaArr=Just (Nothing, am)})
+            | isSpreadParamsName n -> arg{oaArr=Just (Just (RawValue vm n), am)}
           (SDOutput, ObjArr{oaObj, oaArr=Just (Nothing, _)}) -> arg{oaObj=Nothing, oaArr=Just (oaObj, emptyMetaE $ fromJust oaObj)}
           (_, _) -> arg
 
@@ -479,6 +482,66 @@ desFileImport rawImp = rawImp{
     impRaw=semiDesExpr SDOutput Nothing $ impRaw rawImp,
     impAbs=semiDesExpr SDOutput Nothing $ impAbs rawImp
   }
+
+-- | A spread of parameters (@f(..ps)@): a higher-order parameter or lambda written with a spread
+-- for its parameters is a function of whatever parameters it has, and @ps@ stands for all of them.
+-- A body pattern over it is over a function of any parameters (@kind(f(..ps)= wrap(r= a(..ps)))@),
+-- a sub-function variable over all of them is written @a(..ps)@, and a lambda written with them
+-- (@f(..ps)= a(..ps)@) passes them on. A guard matching a definition names a function of any
+-- parameters the same way (@(fun(..args) \@-> T)@).
+--
+-- The spread is kept as one parameter, named with 'spreadParamsPrefix' (@f(..ps)@ is @f@ with the
+-- parameter @..ps@), so that it is a key as every parameter is. A spread is one of parameters when
+-- it is written in a key, which is a call given an arrow (@f(..ps) -> R@, @f(..ps)= pattern@), or
+-- in the input of a guard matching a definition, and every spread of the same name in the
+-- definition is then the same parameters. Any other spread is of a value (@Context(value, ..c)@),
+-- and is left as it is.
+rawSpreadParams :: PObjArr -> PObjArr
+rawSpreadParams roa = if null names then roa else onObjArr roa
+  where
+    names = concatMap objArrNames (roaObj roa : map Just (roaAnnots roa) ++ [roaArr roa >>= fst, roaDef roa])
+    objArrNames = maybe [] exprNames
+    exprNames e = case e of
+      RawTupleApply _ (_, b) args -> exprNames b ++ concatMap argNames args
+      RawAliasExpr b a -> exprNames b ++ exprNames a
+      RawWhere _ b c -> exprNames b ++ exprNames c ++ arrowDefNames c
+      RawParen e' -> exprNames e'
+      RawMethod _ b v -> exprNames b ++ exprNames v
+      RawList _ vs -> concatMap exprNames vs
+      RawContextApply _ (_, b) ctxs -> exprNames b ++ concatMap (objArrNames . roaObj) ctxs
+      RawVarsApply _ b _ -> exprNames b
+      RawTheExpr e' -> exprNames e'
+      _ -> []
+    argNames (_, RawObjArr{roaObj, roaArr}) = keyNames ++ objArrNames (roaArr >>= fst) ++ objArrNames roaObj
+      where
+        keyNames = case (roaObj, roaArr) of
+          (Just (RawTupleApply _ _ kargs), Just _) -> [ n | (True, RawObjArr{roaObj=Just (RawValue _ n), roaArr=Nothing}) <- kargs ]
+          _ -> []
+    -- The input of a guard matching a definition (@(fun(..args) \@-> T)\@pattern@).
+    arrowDefNames (RawAliasExpr (RawParen (RawTupleApply _ (_, RawValue _ opN) opArgs)) _)
+      | nameStr opN == operatorArrowDef = [ n | (_, RawObjArr{roaObj=Just (RawValue _ k), roaArr=Just (Just (RawTupleApply _ _ kargs), _)}) <- opArgs, nameStr k == operatorArgL, (True, RawObjArr{roaObj=Just (RawValue _ n), roaArr=Nothing}) <- kargs ]
+    arrowDefNames _ = []
+
+    onObjArr a = a{
+      roaObj = onExpr <$> roaObj a,
+      roaAnnots = map onExpr (roaAnnots a),
+      roaArr = fmap (first (fmap onExpr)) (roaArr a),
+      roaDef = onExpr <$> roaDef a
+      }
+    onExpr e = case e of
+      RawTupleApply m (bm, b) args -> RawTupleApply m (bm, onExpr b) (map onArg args)
+      RawAliasExpr b a -> RawAliasExpr (onExpr b) (onExpr a)
+      RawWhere m b c -> RawWhere m (onExpr b) (onExpr c)
+      RawParen e' -> RawParen (onExpr e')
+      RawMethod m b v -> RawMethod m (onExpr b) (onExpr v)
+      RawList m vs -> RawList m (map onExpr vs)
+      RawContextApply m (bm, b) ctxs -> RawContextApply m (bm, onExpr b) ctxs
+      RawVarsApply m b vs -> RawVarsApply m (onExpr b) vs
+      RawTheExpr e' -> RawTheExpr (onExpr e')
+      _ -> e
+    onArg (True, a@RawObjArr{roaObj=Just (RawValue m n), roaArr=Nothing})
+      | n `elem` names = let n' = mkName (spreadParamsPrefix ++ nameStr n) in (False, a{roaObj=Just (RawValue (mWithType (relTypeVal n') m) n')})
+    onArg (isSpread, a) = (isSpread, onObjArr a)
 
 desObjArr :: Maybe PObjExpr -> PObjArr -> [ObjArr RawExpr ParseMetaDat]
 desObjArr mainObj (RawObjArr obj basis@TypeObj doc annots arr Nothing) = [ObjArr obj basis doc annots arr']

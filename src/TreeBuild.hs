@@ -337,7 +337,7 @@ findResArrows env@TBEnv{tbResEnv, tbTypeEnv, tbUntyped} os srcType@PartialType{p
   instantiated <- catMaybes <$> mapM instantiateItem globalArrows
   -- Arms are not ordered, so a function matching the body patterns of two arms would be given to
   -- whichever is tried first. That is reported rather than chosen.
-  let matchedPatternArms = nub [ oa | (_, Just oa, _) <- instantiated, any (isJust . bodyPatternParts) (exprAppliedArgs (oaObjExpr oa)) ]
+  let matchedPatternArms = nub [ oa | (_, Just oa, _) <- instantiated, any (isJust . bodyPatternParts) (objDefinedArgs (oaObjExpr oa)) ]
   when (length matchedPatternArms > 1) $
     CErr [MkCNote $ BuildTreeCErr Nothing $ printf "Several definitions of %s have a body pattern matching the function given in %s: %s" (show srcName) (show srcType) (intercalate ", " [ maybe (show $ oaObjPath oa) showCodeRange (getMetaPos $ getExprMeta $ oaObjExpr oa) | oa <- matchedPatternArms ])]
   case argArrows ++ instantiated of
@@ -790,6 +790,22 @@ carriesMembership PartialType{ptPreds, ptVars, ptArgs} =
     typeCarries (UnionType _ leafs _) = any carriesMembership (splitUnionType leafs)
     typeCarries (TypeVar _ _ inner) = typeCarries inner
 
+-- | An expression as the tree it is written as, with no call of it built: what a lambda that is
+-- never called holds ('toTEObjArr'), read back as the expression it was ('texprToExpr').
+toTExprInert :: Expr TBMetaDat -> TExpr TBMetaDat
+toTExprInert (CExpr m (CInt c)) = TCExpr m (IntVal c)
+toTExprInert (CExpr m (CFloat c)) = TCExpr m (FloatVal c)
+toTExprInert (CExpr m (CStr c)) = TCExpr m (StrVal c)
+toTExprInert (CExpr m (CChar c)) = TCExpr m (CharVal c)
+toTExprInert (Value m n) = TValue m n
+toTExprInert (HoleExpr m h) = THoleExpr m h
+toTExprInert (AliasExpr b a) = TAliasExpr (toTExprInert b) (toTExprInert a)
+toTExprInert (EWhere m b a) = TWhere m (toTExprInert b) (toTExprInert a)
+toTExprInert (TupleApply m (bm, be) arg) = TTupleApply m (bm, toTExprInert be) $ case arg of
+  EAppArg a     -> EAppArg a{oaObj = fmap toTExprInert (oaObj a), oaAnnots = map toTExprInert (oaAnnots a), oaArr = fmap (\(e, am) -> (fmap toTExprInert e, am)) (oaArr a)}
+  EAppVar vn vm -> EAppVar vn vm
+  EAppSpread a  -> EAppSpread (toTExprInert a)
+
 toTExpr :: TBEnv -> [ObjSrc] -> Expr TBMetaDat -> CRes (TExpr TBMetaDat)
 -- toTExpr _ os e | trace (printf "toTExpr %s \n\twith %s" (show e) (show os)) False = undefined
 toTExpr _ _ (CExpr m (CInt c)) = return $ TCExpr m (IntVal c)
@@ -991,8 +1007,14 @@ toTEObjArr env@TBEnv{tbTypeEnv, tbResEnv} os inExpr oa@ObjArr{oaObj, oaAnnots, o
     let arrBuildM = if isLambda || (isAppliedTerm && metaMightReduce)
           then mWithType (reduceAppliedTypeFix tbTypeEnv H.empty (getMetaType arrM)) arrM
           else arrM
-    arrExpr' <- forM arrExpr $ \e ->
-      toTExprDest env os' e arrBuildM
+    -- A lambda written with a spread of parameters (@f(..ps)= body(..ps)@) is a function of
+    -- whatever parameters it has, which no call gives it: it is only ever matched by a body
+    -- pattern ('TreeBuild.BodyPattern') or passed on. Its body is kept as it is written rather than
+    -- built, as building it would call functions with parameters it does not know.
+    let spreadLambda = isLambda && maybe False (any (isSpreadParamsName . pkName) . H.keys . exprAppliedArgsMap) oaObj
+    arrExpr' <- forM arrExpr $ \e -> if spreadLambda
+      then return (toTExprInert e)
+      else toTExprDest env os' e arrBuildM
     return (arrExpr', arrM)
   oaAnnots' <- mapM (toTExpr env os') oaAnnots
   return oa{oaObj=oaObj', oaAnnots=oaAnnots', oaArr=oaArr'}
@@ -1020,11 +1042,20 @@ withArgArrows env@TBEnv{tbTypeEnv} lams = case lams of
 
 -- | The lambdas given along a call's application chain (@f(a)(fn(v)= body)@): each argument whose
 -- object is applied to parameters and which has a body.
+--
+-- A call in a context (@ContextIn(value= f(fn(v)= body), ctx)@, how a bind runs a call in its
+-- states) is given the lambdas of the call it holds: that call is the one the context's
+-- definition defines ('objDefinedArgs').
 callLambdas :: Expr TBMetaDat -> [ObjArr Expr TBMetaDat]
-callLambdas (TupleApply _ (_, be) arg) = case arg of
-  EAppArg oa@ObjArr{oaObj=Just obj, oaArr=Just (Just _, _)} | not (null (exprAppliedArgs obj)) -> oa : callLambdas be
-  _ -> callLambdas be
-callLambdas _ = []
+callLambdas e = go e ++ held
+  where
+    go (TupleApply _ (_, be) arg) = case arg of
+      EAppArg oa@ObjArr{oaObj=Just obj, oaArr=Just (Just _, _)} | not (null (exprAppliedArgs obj)) -> oa : go be
+      _ -> go be
+    go _ = []
+    held = case H.lookup (partialKey (mkName contextValStr)) (exprAppliedArgsMap e) of
+      Just (Just (_, Just v)) | maybe False ((== ContextInStr) . nameStr . makeAbsoluteName) (maybeExprPath e) -> callLambdas v
+      _ -> []
 
 toTExprDest :: TBEnv -> [ObjSrc] -> Expr TBMetaDat -> EvalMeta -> CRes (TExpr TBMetaDat)
 toTExprDest = toTExprDestWith True
@@ -1045,10 +1076,10 @@ toTExprDestWith readArgRefs env0@TBEnv{tbTypeEnv} os e m = do
   let env = withCallArrows env0 e
   -- The call is built for the arguments its object sources bind, which TreeBuild knows more
   -- precisely than the inferred type it was typechecked with: each slot valued by a reference to
-  -- one of the enclosing definition's arguments is that argument here ('applyArgRefBindings', the
-  -- same reading an arm's result is given).
+  -- one of the enclosing definition's arguments is that argument here, as is each such slot of a
+  -- call a slot holds ('applyArgRefBindingsDeep', the same reading an arm's result is given).
   let srcT0 = getMetaType $ getExprMeta e'
-  let srcT | readArgRefs = applyArgRefBindings tbTypeEnv e (exprArgRefBindings (objSrcsEnv tbTypeEnv os) e) srcT0
+  let srcT | readArgRefs = applyArgRefBindingsDeep tbTypeEnv (objSrcsEnv tbTypeEnv os) e srcT0
            | otherwise   = srcT0
   ct <- buildCallTree env os S.empty PTopType MayHold DestInferred srcT (getMetaType m)
   -- A reference to an argument of the enclosing definition — bare (@= v@) or applied
@@ -1157,7 +1188,7 @@ buildRootOA env oa = do
   -- A definition written with a body pattern ('bodyPatternParts') has a body only for a function the
   -- pattern matched: until then its sub-function variables name no function. It is built where a
   -- call chooses it ('TreeBuild.BodyPattern'), so here only what it is written over is.
-  let oa' | any (isJust . bodyPatternParts) (exprAppliedArgs (oaObjExpr oa)) = oa{oaArr = fmap (\(_, m) -> (Nothing, m)) (oaArr oa)}
+  let oa' | any (isJust . bodyPatternParts) (objDefinedArgs (oaObjExpr oa)) = oa{oaArr = fmap (\(_, m) -> (Nothing, m)) (oaArr oa)}
           | otherwise = oa
   toTEObjArr env' [objSrc] False oa'
 

@@ -349,6 +349,8 @@ newtype BodyStates = BodyStates [(Bool, PObjArr)]
 -- (@cont(arg= /Context(value\@x, ctx\@r), states)@) runs in the states it was given with the
 -- ones it took back laid over them.
 declContextStates :: Maybe PExpr -> Maybe BodyStates
+-- A guarded definition runs in the states of the definition it guards.
+declContextStates (Just (RawWhere _ b _)) = declContextStates (Just b)
 declContextStates (Just (RawContextApply _ _ ctxs)) = Just $ namedStates $ map checkedContextState ctxs
 declContextStates (Just (RawTupleApply _ (_, RawContextApply _ _ ctxs) _)) = Just $ namedStates $ map checkedContextState ctxs
 declContextStates (Just (RawTupleApply _ (_, RawValue _ base) args)) | isBindCont base = do

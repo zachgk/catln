@@ -501,7 +501,7 @@ localArrowTypeEnv env (Constraint callArrs maybeConOa stypeVaenv _) = do
   let subFnParents = H.fromList
         [ (inExprSingleton sub, inExprSingleton fObj)
         | oa <- maybeConOa
-        , argOa <- exprAppliedArgs (oaObjExpr oa)
+        , argOa <- objDefinedArgs (oaObjExpr oa)
         , Just (fObj, pat, _) <- [bodyPatternParts argOa]
         , sub <- bodyPatternSubFns fObj pat ]
   let declResultFor k0 = let k = H.lookupDefault k0 k0 subFnParents in case H.lookup k declArgResults of
