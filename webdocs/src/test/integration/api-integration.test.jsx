@@ -202,6 +202,7 @@ describe('Backend API contract', () => {
     // run against happens to name.
     expect(annots).toEqual([
       '#calendar',
+      '#dayPlanner',
       '#listProgram(mode= /Catln/Doc/Desugar)',
       '#listProgram(mode= /Catln/Doc/TreeBuild)',
       '#listProgram(mode= /Catln/Doc/Typecheck)',
@@ -826,7 +827,10 @@ describe('Backend API contract', () => {
     // The whole point of gathering them: a task is written back to the note it was read from, which
     // is not the page whatever displays the list is on.
     it('writes a task of the list back to the note it was read from', async () => {
-      const before = (await tasks()).find(t => contentsOf(t) === FIRST)
+      // Found in the note it is about: another note of the vault (Links.md) writes a task saying the
+      // same, and a write of that one would be a write of a note this does not mean to touch.
+      const inNote = t => t.ptPage.endsWith(NOTE) && contentsOf(t) === FIRST
+      const before = (await tasks()).find(inNote)
       expect(before).toBeDefined()
       expect(isDone(before)).toBe(false)
 
@@ -840,9 +844,9 @@ describe('Backend API contract', () => {
         expect(page.contents[0].pgSource).toContain(`- [x] ${FIRST}`)
 
         // And so does the list, which reads the notes again rather than remembering the write.
-        expect(isDone((await tasks()).find(t => contentsOf(t) === FIRST))).toBe(true)
+        expect(isDone((await tasks()).find(inNote))).toBe(true)
       } finally {
-        const now = (await tasks()).find(t => contentsOf(t) === FIRST)
+        const now = (await tasks()).find(inNote)
         if (now) await writeTask(now, taskSource(FIRST, false))
       }
     })
@@ -881,9 +885,10 @@ describe('Backend API contract', () => {
       const result = await answered('not done\nsort by priority\nlimit 3', await notePage())
       expect(result.qrError).toBeNull()
 
-      // Filtered, ordered and cut: the one task of the vault anybody gave a priority to comes
-      // first, and the rest follow in the order the note wrote them.
-      expect(result.qrTasks.map(describedAs)).toEqual(['Ship it #work', 'Read the note', 'Plan the rest'])
+      // Filtered, ordered and cut: the highest priority first, and those of one priority in the order
+      // the vault wrote them. Marks.md, which writes a task for each of the plugin's marks, is the
+      // note of the vault holding them; this is the answer the golden of Query.md's annotations holds.
+      expect(result.qrTasks.map(describedAs)).toEqual(['Highest', 'High', 'Due then priority'])
 
       // Each entry carries where it came from, which is what lets a row of a result be edited.
       for (const task of result.qrTasks) {
@@ -1108,8 +1113,11 @@ describe('Backend API contract', () => {
   // The pages either side of one are the server's answer, and the sidebar is the server's other
   // answer about the same order: a page's neighbours are the pages around it in the tree.
   //
-  // Only the page the server opens at is warmed, and each page evaluates its own annotations on
-  // first load, so the three pages read here pay that cost rather than the default 15s budget.
+  // Each page evaluates its own annotations on first load, and the pages at the start of the order
+  // are in the standard library: stack/core/algebra.ct's asserts, tests and example took 111s on a
+  // dev machine. Warming them first does not hold, because any write drops every page's tests
+  // (CtService.ctssClearInvalidations) and the cases above write notes. So the budget is for one
+  // library page loaded cold.
   it('/api/page names the pages either side of one, and the ends have none', async () => {
     const order = (await sidebarPages()).map(p => p.sbPath)
     expect(order.length).toBeGreaterThan(2)
@@ -1128,7 +1136,7 @@ describe('Backend API contract', () => {
     const last = await pageAt(order[order.length - 1])
     expect(last.pgPrev).toBe(order[order.length - 2])
     expect(last.pgNext).toBeNull()
-  }, 60000)
+  }, 240000)
 
   it('/api/config reports a writable server and the page it opens at', async () => {
     const data = await fetchApi('/api/config')
@@ -1209,7 +1217,8 @@ describe('Backend API contract', () => {
     }, WRITE_TIMEOUT)
 
     // A block of a daily note moved to another day is taken out of the note and written under the
-    // planner's heading of that day's note, which is written where there was none.
+    // planner's heading of that day's note, which is written where there was none. What is written
+    // under its line goes with it, since that is part of the block as the note wrote it.
     it('moves a block moved to another day into that day\'s note', async () => {
       const page = await pageFor(DAILY)
       const {decls} = await noteOf(page)
@@ -1222,7 +1231,7 @@ describe('Backend API contract', () => {
       expect((await noteOf(page)).source).not.toContain('Lunch')
       const moved = await pageFor('catln-planner/Daily/2026-01-05.md')
       expect(moved).toBeDefined()
-      expect((await noteOf(moved)).source).toBe('# Day planner\n\n- 12:00 - 13:00 Lunch\n')
+      expect((await noteOf(moved)).source).toBe('# Day planner\n\n- 12:00 - 13:00 Lunch\n  with the team\n')
     }, WRITE_TIMEOUT)
 
     // A block created on a day goes into that day's note, as a moved one does.
