@@ -2,6 +2,19 @@ Prgm
     { prgmObjMap = ObjectMapWith
         { omItems = fromList
             [
+                ( "/LLVM/Operand"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /LLVM/Operand
+                            ( EAppArg { eaaArg = Value /type -> ∀/Data/String } )
+                            ( EAppArg { eaaArg = Value /repr -> ∀/Data/String } )
+                        ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/LLVM/llvmFunction.$5991a2"
                 , ObjectMapItem
                     { omiDecls = []
@@ -9,6 +22,11 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /LLVM/llvmFunction.$5991a2
+                            ( EAppArg
+                                { eaaArg = /body
+                                    ( EAppArg { eaaArg = Value /..ps } )
+                                }
+                            )
                             ( EAppArg
                                 { eaaArg = Value /$5991a2-arg -> /Context
                                     [ /V=() ]
@@ -60,28 +78,18 @@ Prgm
                             ) =
                             ( /Data/bindap
                                 ( EAppArg
-                                    { eaaArg = Value /m -> /Context
-                                        [ /V=() ]
-                                        ( /value=()
-                                        , /ctx=
-                                            ( /llvmfn=/LLVM/LlvmFn
-                                                ( /lines=/Data/List/Cons[ /T=∀/Data/String ]
-                                                    ( /head=∀/Data/String
-                                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                                    )
-                                                , /next=/Data/Primitive/Integer
-                                                )
-                                            )
-                                        ) =
+                                    { eaaArg = Value /m -> /Context[ /V=/LLVM/Operand.. ]
+                                        ( /value=/LLVM/Operand..
+                                        , /ctx=( /llvmfn=/LLVM/LlvmFn.. )
+                                        ).. =
                                         ( /ContextIn
                                             ( EAppArg
-                                                { eaaArg = Value /value -> /LLVM/llvmEmit
-                                                    ( /line=( /Data/String/Text.. + /Catln/CStr ) ) = /LLVM/llvmEmit
+                                                { eaaArg = Value /value -> /LLVM/llvmOperand
+                                                    ( /f( /..ps=TopType )=/f( /..ps=TopType ) ) = /LLVM/llvmOperand
                                                     ( EAppArg
-                                                        { eaaArg = Value /line ->
-                                                            ( /Data/String/Text
-                                                                ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
-                                                            ) = "  ; TODO unsupported: the body of the function"
+                                                        { eaaArg = /f
+                                                            ( EAppArg { eaaArg = Value /..ps } )= /body
+                                                            ( EAppArg { eaaArg = Value /..ps -> TVArg /..ps = Value /..ps } )
                                                         }
                                                     )
                                                 }
@@ -108,37 +116,19 @@ Prgm
                                                         }
                                                     )
                                                 }
-                                            ) ↦ /Context
-                                            [ /V=() ]
-                                            ( /value=()
-                                            , /ctx=
-                                                ( /llvmfn=/LLVM/LlvmFn
-                                                    ( /lines=/Data/List/Cons[ /T=∀/Data/String ]
-                                                        ( /head=∀/Data/String
-                                                        , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                                        )
-                                                    , /next=/Data/Primitive/Integer
-                                                    )
-                                                )
-                                            )
+                                            ) ↦ /Context[ /V=/LLVM/Operand.. ]
+                                            ( /value=/LLVM/Operand..
+                                            , /ctx=( /llvmfn=/LLVM/LlvmFn.. )
+                                            )..
                                         )
                                     }
                                 )
                                 ( EAppArg
                                     { eaaArg = /fn
                                         ( EAppArg
-                                            { eaaArg = Value /v -> /Context
-                                                [ /V=() ]
-                                                ( /value=()
-                                                , /ctx=
-                                                    ( /llvmfn=/LLVM/LlvmFn
-                                                        ( /lines=/Data/List/Cons[ /T=∀/Data/String ]
-                                                            ( /head=∀/Data/String
-                                                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                                            )
-                                                        , /next=/Data/Primitive/Integer
-                                                        )
-                                                    )
+                                            { eaaArg = Value /v -> /Context[ /V=/LLVM/Operand.. ]
+                                                ( /value=/LLVM/Operand..
+                                                , /ctx=( /llvmfn=/LLVM/LlvmFn.. )
                                                 )
                                             }
                                         ) -> /Context
@@ -157,12 +147,12 @@ Prgm
                                                 )
                                             )
                                         ) =
-                                        ( /LLVM/llvmFunction.$5991a2.$a79854
+                                        ( /LLVM/llvmFunction.$5991a2.$1de666
                                             ( EAppArg
-                                                { eaaArg = Value /$a79854-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                                { eaaArg = Value /$1de666-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /$a79854-states ->
+                                                { eaaArg = Value /$1de666-states ->
                                                     ( /llvmprogram=/LLVM/LlvmProgram
                                                         ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
                                                         , /functions=∀/Data/List/ConsList[ /T=∀/Data/String ]
@@ -459,6 +449,271 @@ Prgm
                     }
                 )
             ,
+                ( "/LLVM/llvmFunction.$5991a2.$1de666.$c99305.$bdd31e"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmFunction.$5991a2.$1de666.$c99305.$bdd31e
+                            ( EAppArg
+                                { eaaArg = Value /$bdd31e-arg -> /Context
+                                    [ /V=
+                                        ( /Data/List/Nil + /Data/List/Cons[ /T=∀/Data/String ]
+                                            ( /head=∀/Data/String
+                                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                            )
+                                        )
+                                    ]
+                                    ( /value=
+                                        ( /Data/List/Nil + /Data/List/Cons[ /T=∀/Data/String ]
+                                            ( /head=∀/Data/String
+                                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                            )
+                                        )
+                                    , /ctx=
+                                        ( /llvmfn=/LLVM/LlvmFn
+                                            ( /lines=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                            , /next=/Data/Primitive/Integer
+                                            )
+                                        )
+                                    ) = /Context
+                                    ( EAppArg
+                                        { eaaArg = Value /value@Value /bodyLines ->
+                                            ( /Data/List/Nil + /Data/List/Cons[ /T=∀/Data/String ]
+                                                ( /head=∀/Data/String
+                                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                                )
+                                            )
+                                        }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /ctx@Value /$bdd31e-ctx ->
+                                            ( /llvmfn=/LLVM/LlvmFn
+                                                ( /lines=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                                , /next=/Data/Primitive/Integer
+                                                )
+                                            )
+                                        }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /$bdd31e-states ->
+                                    ( /llvmprogram=/LLVM/LlvmProgram
+                                        ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
+                                        , /functions=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                        )
+                                    , /llvmfn=/LLVM/LlvmFn
+                                        ( /lines=/Data/List/Cons[ /T=∀/Data/String ]
+                                            ( /head=∀/Data/String
+                                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                            )
+                                        , /next=/Data/Primitive/Integer
+                                        )
+                                    )
+                                }
+                            ) -> /Context
+                            ( /value=()
+                            , /ctx=
+                                ( /llvmprogram=/LLVM/LlvmProgram
+                                    ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
+                                    , /functions=/Data/List/Cons[ /T=∀/Data/String ]
+                                        ( /head=∀/Data/String
+                                        , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                        )
+                                    )
+                                , /llvmfn=/LLVM/LlvmFn
+                                    ( /lines=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                    , /next=/Data/Primitive/Integer
+                                    )
+                                )
+                            ) =
+                            ( /Data/bindap
+                                ( EAppArg
+                                    { eaaArg = Value /m -> /Context
+                                        [ /V=() ]
+                                        ( /value=()
+                                        , /ctx=
+                                            ( /llvmprogram=/LLVM/LlvmProgram
+                                                ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
+                                                , /functions=/Data/List/Cons[ /T=∀/Data/String ]
+                                                    ( /head=∀/Data/String
+                                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                                    )
+                                                )
+                                            )
+                                        ) =
+                                        ( /ContextIn
+                                            ( EAppArg
+                                                { eaaArg = Value /value -> /LLVM/llvmAddFunction( /text=∀/Data/String ) = /LLVM/llvmAddFunction
+                                                    ( EAppArg
+                                                        { eaaArg = Value /text -> ∀/Data/String =
+                                                            ( /LLVM/llvmDefine
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /ret ->
+                                                                        ( /Data/String/Text
+                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                        ) = "i32"
+                                                                    }
+                                                                )
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /name ->
+                                                                        ( /Data/String/Text
+                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                        ) = "main"
+                                                                    }
+                                                                )
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /body -> /Data/List/Cons[ /T=∀/Data/String ]
+                                                                        ( /head=( /Data/String/Text.. + /Catln/CStr )
+                                                                        , /tail=∀/Data/List/ConsList[ /T=$_/T ]
+                                                                        ) = /Data/List/Cons
+                                                                        ( EAppArg
+                                                                            { eaaArg = Value /head ->
+                                                                                ( /Data/String/Text
+                                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                                ) = "entry:"
+                                                                            }
+                                                                        )
+                                                                        ( EAppArg
+                                                                            { eaaArg = Value /tail -> TVArg /bodyLines = ( Value /bodyLines ↦ TVArg /bodyLines ) }
+                                                                        )
+                                                                    }
+                                                                ) ↦ ∀/Data/String
+                                                            )
+                                                        }
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /ctx ->
+                                                    ( /llvmprogram=/LLVM/LlvmProgram
+                                                        ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
+                                                        , /functions=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                                        )
+                                                    , /llvmfn=/LLVM/LlvmFn
+                                                        ( /lines=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                                        , /next=/Data/Primitive/Integer
+                                                        )
+                                                    ) = /
+                                                    ( EAppSpread
+                                                        { easExpr = ( Value /$bdd31e-states ↦ TopType ) }
+                                                    )
+                                                    ( EAppSpread
+                                                        { easExpr = ( Value /$bdd31e-ctx ↦ TopType ) }
+                                                    )
+                                                }
+                                            ) ↦ /Context
+                                            [ /V=() ]
+                                            ( /value=()
+                                            , /ctx=
+                                                ( /llvmprogram=/LLVM/LlvmProgram
+                                                    ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
+                                                    , /functions=/Data/List/Cons[ /T=∀/Data/String ]
+                                                        ( /head=∀/Data/String
+                                                        , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                                        )
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = /fn
+                                        ( EAppArg
+                                            { eaaArg = Value /v -> /Context
+                                                [ /V=() ]
+                                                ( /value=()
+                                                , /ctx=
+                                                    ( /llvmprogram=/LLVM/LlvmProgram
+                                                        ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
+                                                        , /functions=/Data/List/Cons[ /T=∀/Data/String ]
+                                                            ( /head=∀/Data/String
+                                                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                                            )
+                                                        )
+                                                    )
+                                                )
+                                            }
+                                        ) -> /Context
+                                        ( /value=()
+                                        , /ctx=
+                                            ( /llvmprogram=/LLVM/LlvmProgram
+                                                ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
+                                                , /functions=/Data/List/Cons[ /T=∀/Data/String ]
+                                                    ( /head=∀/Data/String
+                                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                                    )
+                                                )
+                                            , /llvmfn=/LLVM/LlvmFn
+                                                ( /lines=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                                , /next=/Data/Primitive/Integer
+                                                )
+                                            )
+                                        ) =
+                                        ( /LLVM/llvmFunction.$5991a2.$1de666.$c99305.$bdd31e.$c926c5
+                                            ( EAppArg
+                                                { eaaArg = Value /$c926c5-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /$c926c5-states ->
+                                                    ( /llvmprogram=/LLVM/LlvmProgram
+                                                        ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
+                                                        , /functions=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                                        )
+                                                    , /llvmfn=/LLVM/LlvmFn
+                                                        ( /lines=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                                        , /next=/Data/Primitive/Integer
+                                                        )
+                                                    ) = /
+                                                    ( EAppSpread
+                                                        { easExpr = ( Value /$bdd31e-states ↦ TopType ) }
+                                                    )
+                                                    ( EAppSpread
+                                                        { easExpr = ( Value /$bdd31e-ctx ↦ TopType ) }
+                                                    )
+                                                }
+                                            ) ↦ /Context
+                                            ( /value=()
+                                            , /ctx=
+                                                ( /llvmprogram=/LLVM/LlvmProgram
+                                                    ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
+                                                    , /functions=/Data/List/Cons[ /T=∀/Data/String ]
+                                                        ( /head=∀/Data/String
+                                                        , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                                        )
+                                                    )
+                                                , /llvmfn=/LLVM/LlvmFn
+                                                    ( /lines=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                                    , /next=/Data/Primitive/Integer
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    }
+                                ) ↦ /Context
+                                ( /value=()
+                                , /ctx=
+                                    ( /llvmprogram=/LLVM/LlvmProgram
+                                        ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
+                                        , /functions=/Data/List/Cons[ /T=∀/Data/String ]
+                                            ( /head=∀/Data/String
+                                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                            )
+                                        )
+                                    , /llvmfn=/LLVM/LlvmFn
+                                        ( /lines=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                        , /next=/Data/Primitive/Integer
+                                        )
+                                    )
+                                )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls =
@@ -525,6 +780,92 @@ Prgm
                             ) -> /Context
                             ( /value=()
                             , /ctx=( /llvmprogram=/LLVM/LlvmProgram.. )..
+                            )
+                        , /ContextIn
+                            ( EAppArg
+                                { eaaArg = Value /value -> /LLVM/llvmOperand
+                                    ( /f( /..ps=TopType )=/f( /..ps=TopType ) ) = /LLVM/llvmOperand
+                                    ( EAppArg
+                                        { eaaArg = /f
+                                            ( EAppArg { eaaArg = Value /..ps } )
+                                        }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /ctx ->
+                                    ( /llvmfn=/LLVM/LlvmFn
+                                        ( /lines=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                        , /next=/Data/Primitive/Integer
+                                        )
+                                    ).. = /
+                                    ( EAppArg
+                                        { eaaArg = Value /llvmfn -> /LLVM/LlvmFn
+                                            ( /lines=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                            , /next=/Data/Primitive/Integer
+                                            ) = /LLVM/LlvmFn
+                                            ( EAppArg { eaaArg = Value /next -> /Data/Primitive/Integer } )
+                                            ( EAppArg
+                                                { eaaArg = Value /lines -> ∀/Data/List/ConsList[ /T=∀/Data/String ] }
+                                            )@Value /llvmfn
+                                        }
+                                    )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )
+                                }
+                            ) -> /Context
+                            ( /value=/LLVM/Operand..
+                            , /ctx=( /llvmfn=/LLVM/LlvmFn.. )
+                            )..
+                        , /ContextIn
+                            ( EAppArg
+                                { eaaArg = Value /value -> /LLVM/llvmOperand
+                                    ( /f( /..ps=TopType )=/f( /..ps=TopType ) ) = /LLVM/llvmOperand
+                                    ( EAppArg
+                                        { eaaArg = /f
+                                            ( EAppArg { eaaArg = Value /..ps } )= Hole TopType HoleActive { haName = Nothing }@/other
+                                            ( EAppArg { eaaArg = Value /..ps } )
+                                        }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /ctx ->
+                                    ( /llvmfn=/LLVM/LlvmFn
+                                        ( /lines=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                        , /next=/Data/Primitive/Integer
+                                        )
+                                    ).. = /
+                                    ( EAppArg
+                                        { eaaArg = Value /llvmfn -> /LLVM/LlvmFn
+                                            ( /lines=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                            , /next=/Data/Primitive/Integer
+                                            ) = /LLVM/LlvmFn
+                                            ( EAppArg { eaaArg = Value /next -> /Data/Primitive/Integer } )
+                                            ( EAppArg
+                                                { eaaArg = Value /lines -> ∀/Data/List/ConsList[ /T=∀/Data/String ] }
+                                            )@Value /llvmfn
+                                        }
+                                    )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )
+                                }
+                            ) -> /Context
+                            ( /value=/LLVM/Operand
+                                ( /type=( /Data/String/Text.. + /Catln/CStr )
+                                , /repr=( /Data/String/Text.. + /Catln/CStr )
+                                )
+                            , /ctx=
+                                ( /llvmfn=/LLVM/LlvmFn
+                                    ( /lines=/Data/List/Cons[ /T=∀/Data/String ]
+                                        ( /head=( /Data/String/Text.. + /Catln/CStr )
+                                        , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                        )
+                                    , /next=/Data/Primitive/Integer
+                                    )
+                                )
                             )
                         ]
                     , omiRuntimeDecls = []
@@ -797,6 +1138,19 @@ Prgm
                                         { easExpr = Hole TopType HoleActive { haName = Nothing } }
                                     )
                                 }
+                            ) | /operator@->
+                            ( EAppArg
+                                { eaaArg = Value /l= ( ( Value /fun ↦ TopType ) )
+                                    ( EAppArg { eaaArg = Value /..ps= Value /..ps } )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r= Hole TopType HoleActive { haName = Nothing } }
+                            )@/Data/Maybe/Some
+                            ( EAppArg
+                                { eaaArg = Value /value= Hole TopType HoleActive { haName = Nothing }@/body
+                                    ( EAppArg { eaaArg = Value /..ps } )
+                                }
                             ) -> /Context
                             ( /value=()
                             , /ctx=
@@ -917,6 +1271,12 @@ Prgm
                                         ) =
                                         ( /LLVM/llvmFunction.$5991a2
                                             ( EAppArg
+                                                { eaaArg = /body
+                                                    ( EAppArg { eaaArg = Value /..ps } )= /body
+                                                    ( EAppArg { eaaArg = Value /..ps -> TVArg /..ps = Value /..ps } )
+                                                }
+                                            )
+                                            ( EAppArg
                                                 { eaaArg = Value /$5991a2-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
                                             )
                                             ( EAppArg
@@ -961,6 +1321,252 @@ Prgm
                                     , /llvmfn=/LLVM/LlvmFn
                                         ( /lines=∀/Data/List/ConsList[ /T=∀/Data/String ]
                                         , /next=/Data/Primitive/Integer
+                                        )
+                                    )
+                                )
+                            )
+                        , /ContextIn
+                            ( EAppArg
+                                { eaaArg = Value /value -> /LLVM/llvmFunction( /fun=TopType ) = /LLVM/llvmFunction
+                                    ( EAppArg { eaaArg = Value /fun } )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /ctx ->
+                                    ( /llvmprogram=/LLVM/LlvmProgram
+                                        ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
+                                        , /functions=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                        )
+                                    ).. = /
+                                    ( EAppArg
+                                        { eaaArg = Value /llvmprogram -> /LLVM/LlvmProgram
+                                            ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
+                                            , /functions=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                            ) = /LLVM/LlvmProgram
+                                            ( EAppArg
+                                                { eaaArg = Value /todo -> ∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ] }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /functions -> ∀/Data/List/ConsList[ /T=∀/Data/String ] }
+                                            )@Value /llvmprogram
+                                        }
+                                    )
+                                    ( EAppSpread
+                                        { easExpr = Hole TopType HoleActive { haName = Nothing } }
+                                    )
+                                }
+                            ) | /operator@->
+                            ( EAppArg
+                                { eaaArg = Value /l= ( ( Value /fun ↦ TopType ) )
+                                    ( EAppArg { eaaArg = Value /..ps= Value /..ps } )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /r= Hole TopType HoleActive { haName = Nothing } }
+                            )@Value /Data/Maybe/Nothing -> /Context
+                            ( /value=()
+                            , /ctx=
+                                ( /llvmprogram=/LLVM/LlvmProgram
+                                    ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
+                                    , /functions=/Data/List/Cons[ /T=∀/Data/String ]
+                                        ( /head=∀/Data/String
+                                        , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                        )
+                                    )
+                                )
+                            ) =
+                            ( /Data/bindap
+                                ( EAppArg
+                                    { eaaArg = Value /m -> /Context
+                                        [ /V=() ]
+                                        ( /value=()
+                                        , /ctx=
+                                            ( /llvmprogram=/LLVM/LlvmProgram
+                                                ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
+                                                , /functions=/Data/List/Cons[ /T=∀/Data/String ]
+                                                    ( /head=∀/Data/String
+                                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                                    )
+                                                )
+                                            )
+                                        ) =
+                                        ( /ContextIn
+                                            ( EAppArg
+                                                { eaaArg = Value /value -> /LLVM/llvmAddFunction( /text=∀/Data/String ) = /LLVM/llvmAddFunction
+                                                    ( EAppArg
+                                                        { eaaArg = Value /text -> ∀/Data/String =
+                                                            ( /LLVM/llvmDefine
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /ret ->
+                                                                        ( /Data/String/Text
+                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                        ) = "i32"
+                                                                    }
+                                                                )
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /name ->
+                                                                        ( /Data/String/Text
+                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                        ) = "main"
+                                                                    }
+                                                                )
+                                                                ( EAppArg
+                                                                    { eaaArg = Value /body -> /Data/List/Cons
+                                                                        [ /T=( /Data/String/Text.. + /Catln/CStr ) ]
+                                                                        ( /head=( /Data/String/Text.. + /Catln/CStr )
+                                                                        , /tail=/Data/List/Cons
+                                                                            [ /T=( /Data/String/Text.. + /Catln/CStr ) ]
+                                                                            ( /head=( /Data/String/Text.. + /Catln/CStr )
+                                                                            , /tail=/Data/List/Cons
+                                                                                [ /T=( /Data/String/Text.. + /Catln/CStr ) ]
+                                                                                ( /head=( /Data/String/Text.. + /Catln/CStr )
+                                                                                , /tail=/Data/List/Nil
+                                                                                )
+                                                                            )
+                                                                        ) = /Data/List/Cons
+                                                                        ( EAppArg
+                                                                            { eaaArg = Value /head ->
+                                                                                ( /Data/String/Text
+                                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                                ) = "entry:"
+                                                                            }
+                                                                        )
+                                                                        ( EAppArg
+                                                                            { eaaArg = Value /tail -> /Data/List/Cons
+                                                                                [ /T=( /Data/String/Text.. + /Catln/CStr ) ]
+                                                                                ( /head=( /Data/String/Text.. + /Catln/CStr )
+                                                                                , /tail=/Data/List/Cons
+                                                                                    [ /T=( /Data/String/Text.. + /Catln/CStr ) ]
+                                                                                    ( /head=( /Data/String/Text.. + /Catln/CStr )
+                                                                                    , /tail=/Data/List/Nil
+                                                                                    )
+                                                                                ) = /Data/List/Cons
+                                                                                ( EAppArg
+                                                                                    { eaaArg = Value /head ->
+                                                                                        ( /Data/String/Text
+                                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                                        ) = "  ; TODO unsupported: a function with no definition"
+                                                                                    }
+                                                                                )
+                                                                                ( EAppArg
+                                                                                    { eaaArg = Value /tail -> /Data/List/Cons
+                                                                                        [ /T=( /Data/String/Text.. + /Catln/CStr ) ]
+                                                                                        ( /head=( /Data/String/Text.. + /Catln/CStr )
+                                                                                        , /tail=/Data/List/Nil
+                                                                                        ) = /Data/List/Cons
+                                                                                        ( EAppArg
+                                                                                            { eaaArg = Value /head ->
+                                                                                                ( /Data/String/Text
+                                                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                                                                                                ) = "  ret i32 0"
+                                                                                            }
+                                                                                        )
+                                                                                        ( EAppArg { eaaArg = Value /tail -> /Data/List/Nil = Value /Data/List/Nil } )
+                                                                                    }
+                                                                                )
+                                                                            }
+                                                                        )
+                                                                    }
+                                                                ) ↦ ∀/Data/String
+                                                            )
+                                                        }
+                                                    )
+                                                }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /ctx ->
+                                                    ( /llvmprogram=/LLVM/LlvmProgram
+                                                        ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
+                                                        , /functions=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                                        )
+                                                    ) = /
+                                                    ( EAppArg
+                                                        { eaaArg = Value /llvmprogram -> TVArg /llvmprogram = ( Value /llvmprogram ↦ TVArg /llvmprogram ) }
+                                                    )
+                                                }
+                                            ) ↦ /Context
+                                            [ /V=() ]
+                                            ( /value=()
+                                            , /ctx=
+                                                ( /llvmprogram=/LLVM/LlvmProgram
+                                                    ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
+                                                    , /functions=/Data/List/Cons[ /T=∀/Data/String ]
+                                                        ( /head=∀/Data/String
+                                                        , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                                        )
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    }
+                                )
+                                ( EAppArg
+                                    { eaaArg = /fn
+                                        ( EAppArg
+                                            { eaaArg = Value /v -> /Context
+                                                [ /V=() ]
+                                                ( /value=()
+                                                , /ctx=
+                                                    ( /llvmprogram=/LLVM/LlvmProgram
+                                                        ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
+                                                        , /functions=/Data/List/Cons[ /T=∀/Data/String ]
+                                                            ( /head=∀/Data/String
+                                                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                                            )
+                                                        )
+                                                    )
+                                                )
+                                            }
+                                        ) -> /Context
+                                        ( /value=()
+                                        , /ctx=
+                                            ( /llvmprogram=/LLVM/LlvmProgram
+                                                ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
+                                                , /functions=/Data/List/Cons[ /T=∀/Data/String ]
+                                                    ( /head=∀/Data/String
+                                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                                    )
+                                                )
+                                            )
+                                        ) =
+                                        ( /LLVM/llvmFunction.$35f81d
+                                            ( EAppArg
+                                                { eaaArg = Value /$35f81d-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                            )
+                                            ( EAppArg
+                                                { eaaArg = Value /$35f81d-states ->
+                                                    ( /llvmprogram=/LLVM/LlvmProgram
+                                                        ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
+                                                        , /functions=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                                        )
+                                                    ) = /
+                                                    ( EAppArg
+                                                        { eaaArg = Value /llvmprogram -> TVArg /llvmprogram = ( Value /llvmprogram ↦ TVArg /llvmprogram ) }
+                                                    )
+                                                }
+                                            ) ↦ /Context
+                                            ( /value=()
+                                            , /ctx=
+                                                ( /llvmprogram=/LLVM/LlvmProgram
+                                                    ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
+                                                    , /functions=/Data/List/Cons[ /T=∀/Data/String ]
+                                                        ( /head=∀/Data/String
+                                                        , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                                        )
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    }
+                                ) ↦ /Context
+                                ( /value=()
+                                , /ctx=
+                                    ( /llvmprogram=/LLVM/LlvmProgram
+                                        ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
+                                        , /functions=/Data/List/Cons[ /T=∀/Data/String ]
+                                            ( /head=∀/Data/String
+                                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                            )
                                         )
                                     )
                                 )
@@ -1213,6 +1819,93 @@ Prgm
                     }
                 )
             ,
+                ( "/LLVM/llvmFunction.$35f81d"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmFunction.$35f81d
+                            ( EAppArg
+                                { eaaArg = Value /$35f81d-arg -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /ctx=
+                                        ( /llvmprogram=/LLVM/LlvmProgram
+                                            ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
+                                            , /functions=/Data/List/Cons[ /T=∀/Data/String ]
+                                                ( /head=∀/Data/String
+                                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                                )
+                                            )
+                                        )
+                                    ) = /Context
+                                    ( EAppArg
+                                        { eaaArg = Value /value -> () }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /ctx@Value /$35f81d-ctx ->
+                                            ( /llvmprogram=/LLVM/LlvmProgram
+                                                ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
+                                                , /functions=/Data/List/Cons[ /T=∀/Data/String ]
+                                                    ( /head=∀/Data/String
+                                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                                    )
+                                                )
+                                            )
+                                        }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /$35f81d-states ->
+                                    ( /llvmprogram=/LLVM/LlvmProgram
+                                        ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
+                                        , /functions=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                        )
+                                    )
+                                }
+                            ) -> /Context
+                            ( /value=()
+                            , /ctx=
+                                ( /llvmprogram=/LLVM/LlvmProgram
+                                    ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
+                                    , /functions=/Data/List/Cons[ /T=∀/Data/String ]
+                                        ( /head=∀/Data/String
+                                        , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                        )
+                                    )
+                                )
+                            ) = /Context
+                            ( EAppArg
+                                { eaaArg = Value /value -> () = Value / }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /ctx ->
+                                    ( /llvmprogram=/LLVM/LlvmProgram
+                                        ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
+                                        , /functions=/Data/List/Cons[ /T=∀/Data/String ]
+                                            ( /head=∀/Data/String
+                                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                            )
+                                        )
+                                    ) = /
+                                    ( EAppSpread
+                                        { easExpr =
+                                            ( Value /$35f81d-states ↦ TopType )
+                                        }
+                                    )
+                                    ( EAppSpread
+                                        { easExpr =
+                                            ( Value /$35f81d-ctx ↦ TopType )
+                                        }
+                                    )
+                                }
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/LLVM/LlvmTodo"
                 , ObjectMapItem
                     { omiDecls =
@@ -1222,6 +1915,101 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/LLVM/llvmFunction.$5991a2.$1de666.$c99305.$bdd31e.$c926c5"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmFunction.$5991a2.$1de666.$c99305.$bdd31e.$c926c5
+                            ( EAppArg
+                                { eaaArg = Value /$c926c5-arg -> /Context
+                                    [ /V=() ]
+                                    ( /value=()
+                                    , /ctx=
+                                        ( /llvmprogram=/LLVM/LlvmProgram
+                                            ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
+                                            , /functions=/Data/List/Cons[ /T=∀/Data/String ]
+                                                ( /head=∀/Data/String
+                                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                                )
+                                            )
+                                        )
+                                    ) = /Context
+                                    ( EAppArg
+                                        { eaaArg = Value /value -> () }
+                                    )
+                                    ( EAppArg
+                                        { eaaArg = Value /ctx@Value /$c926c5-ctx ->
+                                            ( /llvmprogram=/LLVM/LlvmProgram
+                                                ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
+                                                , /functions=/Data/List/Cons[ /T=∀/Data/String ]
+                                                    ( /head=∀/Data/String
+                                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                                    )
+                                                )
+                                            )
+                                        }
+                                    )
+                                }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /$c926c5-states ->
+                                    ( /llvmprogram=/LLVM/LlvmProgram
+                                        ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
+                                        , /functions=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                        )
+                                    , /llvmfn=/LLVM/LlvmFn
+                                        ( /lines=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                        , /next=/Data/Primitive/Integer
+                                        )
+                                    )
+                                }
+                            ) -> /Context
+                            ( /value=()
+                            , /ctx=
+                                ( /llvmprogram=/LLVM/LlvmProgram
+                                    ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
+                                    , /functions=/Data/List/Cons[ /T=∀/Data/String ]
+                                        ( /head=∀/Data/String
+                                        , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                        )
+                                    )
+                                , /llvmfn=/LLVM/LlvmFn
+                                    ( /lines=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                    , /next=/Data/Primitive/Integer
+                                    )
+                                )
+                            ) = /Context
+                            ( EAppArg
+                                { eaaArg = Value /value -> () = Value / }
+                            )
+                            ( EAppArg
+                                { eaaArg = Value /ctx ->
+                                    ( /llvmprogram=/LLVM/LlvmProgram
+                                        ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
+                                        , /functions=/Data/List/Cons[ /T=∀/Data/String ]
+                                            ( /head=∀/Data/String
+                                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                            )
+                                        )
+                                    , /llvmfn=/LLVM/LlvmFn
+                                        ( /lines=∀/Data/List/ConsList[ /T=∀/Data/String ]
+                                        , /next=/Data/Primitive/Integer
+                                        )
+                                    ) = /
+                                    ( EAppSpread
+                                        { easExpr = ( Value /$c926c5-states ↦ TopType ) }
+                                    )
+                                    ( EAppSpread
+                                        { easExpr = ( Value /$c926c5-ctx ↦ TopType ) }
+                                    )
+                                }
+                            )
+                        ]
                     }
                 )
             ,
@@ -1583,13 +2371,13 @@ Prgm
                     }
                 )
             ,
-                ( "/LLVM/llvmFunction.$5991a2.$a79854.$c99305"
+                ( "/LLVM/llvmFunction.$5991a2.$1de666.$c99305"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /LLVM/llvmFunction.$5991a2.$a79854.$c99305
+                        [ /LLVM/llvmFunction.$5991a2.$1de666.$c99305
                             ( EAppArg
                                 { eaaArg = Value /$c99305-arg -> /Context
                                     [ /V=() ]
@@ -1627,13 +2415,7 @@ Prgm
                                         ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
                                         , /functions=∀/Data/List/ConsList[ /T=∀/Data/String ]
                                         )
-                                    , /llvmfn=/LLVM/LlvmFn
-                                        ( /lines=/Data/List/Cons[ /T=∀/Data/String ]
-                                            ( /head=∀/Data/String
-                                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                            )
-                                        , /next=/Data/Primitive/Integer
-                                        )
+                                    , /llvmfn=/LLVM/LlvmFn..
                                     )
                                 }
                             ) -> /Context
@@ -1763,12 +2545,12 @@ Prgm
                                                 )
                                             )
                                         ) =
-                                        ( /LLVM/llvmFunction.$5991a2.$a79854.$c99305.$47156d
+                                        ( /LLVM/llvmFunction.$5991a2.$1de666.$c99305.$bdd31e
                                             ( EAppArg
-                                                { eaaArg = Value /$47156d-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
+                                                { eaaArg = Value /$bdd31e-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
                                             )
                                             ( EAppArg
-                                                { eaaArg = Value /$47156d-states ->
+                                                { eaaArg = Value /$bdd31e-states ->
                                                     ( /llvmprogram=/LLVM/LlvmProgram
                                                         ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
                                                         , /functions=∀/Data/List/ConsList[ /T=∀/Data/String ]
@@ -1890,46 +2672,26 @@ Prgm
                     }
                 )
             ,
-                ( "/LLVM/llvmFunction.$5991a2.$a79854"
+                ( "/LLVM/llvmFunction.$5991a2.$1de666"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /LLVM/llvmFunction.$5991a2.$a79854
+                        [ /LLVM/llvmFunction.$5991a2.$1de666
                             ( EAppArg
-                                { eaaArg = Value /$a79854-arg -> /Context
-                                    [ /V=() ]
-                                    ( /value=()
-                                    , /ctx=
-                                        ( /llvmfn=/LLVM/LlvmFn
-                                            ( /lines=/Data/List/Cons[ /T=∀/Data/String ]
-                                                ( /head=∀/Data/String
-                                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                                )
-                                            , /next=/Data/Primitive/Integer
-                                            )
-                                        )
+                                { eaaArg = Value /$1de666-arg -> /Context[ /V=/LLVM/Operand.. ]
+                                    ( /value=/LLVM/Operand..
+                                    , /ctx=( /llvmfn=/LLVM/LlvmFn.. )
                                     ) = /Context
+                                    ( EAppArg { eaaArg = Value /value -> /LLVM/Operand.. } )
                                     ( EAppArg
-                                        { eaaArg = Value /value -> () }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /ctx@Value /$a79854-ctx ->
-                                            ( /llvmfn=/LLVM/LlvmFn
-                                                ( /lines=/Data/List/Cons[ /T=∀/Data/String ]
-                                                    ( /head=∀/Data/String
-                                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                                    )
-                                                , /next=/Data/Primitive/Integer
-                                                )
-                                            )
-                                        }
+                                        { eaaArg = Value /ctx@Value /$1de666-ctx -> ( /llvmfn=/LLVM/LlvmFn.. ) }
                                     )
                                 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /$a79854-states ->
+                                { eaaArg = Value /$1de666-states ->
                                     ( /llvmprogram=/LLVM/LlvmProgram
                                         ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
                                         , /functions=∀/Data/List/ConsList[ /T=∀/Data/String ]
@@ -1991,18 +2753,19 @@ Prgm
                                                         , /functions=∀/Data/List/ConsList[ /T=∀/Data/String ]
                                                         )
                                                     , /llvmfn=/LLVM/LlvmFn
-                                                        ( /lines=/Data/List/Cons[ /T=∀/Data/String ]
-                                                            ( /head=∀/Data/String
-                                                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                                            )
+                                                        ( /lines=∀/Data/List/ConsList[ /T=∀/Data/String ]
                                                         , /next=/Data/Primitive/Integer
                                                         )
                                                     ) = /
                                                     ( EAppSpread
-                                                        { easExpr = ( Value /$a79854-states ↦ TopType ) }
+                                                        { easExpr =
+                                                            ( Value /$1de666-states ↦ TopType )
+                                                        }
                                                     )
                                                     ( EAppSpread
-                                                        { easExpr = ( Value /$a79854-ctx ↦ TopType ) }
+                                                        { easExpr =
+                                                            ( Value /$1de666-ctx ↦ TopType )
+                                                        }
                                                     )
                                                 }
                                             ) ↦ /Context
@@ -2054,7 +2817,7 @@ Prgm
                                                 )
                                             )
                                         ) =
-                                        ( /LLVM/llvmFunction.$5991a2.$a79854.$c99305
+                                        ( /LLVM/llvmFunction.$5991a2.$1de666.$c99305
                                             ( EAppArg
                                                 { eaaArg = Value /$c99305-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
                                             )
@@ -2064,291 +2827,16 @@ Prgm
                                                         ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
                                                         , /functions=∀/Data/List/ConsList[ /T=∀/Data/String ]
                                                         )
-                                                    , /llvmfn=/LLVM/LlvmFn
-                                                        ( /lines=/Data/List/Cons[ /T=∀/Data/String ]
-                                                            ( /head=∀/Data/String
-                                                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                                            )
-                                                        , /next=/Data/Primitive/Integer
-                                                        )
-                                                    ) = /
-                                                    ( EAppSpread
-                                                        { easExpr = ( Value /$a79854-states ↦ TopType ) }
-                                                    )
-                                                    ( EAppSpread
-                                                        { easExpr = ( Value /$a79854-ctx ↦ TopType ) }
-                                                    )
-                                                }
-                                            ) ↦ /Context
-                                            ( /value=()
-                                            , /ctx=
-                                                ( /llvmprogram=/LLVM/LlvmProgram
-                                                    ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
-                                                    , /functions=/Data/List/Cons[ /T=∀/Data/String ]
-                                                        ( /head=∀/Data/String
-                                                        , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                                        )
-                                                    )
-                                                , /llvmfn=/LLVM/LlvmFn
-                                                    ( /lines=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                                    , /next=/Data/Primitive/Integer
-                                                    )
-                                                )
-                                            )
-                                        )
-                                    }
-                                ) ↦ /Context
-                                ( /value=()
-                                , /ctx=
-                                    ( /llvmprogram=/LLVM/LlvmProgram
-                                        ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
-                                        , /functions=/Data/List/Cons[ /T=∀/Data/String ]
-                                            ( /head=∀/Data/String
-                                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                            )
-                                        )
-                                    , /llvmfn=/LLVM/LlvmFn
-                                        ( /lines=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                        , /next=/Data/Primitive/Integer
-                                        )
-                                    )
-                                )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/LLVM/llvmFunction.$5991a2.$a79854.$c99305.$47156d"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /LLVM/llvmFunction.$5991a2.$a79854.$c99305.$47156d
-                            ( EAppArg
-                                { eaaArg = Value /$47156d-arg -> /Context
-                                    [ /V=
-                                        ( /Data/List/Nil + /Data/List/Cons[ /T=∀/Data/String ]
-                                            ( /head=∀/Data/String
-                                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                            )
-                                        )
-                                    ]
-                                    ( /value=
-                                        ( /Data/List/Nil + /Data/List/Cons[ /T=∀/Data/String ]
-                                            ( /head=∀/Data/String
-                                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                            )
-                                        )
-                                    , /ctx=
-                                        ( /llvmfn=/LLVM/LlvmFn
-                                            ( /lines=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                            , /next=/Data/Primitive/Integer
-                                            )
-                                        )
-                                    ) = /Context
-                                    ( EAppArg
-                                        { eaaArg = Value /value@Value /body ->
-                                            ( /Data/List/Nil + /Data/List/Cons[ /T=∀/Data/String ]
-                                                ( /head=∀/Data/String
-                                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                                )
-                                            )
-                                        }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /ctx@Value /$47156d-ctx ->
-                                            ( /llvmfn=/LLVM/LlvmFn
-                                                ( /lines=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                                , /next=/Data/Primitive/Integer
-                                                )
-                                            )
-                                        }
-                                    )
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /$47156d-states ->
-                                    ( /llvmprogram=/LLVM/LlvmProgram
-                                        ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
-                                        , /functions=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                        )
-                                    , /llvmfn=/LLVM/LlvmFn
-                                        ( /lines=/Data/List/Cons[ /T=∀/Data/String ]
-                                            ( /head=∀/Data/String
-                                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                            )
-                                        , /next=/Data/Primitive/Integer
-                                        )
-                                    )
-                                }
-                            ) -> /Context
-                            ( /value=()
-                            , /ctx=
-                                ( /llvmprogram=/LLVM/LlvmProgram
-                                    ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
-                                    , /functions=/Data/List/Cons[ /T=∀/Data/String ]
-                                        ( /head=∀/Data/String
-                                        , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                        )
-                                    )
-                                , /llvmfn=/LLVM/LlvmFn
-                                    ( /lines=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                    , /next=/Data/Primitive/Integer
-                                    )
-                                )
-                            ) =
-                            ( /Data/bindap
-                                ( EAppArg
-                                    { eaaArg = Value /m -> /Context
-                                        [ /V=() ]
-                                        ( /value=()
-                                        , /ctx=
-                                            ( /llvmprogram=/LLVM/LlvmProgram
-                                                ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
-                                                , /functions=/Data/List/Cons[ /T=∀/Data/String ]
-                                                    ( /head=∀/Data/String
-                                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                                    )
-                                                )
-                                            )
-                                        ) =
-                                        ( /ContextIn
-                                            ( EAppArg
-                                                { eaaArg = Value /value -> /LLVM/llvmAddFunction( /text=∀/Data/String ) = /LLVM/llvmAddFunction
-                                                    ( EAppArg
-                                                        { eaaArg = Value /text -> ∀/Data/String =
-                                                            ( /LLVM/llvmDefine
-                                                                ( EAppArg
-                                                                    { eaaArg = Value /ret ->
-                                                                        ( /Data/String/Text
-                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
-                                                                        ) = "i32"
-                                                                    }
-                                                                )
-                                                                ( EAppArg
-                                                                    { eaaArg = Value /name ->
-                                                                        ( /Data/String/Text
-                                                                            ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
-                                                                        ) = "main"
-                                                                    }
-                                                                )
-                                                                ( EAppArg
-                                                                    { eaaArg = Value /body -> /Data/List/Cons[ /T=∀/Data/String ]
-                                                                        ( /head=( /Data/String/Text.. + /Catln/CStr )
-                                                                        , /tail=∀/Data/List/ConsList[ /T=$_/T ]
-                                                                        ) = /Data/List/Cons
-                                                                        ( EAppArg
-                                                                            { eaaArg = Value /head ->
-                                                                                ( /Data/String/Text
-                                                                                    ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
-                                                                                ) = "entry:"
-                                                                            }
-                                                                        )
-                                                                        ( EAppArg
-                                                                            { eaaArg = Value /tail -> TVArg /body = ( Value /body ↦ TVArg /body ) }
-                                                                        )
-                                                                    }
-                                                                ) ↦ ∀/Data/String
-                                                            )
-                                                        }
-                                                    )
-                                                }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /ctx ->
-                                                    ( /llvmprogram=/LLVM/LlvmProgram
-                                                        ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
-                                                        , /functions=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                                        )
-                                                    , /llvmfn=/LLVM/LlvmFn
-                                                        ( /lines=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                                        , /next=/Data/Primitive/Integer
-                                                        )
+                                                    , /llvmfn=/LLVM/LlvmFn..
                                                     ) = /
                                                     ( EAppSpread
                                                         { easExpr =
-                                                            ( Value /$47156d-states ↦ TopType )
+                                                            ( Value /$1de666-states ↦ TopType )
                                                         }
                                                     )
                                                     ( EAppSpread
                                                         { easExpr =
-                                                            ( Value /$47156d-ctx ↦ TopType )
-                                                        }
-                                                    )
-                                                }
-                                            ) ↦ /Context
-                                            [ /V=() ]
-                                            ( /value=()
-                                            , /ctx=
-                                                ( /llvmprogram=/LLVM/LlvmProgram
-                                                    ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
-                                                    , /functions=/Data/List/Cons[ /T=∀/Data/String ]
-                                                        ( /head=∀/Data/String
-                                                        , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                                        )
-                                                    )
-                                                )
-                                            )
-                                        )
-                                    }
-                                )
-                                ( EAppArg
-                                    { eaaArg = /fn
-                                        ( EAppArg
-                                            { eaaArg = Value /v -> /Context
-                                                [ /V=() ]
-                                                ( /value=()
-                                                , /ctx=
-                                                    ( /llvmprogram=/LLVM/LlvmProgram
-                                                        ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
-                                                        , /functions=/Data/List/Cons[ /T=∀/Data/String ]
-                                                            ( /head=∀/Data/String
-                                                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                                            )
-                                                        )
-                                                    )
-                                                )
-                                            }
-                                        ) -> /Context
-                                        ( /value=()
-                                        , /ctx=
-                                            ( /llvmprogram=/LLVM/LlvmProgram
-                                                ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
-                                                , /functions=/Data/List/Cons[ /T=∀/Data/String ]
-                                                    ( /head=∀/Data/String
-                                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                                    )
-                                                )
-                                            , /llvmfn=/LLVM/LlvmFn
-                                                ( /lines=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                                , /next=/Data/Primitive/Integer
-                                                )
-                                            )
-                                        ) =
-                                        ( /LLVM/llvmFunction.$5991a2.$a79854.$c99305.$47156d.$24e069
-                                            ( EAppArg
-                                                { eaaArg = Value /$24e069-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                            )
-                                            ( EAppArg
-                                                { eaaArg = Value /$24e069-states ->
-                                                    ( /llvmprogram=/LLVM/LlvmProgram
-                                                        ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
-                                                        , /functions=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                                        )
-                                                    , /llvmfn=/LLVM/LlvmFn
-                                                        ( /lines=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                                        , /next=/Data/Primitive/Integer
-                                                        )
-                                                    ) = /
-                                                    ( EAppSpread
-                                                        { easExpr =
-                                                            ( Value /$47156d-states ↦ TopType )
-                                                        }
-                                                    )
-                                                    ( EAppSpread
-                                                        { easExpr =
-                                                            ( Value /$47156d-ctx ↦ TopType )
+                                                            ( Value /$1de666-ctx ↦ TopType )
                                                         }
                                                     )
                                                 }
@@ -2386,105 +2874,6 @@ Prgm
                                         )
                                     )
                                 )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/LLVM/llvmFunction.$5991a2.$a79854.$c99305.$47156d.$24e069"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /LLVM/llvmFunction.$5991a2.$a79854.$c99305.$47156d.$24e069
-                            ( EAppArg
-                                { eaaArg = Value /$24e069-arg -> /Context
-                                    [ /V=() ]
-                                    ( /value=()
-                                    , /ctx=
-                                        ( /llvmprogram=/LLVM/LlvmProgram
-                                            ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
-                                            , /functions=/Data/List/Cons[ /T=∀/Data/String ]
-                                                ( /head=∀/Data/String
-                                                , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                                )
-                                            )
-                                        )
-                                    ) = /Context
-                                    ( EAppArg
-                                        { eaaArg = Value /value -> () }
-                                    )
-                                    ( EAppArg
-                                        { eaaArg = Value /ctx@Value /$24e069-ctx ->
-                                            ( /llvmprogram=/LLVM/LlvmProgram
-                                                ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
-                                                , /functions=/Data/List/Cons[ /T=∀/Data/String ]
-                                                    ( /head=∀/Data/String
-                                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                                    )
-                                                )
-                                            )
-                                        }
-                                    )
-                                }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /$24e069-states ->
-                                    ( /llvmprogram=/LLVM/LlvmProgram
-                                        ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
-                                        , /functions=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                        )
-                                    , /llvmfn=/LLVM/LlvmFn
-                                        ( /lines=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                        , /next=/Data/Primitive/Integer
-                                        )
-                                    )
-                                }
-                            ) -> /Context
-                            ( /value=()
-                            , /ctx=
-                                ( /llvmprogram=/LLVM/LlvmProgram
-                                    ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
-                                    , /functions=/Data/List/Cons[ /T=∀/Data/String ]
-                                        ( /head=∀/Data/String
-                                        , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                        )
-                                    )
-                                , /llvmfn=/LLVM/LlvmFn
-                                    ( /lines=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                    , /next=/Data/Primitive/Integer
-                                    )
-                                )
-                            ) = /Context
-                            ( EAppArg
-                                { eaaArg = Value /value -> () = Value / }
-                            )
-                            ( EAppArg
-                                { eaaArg = Value /ctx ->
-                                    ( /llvmprogram=/LLVM/LlvmProgram
-                                        ( /todo=∀/Data/List/ConsList[ /T=/LLVM/LlvmTodo.. ]
-                                        , /functions=/Data/List/Cons[ /T=∀/Data/String ]
-                                            ( /head=∀/Data/String
-                                            , /tail=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                            )
-                                        )
-                                    , /llvmfn=/LLVM/LlvmFn
-                                        ( /lines=∀/Data/List/ConsList[ /T=∀/Data/String ]
-                                        , /next=/Data/Primitive/Integer
-                                        )
-                                    ) = /
-                                    ( EAppSpread
-                                        { easExpr =
-                                            ( Value /$24e069-states ↦ TopType )
-                                        }
-                                    )
-                                    ( EAppSpread
-                                        { easExpr =
-                                            ( Value /$24e069-ctx ↦ TopType )
-                                        }
-                                    )
-                                }
                             )
                         ]
                     }
@@ -2494,6 +2883,8 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -2533,6 +2924,14 @@ Prgm
                   A program is compiled in a [Context] holding an [LlvmProgram]: what has been compiled so far,
                   and what is still to be compiled. Each function is compiled in turn, in a [Context] holding an
                   [LlvmFn] as well: the lines of that one function."
+                }
+            )
+        , /Catln/#md
+            ( EAppArg
+                { eaaArg = Value /text ->
+                    ( /Data/String/Text
+                        ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
+                    ) = "## Compiling an expression"
                 }
             )
         , /Catln/#md

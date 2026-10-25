@@ -2,6 +2,16 @@ Prgm
     { prgmObjMap = ObjectMapWith
         { omItems = fromList
             [
+                ( "/LLVM/Operand"
+                , ObjectMapItem
+                    { omiDecls =
+                        [ /LLVM/Operand( Value /type -> ∀/Data/String )( Value /repr -> ∀/Data/String ) ]
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/LLVM/llvmFunction.$5991a2"
                 , ObjectMapItem
                     { omiDecls = []
@@ -9,23 +19,23 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /LLVM/llvmFunction.$5991a2
+                            ( /body( Value /..ps ) )
                             ( Value $5991a2-arg= /Context( Value value )
                                 ( Value ctx@Value $5991a2-ctx )
                             )
                             ( Value $5991a2-states )= /Data/bindap
                             ( Value m= /ContextIn
-                                ( Value value= llvmEmit
-                                    ( Value line= CStr
-                                        { csValue = "  ; TODO unsupported: the body of the function" }
-                                    )
+                                ( Value value= llvmOperand
+                                    ( f( Value ..ps )= body( Value ..ps= Value ..ps ) )
                                 )
                                 ( Value ctx= /
                                     ( ..Value $5991a2-states )
                                     ( ..Value $5991a2-ctx )
                                 )
                             )
-                            ( fn( Value v )= /LLVM/llvmFunction.$5991a2.$a79854( Value $a79854-arg= Value v )
-                                ( Value $a79854-states= /
+                            ( fn( Value v )= /LLVM/llvmFunction.$5991a2.$1de666
+                                ( Value $1de666-arg= Value v )
+                                ( Value $1de666-states= /
                                     ( ..Value $5991a2-states )
                                     ( ..Value $5991a2-ctx )
                                 )
@@ -95,6 +105,39 @@ Prgm
                     }
                 )
             ,
+                ( "/LLVM/llvmFunction.$5991a2.$1de666.$c99305.$bdd31e"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmFunction.$5991a2.$1de666.$c99305.$bdd31e
+                            ( Value $bdd31e-arg= /Context( Value value@Value bodyLines )( Value ctx@Value $bdd31e-ctx ) )( Value $bdd31e-states )= /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= llvmAddFunction
+                                    ( Value text= llvmDefine
+                                        ( Value ret= CStr
+                                            { csValue = "i32" }
+                                        )
+                                        ( Value name= CStr
+                                            { csValue = "main" }
+                                        )
+                                        ( Value body= /Data/List/Cons
+                                            ( Value head= CStr
+                                                { csValue = "entry:" }
+                                            )( Value tail= Value bodyLines )
+                                        )
+                                    )
+                                )
+                                ( Value ctx= /( ..Value $bdd31e-states )( ..Value $bdd31e-ctx ) )
+                            )
+                            ( fn( Value v )= /LLVM/llvmFunction.$5991a2.$1de666.$c99305.$bdd31e.$c926c5( Value $c926c5-arg= Value v )
+                                ( Value $c926c5-states= /( ..Value $bdd31e-states )( ..Value $bdd31e-ctx ) )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/ContextIn"
                 , ObjectMapItem
                     { omiDecls =
@@ -115,6 +158,17 @@ Prgm
                             ( /value=()
                             , /ctx=( /llvmprogram=/LLVM/LlvmProgram.. )..
                             )
+                        , /ContextIn
+                            ( Value /value= /LLVM/llvmOperand
+                                ( f( Value ..ps ) )
+                            )
+                            ( Value /ctx= /
+                                ( Value llvmfn= LlvmFn( Value next )( Value lines )@Value llvmfn )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=/LLVM/Operand..
+                            , /ctx=( /llvmfn=/LLVM/LlvmFn.. )
+                            )..
                         ]
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
@@ -160,7 +214,10 @@ Prgm
                             ( Value /ctx= /
                                 ( Value llvmprogram= LlvmProgram( Value todo )( Value functions )@Value llvmprogram )
                                 ( ..Hole TopType HoleActive { haName = Nothing } )
-                            ) -> /Context
+                            ) | /operator@->
+                            ( Value /l= fun( Value ..ps= Value ..ps ) )
+                            ( Value /r= Hole TopType HoleActive { haName = Nothing } )@Some
+                            ( Value value= Hole TopType HoleActive { haName = Nothing }@body( Value /..ps ) ) -> /Context
                             ( /value=()
                             , /ctx=( /llvmprogram=/LLVM/LlvmProgram.. )..
                             ) = /Data/bindap
@@ -177,8 +234,80 @@ Prgm
                                 ( Value ctx= /( Value llvmprogram= Value llvmprogram ) )
                             )
                             ( fn( Value v )= /LLVM/llvmFunction.$5991a2
+                                ( /body( Value /..ps )= /body( Value /..ps= Value /..ps ) )
                                 ( Value $5991a2-arg= Value v )
                                 ( Value $5991a2-states= /( Value llvmprogram= Value llvmprogram ) )
+                            )
+                        , /ContextIn
+                            ( Value /value= /LLVM/llvmFunction( Value fun ) )
+                            ( Value /ctx= /
+                                ( Value llvmprogram= LlvmProgram( Value todo )( Value functions )@Value llvmprogram )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) | /operator@->
+                            ( Value /l= fun( Value ..ps= Value ..ps ) )
+                            ( Value /r= Hole TopType HoleActive { haName = Nothing } )@Value Nothing -> /Context
+                            ( /value=()
+                            , /ctx=( /llvmprogram=/LLVM/LlvmProgram.. )..
+                            ) = /Data/bindap
+                            ( Value m= /ContextIn
+                                ( Value value= llvmAddFunction
+                                    ( Value text= llvmDefine
+                                        ( Value ret= CStr
+                                            { csValue = "i32" }
+                                        )
+                                        ( Value name= CStr
+                                            { csValue = "main" }
+                                        )
+                                        ( Value body= /Data/List/Cons
+                                            ( Value /head= CStr
+                                                { csValue = "entry:" }
+                                            )
+                                            ( Value /tail= /Data/List/Cons
+                                                ( Value /head= CStr
+                                                    { csValue = "  ; TODO unsupported: a function with no definition" }
+                                                )
+                                                ( Value /tail= /Data/List/Cons
+                                                    ( Value /head= CStr
+                                                        { csValue = "  ret i32 0" }
+                                                    )( Value /tail= Value /Data/List/Nil )
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                                ( Value ctx= /( Value llvmprogram= Value llvmprogram ) )
+                            )
+                            ( fn( Value v )= /LLVM/llvmFunction.$35f81d
+                                ( Value $35f81d-arg= Value v )
+                                ( Value $35f81d-states= /( Value llvmprogram= Value llvmprogram ) )
+                            )
+                        , /ContextIn
+                            ( Value /value= /LLVM/llvmOperand
+                                ( f( Value ..ps )= Hole TopType HoleActive { haName = Nothing }@other( Value ..ps ) )
+                            )
+                            ( Value /ctx= /
+                                ( Value llvmfn= LlvmFn( Value next )( Value lines )@Value llvmfn )
+                                ( ..Hole TopType HoleActive { haName = Nothing } )
+                            ) -> /Context
+                            ( /value=/LLVM/Operand..
+                            , /ctx=( /llvmfn=/LLVM/LlvmFn.. )
+                            ).. = /Context
+                            ( Value /value= Operand
+                                ( Value type= CStr
+                                    { csValue = "i32" }
+                                )
+                                ( Value repr= CStr
+                                    { csValue = "undef" }
+                                )
+                            )
+                            ( Value /ctx= /
+                                ( Value llvmfn= LlvmFn( Value next= Value next )
+                                    ( Value lines= /Data/List/Cons
+                                        ( Value head= CStr
+                                            { csValue = "  ; TODO unsupported: an expression no arm of llvmOperand compiles" }
+                                        )( Value tail= Value lines )
+                                    )
+                                )
                             )
                         , /ContextIn
                             ( Value /value= /LLVM/llvmAddFunction( Value text -> ∀/Data/String ) )
@@ -215,6 +344,25 @@ Prgm
                     }
                 )
             ,
+                ( "/LLVM/llvmFunction.$35f81d"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmFunction.$35f81d
+                            ( Value $35f81d-arg= /Context( Value value )
+                                ( Value ctx@Value $35f81d-ctx )
+                            )
+                            ( Value $35f81d-states )= /Context( Value value= Value / )
+                            ( Value ctx= /
+                                ( ..Value $35f81d-states )
+                                ( ..Value $35f81d-ctx )
+                            )
+                        ]
+                    }
+                )
+            ,
                 ( "/LLVM/LlvmTodo"
                 , ObjectMapItem
                     { omiDecls =
@@ -222,6 +370,19 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs = []
+                    }
+                )
+            ,
+                ( "/LLVM/llvmFunction.$5991a2.$1de666.$c99305.$bdd31e.$c926c5"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls = []
+                    , omiRefineDecls = []
+                    , omiDefs =
+                        [ /LLVM/llvmFunction.$5991a2.$1de666.$c99305.$bdd31e.$c926c5
+                            ( Value $c926c5-arg= /Context( Value value )( Value ctx@Value $c926c5-ctx ) )( Value $c926c5-states )= /Context( Value value= Value / )
+                            ( Value ctx= /( ..Value $c926c5-states )( ..Value $c926c5-ctx ) )
+                        ]
                     }
                 )
             ,
@@ -348,20 +509,19 @@ Prgm
                     }
                 )
             ,
-                ( "/LLVM/llvmFunction.$5991a2.$a79854.$c99305"
+                ( "/LLVM/llvmFunction.$5991a2.$1de666.$c99305"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /LLVM/llvmFunction.$5991a2.$a79854.$c99305
+                        [ /LLVM/llvmFunction.$5991a2.$1de666.$c99305
                             ( Value $c99305-arg= /Context( Value value )( Value ctx@Value $c99305-ctx ) )( Value $c99305-states )= /Data/bindap
                             ( Value m= /ContextIn( Value value= Value llvmLines )
                                 ( Value ctx= /( ..Value $c99305-states )( ..Value $c99305-ctx ) )
                             )
-                            ( fn( Value v )= /LLVM/llvmFunction.$5991a2.$a79854.$c99305.$47156d
-                                ( Value $47156d-arg= Value v )
-                                ( Value $47156d-states= /( ..Value $c99305-states )( ..Value $c99305-ctx ) )
+                            ( fn( Value v )= /LLVM/llvmFunction.$5991a2.$1de666.$c99305.$bdd31e( Value $bdd31e-arg= Value v )
+                                ( Value $bdd31e-states= /( ..Value $c99305-states )( ..Value $c99305-ctx ) )
                             )
                         ]
                     }
@@ -385,86 +545,33 @@ Prgm
                     }
                 )
             ,
-                ( "/LLVM/llvmFunction.$5991a2.$a79854"
+                ( "/LLVM/llvmFunction.$5991a2.$1de666"
                 , ObjectMapItem
                     { omiDecls = []
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /LLVM/llvmFunction.$5991a2.$a79854
-                            ( Value $a79854-arg= /Context( Value value )( Value ctx@Value $a79854-ctx ) )( Value $a79854-states )= /Data/bindap
+                        [ /LLVM/llvmFunction.$5991a2.$1de666
+                            ( Value $1de666-arg= /Context( Value value )
+                                ( Value ctx@Value $1de666-ctx )
+                            )
+                            ( Value $1de666-states )= /Data/bindap
                             ( Value m= /ContextIn
                                 ( Value value= llvmEmit
                                     ( Value line= CStr
                                         { csValue = "  ret i32 0" }
                                     )
                                 )
-                                ( Value ctx= /( ..Value $a79854-states )( ..Value $a79854-ctx ) )
-                            )
-                            ( fn( Value v )= /LLVM/llvmFunction.$5991a2.$a79854.$c99305( Value $c99305-arg= Value v )
-                                ( Value $c99305-states= /( ..Value $a79854-states )( ..Value $a79854-ctx ) )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/LLVM/llvmFunction.$5991a2.$a79854.$c99305.$47156d"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /LLVM/llvmFunction.$5991a2.$a79854.$c99305.$47156d
-                            ( Value $47156d-arg= /Context( Value value@Value body )
-                                ( Value ctx@Value $47156d-ctx )
-                            )
-                            ( Value $47156d-states )= /Data/bindap
-                            ( Value m= /ContextIn
-                                ( Value value= llvmAddFunction
-                                    ( Value text= llvmDefine
-                                        ( Value ret= CStr
-                                            { csValue = "i32" }
-                                        )
-                                        ( Value name= CStr
-                                            { csValue = "main" }
-                                        )
-                                        ( Value body= /Data/List/Cons
-                                            ( Value head= CStr
-                                                { csValue = "entry:" }
-                                            )( Value tail= Value body )
-                                        )
-                                    )
-                                )
                                 ( Value ctx= /
-                                    ( ..Value $47156d-states )
-                                    ( ..Value $47156d-ctx )
+                                    ( ..Value $1de666-states )
+                                    ( ..Value $1de666-ctx )
                                 )
                             )
-                            ( fn( Value v )= /LLVM/llvmFunction.$5991a2.$a79854.$c99305.$47156d.$24e069
-                                ( Value $24e069-arg= Value v )
-                                ( Value $24e069-states= /
-                                    ( ..Value $47156d-states )
-                                    ( ..Value $47156d-ctx )
+                            ( fn( Value v )= /LLVM/llvmFunction.$5991a2.$1de666.$c99305( Value $c99305-arg= Value v )
+                                ( Value $c99305-states= /
+                                    ( ..Value $1de666-states )
+                                    ( ..Value $1de666-ctx )
                                 )
-                            )
-                        ]
-                    }
-                )
-            ,
-                ( "/LLVM/llvmFunction.$5991a2.$a79854.$c99305.$47156d.$24e069"
-                , ObjectMapItem
-                    { omiDecls = []
-                    , omiRuntimeDecls = []
-                    , omiRefineDecls = []
-                    , omiDefs =
-                        [ /LLVM/llvmFunction.$5991a2.$a79854.$c99305.$47156d.$24e069
-                            ( Value $24e069-arg= /Context( Value value )
-                                ( Value ctx@Value $24e069-ctx )
-                            )
-                            ( Value $24e069-states )= /Context( Value value= Value / )
-                            ( Value ctx= /
-                                ( ..Value $24e069-states )
-                                ( ..Value $24e069-ctx )
                             )
                         ]
                     }
@@ -474,6 +581,8 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
+        , CGType
         , CGType
         , CGType
         , CGType
@@ -506,6 +615,10 @@ Prgm
                 A program is compiled in a [Context] holding an [LlvmProgram]: what has been compiled so far,
                 and what is still to be compiled. Each function is compiled in turn, in a [Context] holding an
                 [LlvmFn] as well: the lines of that one function." }
+            )
+        , /Catln/#md
+            ( Value /text= CStr
+                { csValue = "## Compiling an expression" }
             )
         , /Catln/#md
             ( Value /text= CStr

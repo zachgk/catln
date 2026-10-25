@@ -2,6 +2,6 @@
 
 define i32 @main() {
 entry:
-  ; TODO unsupported: the body of the function
+  ; TODO unsupported: an expression no arm of llvmOperand compiles
   ret i32 0
 }
