@@ -41,6 +41,18 @@ operatorEq = operatorName "=="
 spreadParamsPrefix :: String
 spreadParamsPrefix = ".."
 
+-- | The prefix of the parameter a parameter variable is kept as while it is desugared
+-- (@f(${p}, ..ps)@ is @f@ with the parameter @..\@p@ and the spread), before the body pattern it
+-- is written in reads it ('Syntax.Ct.Desugarf.Expr.desBodyPattern'). It begins with
+-- 'spreadParamsPrefix', so it is never taken for a parameter a function is given.
+paramVarPrefix :: String
+paramVarPrefix = spreadParamsPrefix ++ "@"
+
+-- | The name of the hole a parameter variable is written as in a body pattern: it matches a body
+-- that is one of the function's parameters, and binds the parameter's name.
+paramVarHole :: String
+paramVarHole = paramVarPrefix ++ "param"
+
 intPrim, floatPrim, truePrim, falsePrim, strPrim, charPrim, ioPrim :: String
 intPrim = "/Data/Primitive/Integer"
 floatPrim = "/Data/Primitive/Float"

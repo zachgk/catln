@@ -21,7 +21,7 @@ import           Text.Printf
 
 import           CtConstants
 import           Data.Char               (toLower)
-import           Data.List               (isPrefixOf)
+import           Data.List               (isPrefixOf, stripPrefix)
 import           Semantics
 import           Semantics.Prgm
 import           Semantics.Types
@@ -309,13 +309,38 @@ desArrowDefMatch obj defE defArgs pat0 = AliasExpr defE' (bindDefs (semiDesExpr 
 -- typed value with, so that it is told apart from a reference to something defined (@Leaf@) by its
 -- form rather than by the type the name is given, which inference changes. A sub-function variable
 -- (@a(x, params)@, 'bodyPatternSubFn') is the alias of an untyped hole for the same reason.
+--
+-- A parameter variable (@f(${p}, ..ps)= ${p}@) matches a body that is one of the function's
+-- parameters, and binds the parameter's name, as a 'String'. It is kept among the key's parameters
+-- until here ('rawSpreadParams'), and taken out of the key, which is the parameter as it is declared
+-- (@f(..ps)@); in the pattern it is a hole of its own ('paramVarHole').
 desBodyPattern :: PSObjArr -> PSObjArr
 desBodyPattern oa = case bodyPatternParts oa of
-  Just (obj, pat, arrM) -> let (obj', aliases) = unaliasKeys obj
-                               params = H.keysSet (exprAppliedArgsMap obj')
-                           in oa{oaObj=Just obj', oaArr=Just (Just (wrapSubFns params $ mapExprValues (patValue aliases) pat), arrM)}
+  Just (obj0, pat, arrM) -> let (obj1, paramVars) = takeParamVars obj0
+                                (obj', aliases) = unaliasKeys obj1
+                                params = H.keysSet (exprAppliedArgsMap obj')
+                            in oa{oaObj=Just obj', oaArr=Just (Just (markParamVars paramVars $ wrapSubFns params $ mapExprValues (patValue aliases) pat), arrM)}
   Nothing -> oa
   where
+    -- The parameter variables of the key, and the key without them.
+    takeParamVars (TupleApply m (bm, be) arg@(EAppArg ObjArr{oaObj=Just (Value _ n)}))
+      | Just v <- stripPrefix paramVarPrefix (nameStr (makeAbsoluteName n) `dropPrefix` "/") = let (be', vs) = takeParamVars be in (be', v : vs)
+      | otherwise = let (be', vs) = takeParamVars be in (TupleApply m (bm, be') arg, vs)
+    takeParamVars (TupleApply m (bm, be) arg) = let (be', vs) = takeParamVars be in (TupleApply m (bm, be') arg, vs)
+    takeParamVars e = (e, [])
+    dropPrefix s p = fromMaybe s (stripPrefix p s)
+    markParamVars [] e = e
+    markParamVars vs e = go e
+      where
+        go (AliasExpr (HoleExpr hm _) a@(Value _ n))
+          | nameStr n `elem` vs || nameStr (makeAbsoluteName n) `dropPrefix` "/" `elem` vs = AliasExpr (HoleExpr (mWithType (relTypeVal (mkName "/Data/String")) hm) (HoleActive (Just (mkName paramVarHole)))) a
+        go (AliasExpr b a) = AliasExpr (go b) a
+        go (EWhere m b c) = EWhere m (go b) c
+        go (TupleApply m (bm, be) arg) = TupleApply m (bm, go be) $ case arg of
+          EAppArg a    -> EAppArg a{oaArr=fmap (first (fmap go)) (oaArr a)}
+          EAppSpread a -> EAppSpread (go a)
+          a@EAppVar{}  -> a
+        go x = x
     -- A sub-function variable ('bodyPatternSubFn') names the part of the body it matches, so it is
     -- the alias of a hole there, as every pattern names a part it matches.
     wrapSubFns params e | bodyPatternSubFn params e = AliasExpr (HoleExpr (mWithType PTopType (getExprMeta e)) (HoleActive Nothing)) e
@@ -541,7 +566,14 @@ rawSpreadParams roa = if null names then roa else onObjArr roa
       _ -> e
     onArg (True, a@RawObjArr{roaObj=Just (RawValue m n), roaArr=Nothing})
       | n `elem` names = let n' = mkName (spreadParamsPrefix ++ nameStr n) in (False, a{roaObj=Just (RawValue (mWithType (relTypeVal n') m) n')})
+    -- A parameter variable among the parameters of a key (@f(${p}, ..ps)= ${p}@) is kept as one
+    -- parameter, named with 'paramVarPrefix', for the body pattern to read ('desBodyPattern').
+    onArg (False, a@RawObjArr{roaObj=Just (RawTupleApply km kb kargs), roaArr=Just _}) =
+      (False, onObjArr a{roaObj=Just (RawTupleApply km kb (map paramVarArg kargs))})
     onArg (isSpread, a) = (isSpread, onObjArr a)
+    paramVarArg (False, ka@RawObjArr{roaObj=Just (RawMacroValue m n), roaArr=Nothing}) =
+      let n' = mkName (paramVarPrefix ++ nameStr n) in (False, ka{roaObj=Just (RawValue (mWithType (relTypeVal n') m) n')})
+    paramVarArg ka = ka
 
 desObjArr :: Maybe PObjExpr -> PObjArr -> [ObjArr RawExpr ParseMetaDat]
 desObjArr mainObj (RawObjArr obj basis@TypeObj doc annots arr Nothing) = [ObjArr obj basis doc annots arr']

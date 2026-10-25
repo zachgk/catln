@@ -252,6 +252,12 @@ matchBody TBEnv{tbTypeEnv} patParams bodyParams0 pat0 body0 = (spreadBindings <>
     -- the parameters it stood for once an arm passed it on ('instantiate').
     bodyParams = filter (not . isSpreadParamsName . pkName) bodyParams0
     spreadBindings = mempty{bSpreads = H.fromList [ (makeAbsoluteName (pkName p), [ bp | bp <- bodyParams, isNothing (paramNamed patParams (pkName bp)) ]) | p <- patParams, isSpreadParamsName (pkName p) ]}
+    -- A parameter variable (@f(${p}, ..ps)= ${p}@): matching a body that is one of the function's
+    -- parameters, and binding the parameter's name.
+    go (AliasExpr (HoleExpr _ (HoleActive (Just h))) (Value _ n)) body
+      | nameStr h == paramVarHole = case body of
+          Value _ bn | Just bp <- paramNamed bodyParams bn -> let s = paramText bp in Just mempty{bLiterals=H.singleton (makeAbsoluteName n) (CExpr (emptyMetaT (constantType (CStr s))) (CStr s))}
+          _ -> Nothing
     -- A value variable (@${fun}@): the alias of an untyped hole, matching a name the body uses
     -- that is not one of its parameters.
     go (AliasExpr (HoleExpr hm _) (Value _ n)) body@(Value _ bn)
@@ -280,6 +286,10 @@ matchBody TBEnv{tbTypeEnv} patParams bodyParams0 pat0 body0 = (spreadBindings <>
         _                                                  -> Nothing
     go _ _ = Nothing
     keyed = H.fromList . map (\(k, v) -> (makeAbsoluteName (pkName k), v)) . H.toList
+    -- A parameter's name as it is written, without the path it is kept under.
+    paramText p = case npathPath (getPath (nameStr (pkName p))) of
+      [] -> nameStr (pkName p)
+      ps -> last ps
 
 -- | The arm with what its body patterns bound in place of their variables: a literal variable is the
 -- constant it matched, and an application of a sub-function variable is the part of the body it

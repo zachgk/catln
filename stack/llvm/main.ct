@@ -47,14 +47,14 @@ module(LLVM)
     # TODO The [LlvmFn] is replaced by the next function's rather than removed when the function is
     #   done. It needs a state added within a scope and removed when it ends, which is not supported
     #   yet (see [imperative] in @memory/main.ct@).
-    # TODO The function is named @main@ and returns an @i32@ whatever it is, as only [c] is compiled
-    #   for now, and its states (@io@) are not passed to it.
+    # TODO The function is named @main@ and takes no parameters, as only [c] is compiled for now,
+    #   and its states (@io@) are not passed to it.
   llvmFunction{LlvmProgram(todo, functions)}(fun) | (fun(..ps) @-> _)@Some(value@body) =
     _<- (){LlvmFn(next= 0, lines= /Data/List/Nil)}
-    _<- llvmOperand(f(..ps)= body(..ps))
-    _<- llvmEmit(line= "  ret i32 0")
+    retOp<- llvmOperand(f(..ps)= body(..ps))
+    _<- llvmEmit(line= llvmRet(o= retOp))
     bodyLines<- llvmLines
-    _<- llvmAddFunction(text= llvmDefine(ret= "i32", name= "main", body= /Data/List/Cons(head= "entry:", tail= bodyLines)))
+    _<- llvmAddFunction(text= llvmDefine(ret= llvmOperandType(o= retOp), name= "main", body= /Data/List/Cons(head= "entry:", tail= bodyLines)))
     ()
   llvmFunction{LlvmProgram(todo, functions)}(fun) | (fun(..ps) @-> _)@Nothing =
     _<- llvmAddFunction(text= llvmDefine(ret= "i32", name= "main", body= ["entry:", "  ; TODO unsupported: a function with no definition", "  ret i32 0"]))
@@ -66,14 +66,135 @@ module(LLVM)
       the instructions computing it in the function's lines, and answers with the [Operand] holding
       its value. Its arms are chosen by the body of [f]: each compiles one shape of expression, and
       compiles the parts of the shape by [llvmOperand] in turn.
-  llvmOperand{LlvmFn(next, lines)}(f(..ps)= other(..ps))= (Operand(type= "i32", repr= "undef")){LlvmFn(next= next, lines= /Data/List/Cons(head= "  ; TODO unsupported: an expression no arm of llvmOperand compiles", tail= lines))}
+  llvmOperand{LlvmFn(next, lines)}(f(..ps) -> _) else = (Operand(type= I32, repr= "undef")){LlvmFn(next= next, lines= /Data/List/Cons(head= "  ; TODO unsupported: an expression no arm of llvmOperand compiles", tail= lines))}
     # An expression no other arm compiles is written as a TODO line, and its value is undefined.
     # TODO An expression that cannot be compiled should fail the build rather than be written as a
     #   TODO, once every integration fixture compiles.
 
-  data(Operand(type -> String, repr -> String))
+  # ### Constants and parameters
+  llvmOperand{LlvmFn(next, lines)}(f(..ps)= (k :: Integer))= (Operand(type= I64, repr= k.toString)){LlvmFn(next= next, lines= lines)}
+    # An [Integer] is an @i64@ constant, which needs no instruction.
+  llvmOperand{LlvmFn(next, lines)}(f(..ps)= (k :: Float))= (Operand(type= F64, repr= k.toString)){LlvmFn(next= next, lines= lines)}
+    # A [Float] is a @double@ constant.
+    # TODO A double that a decimal does not write exactly (@0.1@) is written in LLVM's hexadecimal
+    #   form instead.
+  llvmOperand{LlvmFn(next, lines)}(f(${p}, ..ps)= ${p})= (Operand(type= I64, repr= "%" ++ p)){LlvmFn(next= next, lines= lines)}
+    # A parameter [p] of the function is the register of the same name.
+    # TODO A parameter is typed as the function's callers give it, once functions are compiled for
+    #   their callers; every parameter is an @i64@ for now.
+
+  # ### Arithmetic and comparisons
+    Each operator compiles its two operands by [llvmOperand] in turn, and then the instruction it
+    is ([llvmInstr]), given for integers and for floats.
+    # TODO An arm written as the call of a helper compiling both operands
+    #   (@/ContextIn(value= llvmBinary(op, a(..ps)= a(..ps), b(..ps)= b(..ps)), ctx)@) makes inference
+    #   of the core component run past 15 minutes, where these binds take seconds; each arm repeats
+    #   them until that is found.
+  llvmOperand{LlvmFn(next, lines)}(f(..ps)= a(..ps) + b(..ps)) =
+    leftOp<- llvmOperand(f(..ps)= a(..ps))
+
+    rightOp<- llvmOperand(f(..ps)= b(..ps))
+
+    instrOp<- llvmInstr(op= LlvmArith(int= "add", float= "fadd"), l= leftOp, r= rightOp)
+    instrOp
+  llvmOperand{LlvmFn(next, lines)}(f(..ps)= a(..ps) - b(..ps)) =
+    leftOp<- llvmOperand(f(..ps)= a(..ps))
+
+    rightOp<- llvmOperand(f(..ps)= b(..ps))
+
+    instrOp<- llvmInstr(op= LlvmArith(int= "sub", float= "fsub"), l= leftOp, r= rightOp)
+    instrOp
+  llvmOperand{LlvmFn(next, lines)}(f(..ps)= a(..ps) * b(..ps)) =
+    leftOp<- llvmOperand(f(..ps)= a(..ps))
+
+    rightOp<- llvmOperand(f(..ps)= b(..ps))
+
+    instrOp<- llvmInstr(op= LlvmArith(int= "mul", float= "fmul"), l= leftOp, r= rightOp)
+    instrOp
+  llvmOperand{LlvmFn(next, lines)}(f(..ps)= a(..ps) < b(..ps)) =
+    leftOp<- llvmOperand(f(..ps)= a(..ps))
+
+    rightOp<- llvmOperand(f(..ps)= b(..ps))
+
+    instrOp<- llvmInstr(op= LlvmCompare(int= "icmp slt", float= "fcmp olt"), l= leftOp, r= rightOp)
+    instrOp
+  llvmOperand{LlvmFn(next, lines)}(f(..ps)= a(..ps) > b(..ps)) =
+    leftOp<- llvmOperand(f(..ps)= a(..ps))
+
+    rightOp<- llvmOperand(f(..ps)= b(..ps))
+
+    instrOp<- llvmInstr(op= LlvmCompare(int= "icmp sgt", float= "fcmp ogt"), l= leftOp, r= rightOp)
+    instrOp
+  llvmOperand{LlvmFn(next, lines)}(f(..ps)= a(..ps) <= b(..ps)) =
+    leftOp<- llvmOperand(f(..ps)= a(..ps))
+
+    rightOp<- llvmOperand(f(..ps)= b(..ps))
+
+    instrOp<- llvmInstr(op= LlvmCompare(int= "icmp sle", float= "fcmp ole"), l= leftOp, r= rightOp)
+    instrOp
+  llvmOperand{LlvmFn(next, lines)}(f(..ps)= a(..ps) >= b(..ps)) =
+    leftOp<- llvmOperand(f(..ps)= a(..ps))
+
+    rightOp<- llvmOperand(f(..ps)= b(..ps))
+
+    instrOp<- llvmInstr(op= LlvmCompare(int= "icmp sge", float= "fcmp oge"), l= leftOp, r= rightOp)
+    instrOp
+  llvmOperand{LlvmFn(next, lines)}(f(..ps)= a(..ps) == b(..ps)) =
+    leftOp<- llvmOperand(f(..ps)= a(..ps))
+
+    rightOp<- llvmOperand(f(..ps)= b(..ps))
+
+    instrOp<- llvmInstr(op= LlvmCompare(int= "icmp eq", float= "fcmp oeq"), l= leftOp, r= rightOp)
+    instrOp
+
+  llvmInstr{LlvmFn(next, lines)}(op -> LlvmBinOp, l -> Operand.., r -> Operand..) -> /Context..(value -> Operand.., ctx -> (llvmfn -> LlvmFn..))
+    # [llvmInstr] writes the instruction [op] of the operands [l] and [r] into a fresh register, and
+      answers with it: an arithmetic one is of the operands' type, and a comparison is an @i1@.
+  llvmInstr{LlvmFn(next, lines)}(op= LlvmArith(int, float), l= Operand(type= I64, repr@lv), r= Operand(type= I64, repr@rv))= (Operand(type= I64, repr= "%r" ++ next.toString)){LlvmFn(next= next + 1, lines= /Data/List/Cons(head= "  %r" ++ next.toString ++ " = " ++ int ++ " i64 " ++ lv ++ ", " ++ rv, tail= lines))}
+  llvmInstr{LlvmFn(next, lines)}(op= LlvmArith(int, float), l= Operand(type= F64, repr@lv), r= Operand(type= F64, repr@rv))= (Operand(type= F64, repr= "%r" ++ next.toString)){LlvmFn(next= next + 1, lines= /Data/List/Cons(head= "  %r" ++ next.toString ++ " = " ++ float ++ " double " ++ lv ++ ", " ++ rv, tail= lines))}
+  llvmInstr{LlvmFn(next, lines)}(op= LlvmCompare(int, float), l= Operand(type= I64, repr@lv), r= Operand(type= I64, repr@rv))= (Operand(type= I1, repr= "%r" ++ next.toString)){LlvmFn(next= next + 1, lines= /Data/List/Cons(head= "  %r" ++ next.toString ++ " = " ++ int ++ " i64 " ++ lv ++ ", " ++ rv, tail= lines))}
+  llvmInstr{LlvmFn(next, lines)}(op= LlvmCompare(int, float), l= Operand(type= F64, repr@lv), r= Operand(type= F64, repr@rv))= (Operand(type= I1, repr= "%r" ++ next.toString)){LlvmFn(next= next + 1, lines= /Data/List/Cons(head= "  %r" ++ next.toString ++ " = " ++ float ++ " double " ++ lv ++ ", " ++ rv, tail= lines))}
+  llvmInstr{LlvmFn(next, lines)}(op, l, r) else = (Operand(type= I32, repr= "undef")){LlvmFn(next= next, lines= /Data/List/Cons(head= "  ; TODO unsupported: an operator of operands of different types", tail= lines))}
+    # TODO Operands of different types are converted to one type, or refused.
+
+  data(LlvmArith(int -> String, float -> String))
+    # An [LlvmArith] is an arithmetic instruction: the one for integers ([int]) and the one for
+      floats ([float]).
+  data(LlvmCompare(int -> String, float -> String))
+    # An [LlvmCompare] is a comparison, written as the instruction and its condition, for integers
+      ([int]) and for floats ([float]).
+
+  class(LlvmBinOp, [LlvmArith.., LlvmCompare..])
+    # An [LlvmBinOp] is an instruction of two operands.
+
+  # ## Operands
+  data(Operand(type -> LlvmType, repr -> String))
     # An [Operand] is a value in LLVM, as an instruction is given it: its [type] and the text it is
-      written as ([repr]), a register such as `%1` or a constant such as `0`.
+      written as ([repr]), a register such as `%r1` or a constant such as `0`.
+
+  class(LlvmType, [I64, F64, I1, I32])
+    # An [LlvmType] is the type of an [Operand]: a 64-bit integer ([I64]), a double ([F64]), a
+      boolean ([I1]), or a 32-bit integer ([I32]).
+
+  data(I64)
+  data(F64)
+  data(I1)
+  data(I32)
+
+  llvmTypeText(t -> LlvmType) -> String
+    # [llvmTypeText] is the type [t] as LLVM writes it.
+  llvmTypeText(t= I64)= "i64"
+  llvmTypeText(t= F64)= "double"
+  llvmTypeText(t= I1)= "i1"
+  llvmTypeText(t= I32)= "i32"
+
+  llvmOperandType(o -> Operand..) -> String
+    # [llvmOperandType] is the type of the operand [o], as LLVM writes it.
+  llvmOperandType(o= Operand(type, repr))= llvmTypeText(t= type)
+
+  llvmRet(o -> Operand..) -> String
+    # [llvmRet] is the instruction returning the operand [o].
+  llvmRet(o= Operand(type, repr))= "  ret " ++ llvmTypeText(t= type) ++ " " ++ repr
 
   llvmAddFunction{LlvmProgram(todo, functions)}(text -> String)= (){LlvmProgram(todo= todo, functions= /Data/List/Cons(head= text, tail= functions))}
     # [llvmAddFunction] adds the compiled function [text] to the program.
@@ -110,5 +231,55 @@ module(LLVM)
     >>> define i32 @main() {
     >>> entry:
     >>>   ret i32 0
+    >>> }
+    >>>
+module(LLVM/Example)
+  # ## Compiling functions
+    What [llvm] compiles a function to, read as the text of the module it writes ([llvmText]).
+  llvmText(c) -> String
+    # [llvmText] is the text of the module [llvm] compiles [c] to.
+  llvmText(c)= builtText(result= /Catln/llvm(c= c))
+
+  builtText(result= CatlnResult(files= /Data/List/Cons(head= BuildFile(path, contents), tail)))= contents
+
+  arith(x -> Integer) -> Integer
+    # [arith] is arithmetic of a parameter and constants.
+  arith(x)= 2 * 3 + x
+
+  > llvmText(c= /LLVM/Example/arith)
+    >>> ; ModuleID = 'catln'
+    >>>
+    >>> define i64 @main() {
+    >>> entry:
+    >>>   %r0 = mul i64 2, 3
+    >>>   %r1 = add i64 %r0, %x
+    >>>   ret i64 %r1
+    >>> }
+    >>>
+  floats(x -> Float) -> Float
+    # [floats] is arithmetic of [Float] constants.
+  floats(x)= 1.5 * 2.0 - 0.5
+
+  > llvmText(c= /LLVM/Example/floats)
+    >>> ; ModuleID = 'catln'
+    >>>
+    >>> define double @main() {
+    >>> entry:
+    >>>   %r0 = fmul double 1.5, 2.0
+    >>>   %r1 = fsub double %r0, 0.5
+    >>>   ret double %r1
+    >>> }
+    >>>
+  less(x -> Integer) -> Boolean
+    # [less] is a comparison, an @i1@.
+  less(x)= x < 3
+
+  > llvmText(c= /LLVM/Example/less)
+    >>> ; ModuleID = 'catln'
+    >>>
+    >>> define i1 @main() {
+    >>> entry:
+    >>>   %r0 = icmp slt i64 %x, 3
+    >>>   ret i1 %r0
     >>> }
     >>>
