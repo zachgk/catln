@@ -717,7 +717,13 @@ ctssUnchanged :: Maybe Watcher -> S.HashSet FilePath -> [(FileImport, ReadPage)]
 ctssUnchanged Nothing _ pages = unchangedPages pages
 ctssUnchanged (Just watcher) written pages = do
   everyPath <- allCovered watcher
-  if S.null written && everyPath then return (H.fromList pages) else ctssUnchangedOf watcher written pages
+  -- Nothing written leaves every page as it was read, but a page with no read to say so is not one
+  -- of them: 'ctssStale' forgets a page's read times so the next read reads it again, and it does
+  -- so as soon as the page is written, which may be before the watcher has seen the write. Given
+  -- back here, that read would answer with the page as it was before the write.
+  if S.null written && everyPath
+    then return $ H.fromList [page | page@(_, read') <- pages, isJust (rpReads read')]
+    else ctssUnchangedOf watcher written pages
 
 -- | 'ctssUnchanged' where something has been written to, or some path is one the watcher cannot
 -- answer for.

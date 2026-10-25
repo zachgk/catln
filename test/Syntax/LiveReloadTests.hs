@@ -23,8 +23,9 @@ import           CtService              (CTSS (..), Progress (..),
                                          ctssEvaluableFrom, ctssFollow,
                                          ctssFollowing, ctssGetFrom, ctssKeys,
                                          ctssMapPages, ctssProgress, ctssReadOf,
-                                         ctssReport, ctssWatch, ctssWatchLive,
-                                         ctssWorking, emptyCTSS, serviceToday)
+                                         ctssReport, ctssStale, ctssWatch,
+                                         ctssWatchLive, ctssWorking, emptyCTSS,
+                                         getSource, serviceToday)
 import qualified Data.HashMap.Strict    as H
 import qualified Data.HashSet           as S
 import           Data.IORef             (modifyIORef', newIORef, readIORef)
@@ -38,7 +39,8 @@ import           Eval.Runtime.WebDocs   (askService)
 import           Semantics              (CTSSConfig (..), ctssCachePath,
                                          testCtssConfig)
 import           Semantics.Prgm         (FileImport, impDisp)
-import           Syntax.Ct.Prgm         (noImporters, rootImportCtx)
+import           Syntax.Ct.Prgm         (ReadPage (..), noImporters,
+                                         rootImportCtx)
 import           Syntax.Parsers         (canonicalImport, finishReading,
                                          mkRawImportStr, newReadQueue,
                                          newReading, readQueued, rqLeft,
@@ -220,6 +222,54 @@ testWatchLive = testCase "a write wakes a display with nothing having asked" $ d
   ctssFollow ctss (Shown (Just a)) $ \await -> do
     writeLater (addUTCTime 60 now) (dir </> "b.ct") "b = 3\n"
     assertBool "the display was not woken by a write nothing asked about" =<< waitFor await
+
+-- | A page written before it was watched is read by the next read.
+--
+-- The watcher cannot report a write it started after, so the read after it has nothing written to
+-- and every path watched — the read which gives every page back. Watching is what finds such a page
+-- ('CtService.ctssRewatch'), and it says so by forgetting the page's read times, which that read
+-- must take as the page being unread rather than give it back as it was.
+testWrittenBeforeWatched :: TestTree
+testWrittenBeforeWatched = testCase "a page written before it was watched is read by the next read" $ do
+  dir <- caseDir "live-written-before-watched"
+  now <- getCurrentTime
+  writeLater now (dir </> "a.ct") "a = 1\n"
+  ctss <- ctssBaseFiles testCtssConfig [dir </> "a.ct"]
+  a <- pageAt (dir </> "a.ct") ctss
+
+  writeLater (addUTCTime 60 now) (dir </> "a.ct") "a = 2\n"
+  ctssWatch ctss
+  _ <- ctssReadOf ctss []
+  source <- runCResT $ getSource ctss a
+  case source of
+    CRes _ src -> assertEqual "the read gave back the page as it was before it was written" "a = 2\n" src
+    CErr notes -> assertFailure $ "the page has no source: " ++ show notes
+
+-- | A page made stale is read by the next read, whatever the watcher has seen.
+--
+-- What a write through the service relies on ('CtService.setSource'): it writes the file, makes the
+-- page stale and reads, all before the watcher need have reported the write. Asked of a page nothing
+-- has been written to, so the watcher has nothing to report at all and only the staleness can say
+-- the page is to be read.
+testStaleReadWhenWatched :: TestTree
+testStaleReadWhenWatched = testCase "a page made stale is read by the next read of a watched service" $ do
+  dir <- caseDir "live-stale-watched"
+  now <- getCurrentTime
+  writeLater now (dir </> "a.ct") "a = 1\n"
+  ctss <- ctssBaseFiles testCtssConfig [dir </> "a.ct"]
+  ctssWatch ctss
+  a <- pageAt (dir </> "a.ct") ctss
+  -- Whether the page holds the times of a read, which is what a read leaves on every page it read.
+  let readTimes = do
+        held <- ctssCached (Just . pure . isJust . rpReads . ssfRead) a ctss
+        return $ case held of
+          Just (CRes _ reads') -> Just reads'
+          _                    -> Nothing
+
+  ctssStale ctss a
+  assertEqual "the page made stale kept its read times" (Just False) =<< readTimes
+  _ <- ctssReadOf ctss []
+  assertEqual "the read gave the stale page back rather than reading it" (Just True) =<< readTimes
 
 
 -- | Stand in for a build having left these on the pages.
@@ -557,6 +607,8 @@ liveReloadTests = testGroup "LiveReload" [
   testPageAdded,
   testFollowCloses,
   testWatchLive,
+  testWrittenBeforeWatched,
+  testStaleReadWhenWatched,
   testBrokenPageLeftOut,
   testAnnotsFollowTheirAsks,
   testAskServiceForcesItsAnswer,
