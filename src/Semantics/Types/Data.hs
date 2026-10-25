@@ -15,6 +15,7 @@
 {-# LANGUAGE DataKinds       #-}
 {-# LANGUAGE DeriveAnyClass  #-}
 {-# LANGUAGE DeriveGeneric   #-}
+{-# LANGUAGE MagicHash       #-}
 {-# LANGUAGE NamedFieldPuns  #-}
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE TypeFamilies    #-}
@@ -34,6 +35,7 @@ import qualified Data.List            as L
 import           Data.List.Split      (splitOn)
 import           Data.Maybe
 import           Data.Proxy           (Proxy (..))
+import           GHC.Exts             (isTrue#, reallyUnsafePtrEquality#)
 import           GHC.Generics
 import           Semantics.CtType
 import           Semantics.Types.Name
@@ -268,7 +270,48 @@ data Constant
   | CFloat { cfValue :: Double }
   | CStr { csValue :: String }
   | CChar { chValue :: Char }
-  deriving (Eq, Ord, Show, Generic, Hashable, ToJSON)
+  deriving (Show, Generic, ToJSON)
+
+-- | Structural, except that a float NaN equals itself: a constant is a value a type holds, and
+-- the type holding NaN is the same type as itself. Compared as 'Double's, NaN equals nothing, so
+-- such a type was unequal to itself and every comparison of it (a memo key, the @t1 == t2@
+-- shortcuts) answered as though it were two types.
+instance Eq Constant where
+  CInt a == CInt b     = a == b
+  CFloat a == CFloat b = a == b || (isNaN a && isNaN b)
+  CStr a == CStr b     = a == b
+  CChar a == CChar b   = a == b
+  _ == _               = False
+
+-- | The derived order (constructor, then value), with NaN placed after every other float and
+-- equal to itself, as 'Eq' has it.
+instance Ord Constant where
+  compare (CFloat a) (CFloat b)
+    | isNaN a && isNaN b = EQ
+    | isNaN a            = GT
+    | isNaN b            = LT
+    | otherwise          = compare a b
+  compare a b = compare (tag a) (tag b) <> case (a, b) of
+    (CInt x, CInt y)   -> compare x y
+    (CStr x, CStr y)   -> compare x y
+    (CChar x, CChar y) -> compare x y
+    _                  -> EQ
+    where
+      tag :: Constant -> Int
+      tag CInt{}   = 0
+      tag CFloat{} = 1
+      tag CStr{}   = 2
+      tag CChar{}  = 3
+
+-- | Equal to the derived hash (the constructor's index, then its value), except that every NaN
+-- hashes as one NaN, as 'Eq' makes them one value.
+instance Hashable Constant where
+  hashWithSalt s (CInt v)   = s `hashWithSalt` (0 :: Int) `hashWithSalt` v
+  hashWithSalt s (CFloat v)
+    | isNaN v               = s `hashWithSalt` (1 :: Int) `hashWithSalt` (0 / 0 :: Double)
+    | otherwise             = s `hashWithSalt` (1 :: Int) `hashWithSalt` v
+  hashWithSalt s (CStr v)   = s `hashWithSalt` (2 :: Int) `hashWithSalt` v
+  hashWithSalt s (CChar v)  = s `hashWithSalt` (3 :: Int) `hashWithSalt` v
 
 -- | A constant written in a program, read as a Catln type.
 --
@@ -428,8 +471,12 @@ typeMapHash :: Hashable k => H.HashMap k Type -> Int
 typeMapHash = H.foldlWithKey' (\acc k t -> acc + (hash k `hashWithSalt` typeHash t)) 0
 
 -- | Structural: the hash only decides a comparison when it differs, which is the common case and
--- the cheap one. Equal hashes still compare in full.
+-- the cheap one. Equal hashes still compare in full, except that a type is equal to itself without
+-- a walk: the same object on both sides (an operation handing back its input, or a field it left
+-- alone) is the same type, as equality is reflexive ('Constant' included). The test only ever
+-- answers yes; two equal types in different objects are compared as before.
 instance Eq Type where
+  a == b | isTrue# (reallyUnsafePtrEquality# a b) = True
   UnionTypeH h1 _ t1 l1 c1 == UnionTypeH h2 _ t2 l2 c2 = h1 == h2 && l1 == l2 && c1 == c2 && t1 == t2
   TypeVarH h1 a1 o1 i1 == TypeVarH h2 a2 o2 i2     = h1 == h2 && a1 == a2 && o1 == o2 && i1 == i2
   _ == _                                           = False
