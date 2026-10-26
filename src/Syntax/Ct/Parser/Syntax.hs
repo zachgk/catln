@@ -65,6 +65,8 @@ rawExprWithType t (RawCExpr m c) = RawCExpr (mWithType t m) c
 rawExprWithType t (RawValue m n) = RawValue (mWithType t m) n
 rawExprWithType t (RawHoleExpr m h) = RawHoleExpr (mWithType t m) h
 rawExprWithType t (RawList m l) = RawList (mWithType t m) l
+-- A typed application (@(c(..ps) :: Integer)@): in a body pattern, a part of the body of the type.
+rawExprWithType t (RawTupleApply m b args) = RawTupleApply (mWithType t m) b args
 rawExprWithType _ e = error $ printf "rawExprWithType for unexpected type: %s" (show e)
 
 mapOAObjPath :: (Show m, MetaDat m) => ((Meta m, TypeName) -> Expr m) -> ObjArr Expr m -> ObjArr Expr m

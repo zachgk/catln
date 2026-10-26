@@ -343,7 +343,9 @@ desBodyPattern oa = case bodyPatternParts oa of
         go x = x
     -- A sub-function variable ('bodyPatternSubFn') names the part of the body it matches, so it is
     -- the alias of a hole there, as every pattern names a part it matches.
-    wrapSubFns params e | bodyPatternSubFn params e = AliasExpr (HoleExpr (mWithType PTopType (getExprMeta e)) (HoleActive Nothing)) e
+    -- One written with a type (@(c(..ps) :: Integer)@) matches only a part of that type, so its
+    -- hole is of it.
+    wrapSubFns params e | bodyPatternSubFn params e = AliasExpr (HoleExpr (getExprMeta e) (HoleActive Nothing)) (e `setExprMeta` mWithType PTopType (getExprMeta e))
     wrapSubFns params (TupleApply m (bm, be) arg) = TupleApply m (bm, wrapSubFns params be) $ case arg of
       EAppArg a    -> EAppArg a{oaArr=fmap (first (fmap (wrapSubFns params))) (oaArr a)}
       EAppSpread a -> EAppSpread (wrapSubFns params a)
@@ -552,7 +554,22 @@ rawSpreadParams roa0 = if null names then roa else onObjArr roa
     inPatternArg (False, a@RawObjArr{roaObj=Just (RawMacroValue m k), roaArr=Just (Just v, vm)}) =
       let k' = mkName (paramVarPrefix ++ nameStr k) in (False, a{roaObj=Just (RawValue (mWithType (relTypeVal k') m) k'), roaArr=Just (Just (inPattern v), vm)})
     inPatternArg (s, a) = (s, a{roaArr = fmap (first (fmap inPattern)) (roaArr a)})
-    names = concatMap objArrNames (roaObj roa : map Just (roaAnnots roa) ++ [roaArr roa >>= fst, roaDef roa])
+    names = concatMap objArrNames (roaObj roa : map Just (roaAnnots roa) ++ [roaArr roa >>= fst, roaDef roa]) ++ patternSpreads (roaObj roa0)
+    -- The spreads of open calls in the definition's patterns (@${fun}(..rest)@), which its body
+    -- writes back (@${fun}(..rest)@) as the arguments they matched.
+    patternSpreads = maybe [] inputSpreads
+    inputSpreads e = case e of
+      RawTupleApply _ (_, b) args -> inputSpreads b ++ concat [ maybe [] patSpreads (roaArr a >>= fst) | (False, a@RawObjArr{roaObj=Just RawTupleApply{}}) <- args ] ++ concat [ maybe [] inputSpreads (roaObj a) | (_, a) <- args ]
+      RawWhere _ b _ -> inputSpreads b
+      RawAliasExpr b _ -> inputSpreads b
+      RawParen e' -> inputSpreads e'
+      RawContextApply _ (_, b) _ -> inputSpreads b
+      _ -> []
+    patSpreads e = case e of
+      RawTupleApply _ (_, b) args -> patSpreads b ++ [ n | (True, RawObjArr{roaObj=Just (RawValue _ n), roaArr=Nothing}) <- args ] ++ concat [ maybe [] patSpreads (roaArr a >>= fst) | (_, a) <- args ]
+      RawAliasExpr b _ -> patSpreads b
+      RawParen e' -> patSpreads e'
+      _ -> []
     objArrNames = maybe [] exprNames
     exprNames e = case e of
       RawTupleApply _ (_, b) args -> exprNames b ++ concatMap argNames args

@@ -30,6 +30,7 @@ import           Text.Printf
 import           CRes
 import           CtConstants
 import           Eval.Common
+import           Semantics           (reduceAppliedTypeFix)
 import           Semantics.Prgm
 import           Semantics.Types
 
@@ -42,17 +43,21 @@ type BPObjArr = ObjArr Expr EvalMetaDat
 --
 -- A spread of parameters (@..ps@ in @f(..ps)@, 'isSpreadParamsName') is bound to the parameters it
 -- stood for: those of the function the pattern matched, or of the definition a guard found.
+--
+-- The spread of an open call (@${fun}(..rest)@) is bound to the arguments it matched, written back
+-- where the body writes the spread.
 data Bindings = Bindings {
   bLiterals :: H.HashMap Name BPExpr,
   bSubFns   :: H.HashMap ArgName ([ArgName], BPExpr),
-  bSpreads  :: H.HashMap Name [ArgName]
+  bSpreads  :: H.HashMap Name [ArgName],
+  bRest     :: H.HashMap Name [BPObjArr]
   }
 
 instance Semigroup Bindings where
-  Bindings l1 s1 p1 <> Bindings l2 s2 p2 = Bindings (l1 <> l2) (s1 <> s2) (p1 <> p2)
+  Bindings l1 s1 p1 r1 <> Bindings l2 s2 p2 r2 = Bindings (l1 <> l2) (s1 <> s2) (p1 <> p2) (r1 <> r2)
 
 instance Monoid Bindings where
-  mempty = Bindings H.empty H.empty H.empty
+  mempty = Bindings H.empty H.empty H.empty H.empty
 
 -- | The arm for a call: the arm itself when it has no body pattern and no guard matching an arrow's
 -- definition, and otherwise the arm instantiated for the functions the call gives it ('Just'), or
@@ -167,14 +172,21 @@ resolveDefGuard TBEnv{tbResEnv, tbTypeEnv} srcType oa Bindings{bLiterals} (defIn
                 , oaDefinedName d == makeAbsoluteName calleeName
                 , isSubtypeOf tbTypeEnv (getMetaType arrM) arrowResult ]
   answer <- case reached of
-    []  -> return Nothing
-    [d] -> Just <$> defFunction d
-    ds  -> guardErr $ printf "%s reaches several definitions, at %s, and it gives one" (show input) (show [ getMetaPos (getExprMeta (oaObjExpr d)) | d <- ds ])
-  let given = S.fromList [ makeAbsoluteName (pkName g) | (g, _) <- givenArgs ]
-  let spreadBindings = case answer of
-        Just (params, _) -> mempty{bSpreads = H.fromList [ (makeAbsoluteName (pkName k), [ p | p <- params, not (S.member (makeAbsoluteName (pkName p)) given) ]) | (k, _) <- spreadArgs ]}
-        Nothing -> mempty
-  fmap (spreadBindings <>) <$> matchAnswer answer
+    []  -> return (Just Nothing)
+    -- A definition that is one case of its function (guarded, or with states it destructures) is
+    -- not the function either, and the guard does not hold.
+    [d] -> fmap Just <$> defFunction d
+    -- A function of several definitions is not one definition: the guard is neither Some of one
+    -- nor Nothing, and the arm does not apply.
+    _   -> return Nothing
+  case answer of
+    Nothing -> return Nothing
+    Just answer' -> do
+      let given = S.fromList [ makeAbsoluteName (pkName g) | (g, _) <- givenArgs ]
+      let spreadBindings = case answer' of
+            Just (params, _) -> mempty{bSpreads = H.fromList [ (makeAbsoluteName (pkName k), [ p | p <- params, not (S.member (makeAbsoluteName (pkName p)) given) ]) | (k, _) <- spreadArgs ]}
+            Nothing -> mempty
+      fmap (spreadBindings <>) <$> matchAnswer answer'
   where
     -- The name of a function an argument of the call holds as its value: the argument is bound by
     -- the arm's object, and the call gives it the name alone.
@@ -199,12 +211,12 @@ resolveDefGuard TBEnv{tbResEnv, tbTypeEnv} srcType oa Bindings{bLiterals} (defIn
     defFunction d@ObjArr{oaObj=Just dObj, oaArr=Just (Just dBody, _)}
       -- A function in a context (@ContextIn(value= main, ctx= (io -> IO, ..))@) is the function of
       -- its states, when each is only named.
-      | makeAbsoluteName (oaObjPath d) == mkName ContextInStr && isNothing (exprWhereCond dObj) = case H.lookup (partialKey (mkName contextStatesStr)) (exprAppliedArgsMap dObj) of
-          Just (Just (_, Just states)) | all keyOnly (exprAppliedArgs states) -> return (H.keys (exprAppliedArgsMap states), dBody)
-          _ -> guardErr $ printf "the definition at %s is not a function of its states alone" (show $ getMetaPos $ getExprMeta $ oaObjExpr d)
-      | all keyOnly (exprAppliedArgs dObj) && isNothing (exprWhereCond dObj) = return (H.keys (exprAppliedArgsMap dObj), dBody)
-      | isNothing (exprWhereCond dObj) = return (H.keys (exprAppliedArgsMap dObj), readFields (concat [ fieldReads (Value emptyMetaN (pkName k)) v | (k, Just (_, Just v)) <- H.toList (exprAppliedArgsMap dObj) ]) dBody)
-      | otherwise = guardErr $ printf "the definition at %s is not a function of its parameters alone" (show $ getMetaPos $ getExprMeta $ oaObjExpr d)
+      | makeAbsoluteName (oaObjPath d) == mkName ContextInStr && isNothing (exprWhereCond dObj) = return $ case H.lookup (partialKey (mkName contextStatesStr)) (exprAppliedArgsMap dObj) of
+          Just (Just (_, Just states)) | all keyOnly (exprAppliedArgs states) -> Just (H.keys (exprAppliedArgsMap states), dBody)
+          _ -> Nothing
+      | all keyOnly (exprAppliedArgs dObj) && isNothing (exprWhereCond dObj) = return $ Just (H.keys (exprAppliedArgsMap dObj), dBody)
+      | isNothing (exprWhereCond dObj) = return $ Just (H.keys (exprAppliedArgsMap dObj), readFields (concat [ fieldReads (Value emptyMetaN (pkName k)) v | (k, Just (_, Just v)) <- H.toList (exprAppliedArgsMap dObj) ]) dBody)
+      | otherwise = return Nothing
     defFunction d = guardErr $ printf "the definition %s has no body" (show $ oaObjPath d)
     keyOnly ObjArr{oaObj=Just k, oaArr=Just (Nothing, _)} = exprIsName k
     keyOnly _                                             = False
@@ -303,8 +315,15 @@ matchBody TBEnv{tbTypeEnv} patParams bodyParams0 pat0 body0 = (spreadBindings <>
     go (AliasExpr (HoleExpr hm _) (Value _ n)) body@(CExpr _ c)
       | getMetaType hm /= PTopType && isSubtypeOf tbTypeEnv (constantType c) (getMetaType hm) = Just mempty{bLiterals=H.singleton (makeAbsoluteName n) body}
     -- A sub-function variable: the alias of a hole with the parameter it binds, matching any part.
-    go (AliasExpr HoleExpr{} subFn) body
-      | not (null (exprAppliedArgs subFn)) = Just mempty{bSubFns=H.singleton (inExprSingleton subFn) (bodyParams, body)}
+    -- One written with a type (@(c(..ps) :: Integer)@) matches only a part of it: what the part
+    -- reduces to, as a call is typed as itself until it is built, is within the type. A part that
+    -- may be of several is matched by none, so arms of disjoint types never both apply.
+    go (AliasExpr (HoleExpr hm _) subFn) body
+      | not (null (exprAppliedArgs subFn)) =
+        if typed hm subFn && (isBottomType reduced || not (isSubtypeOf tbTypeEnv reduced (getMetaType hm)))
+          then Nothing
+          else Just mempty{bSubFns=H.singleton (inExprSingleton subFn) (bodyParams, body)}
+      where reduced = reduceAppliedTypeFix tbTypeEnv H.empty (getExprType body)
     go (AliasExpr _ _) _ = Nothing
     go (CExpr _ c) (CExpr _ c') = if c == c' then Just mempty else Nothing
     go (Value _ n) (Value _ bn) = case (paramNamed patParams n, paramNamed bodyParams bn) of
@@ -332,7 +351,8 @@ matchBody TBEnv{tbTypeEnv} patParams bodyParams0 pat0 body0 = (spreadBindings <>
       let rest0 = H.difference bodyArgs fixedArgs
       (keyBindings, rest) <- foldM matchKeyVar ([], rest0) keyVarArgs
       guard (open || H.null rest)
-      return (headBindings <> mconcat fixedBindings <> mconcat keyBindings)
+      let restBindings = mempty{bRest = H.fromList [ (makeAbsoluteName k, [ ObjArr (Just (Value emptyMetaN k')) ArgObj Nothing [] (Just (Just v, vm)) | (k', Just (vm, Just v)) <- sortOn (show . fst) (H.toList rest) ]) | k <- H.keys patArgs, isOpen k ]}
+      return (headBindings <> mconcat fixedBindings <> mconcat keyBindings <> restBindings)
       where
         matchKeyVar (acc, rest) (v, patArg) = case patArg of
           Just (_, Just patV) -> case [ (k, b) | (k, Just (_, Just bodyV)) <- sortOn (show . fst) (H.toList rest), Just b <- [go patV bodyV] ] of
@@ -341,6 +361,8 @@ matchBody TBEnv{tbTypeEnv} patParams bodyParams0 pat0 body0 = (spreadBindings <>
           _ -> Nothing
     go _ _ = Nothing
     keyed = H.fromList . map (\(k, v) -> (makeAbsoluteName (pkName k), v)) . H.toList
+    -- Whether a sub-function variable's hole was given a type, rather than the one its name has.
+    typed hm subFn = let t = getMetaType hm in t /= PTopType && maybe True (\n -> t /= relTypeVal n) (maybeExprPath subFn)
     -- A parameter's name as it is written, without the path it is kept under.
     paramText p = case npathPath (getPath (nameStr (pkName p))) of
       [] -> nameStr (pkName p)
@@ -355,7 +377,7 @@ matchBody TBEnv{tbTypeEnv} patParams bodyParams0 pat0 body0 = (spreadBindings <>
 -- was bound to beside it (@f(..ps, x)@), so the body it passes on names its parameters as its own,
 -- and is a function still when it has none.
 instantiate :: Bindings -> BPObjArr -> BPObjArr
-instantiate Bindings{bLiterals, bSubFns, bSpreads} oa = oa{
+instantiate Bindings{bLiterals, bSubFns, bSpreads, bRest} oa = oa{
   oaArr = fmap (\(e, m) -> (fmap subst e, m)) (oaArr oa),
   oaAnnots = map subst (oaAnnots oa)
   }
@@ -367,6 +389,9 @@ instantiate Bindings{bLiterals, bSubFns, bSpreads} oa = oa{
     subst e@HoleExpr{} = e
     subst (AliasExpr b a) = AliasExpr (subst b) a
     subst (EWhere m b c) = EWhere m (subst b) (subst c)
+    -- The spread of an open call (@${fun}(..rest)@) is the arguments it matched.
+    subst (TupleApply m (_, be) (EAppArg ObjArr{oaObj=Just (Value _ n)}))
+      | Just rs <- H.lookup (makeAbsoluteName n) bRest = foldl (\b r -> TupleApply m (getExprMeta b, b) (EAppArg r)) (subst be) rs
     subst e@(TupleApply m (bm, be) arg)
       | Just (params, part) <- subFnApplied e = apply params part (H.mapMaybe (\v -> subst <$> (v >>= snd)) $ H.fromList [ (makeAbsoluteName (pkName k), v) | (k, v) <- H.toList (exprAppliedArgsMap e) ])
       | otherwise = TupleApply m (bm, subst be) (substArg arg)

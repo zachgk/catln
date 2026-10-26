@@ -4,7 +4,7 @@ declare void @exit(i32)
 
 define i32 @main() {
 entry:
-  ; TODO unsupported: an expression no arm of llvmOperand compiles
+  ; TODO unsupported: a call of a function that has no one definition
   ; TODO unsupported: an expression no arm of llvmOperand compiles
   ; TODO unsupported: an operator of operands of different types
   ; TODO unsupported: an expression no arm of llvmOperand compiles

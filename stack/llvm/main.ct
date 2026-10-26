@@ -12,26 +12,34 @@ module(Catln)
     # [llvm] compiles the runnable argument [c] into a [CatlnResult] holding the LLVM module `main.ll`.
       The [/LLVM/LlvmProgram] state is made here, holding [c] as the one function to compile, and
       is dropped again before [llvm] answers: [/LLVM/llvmProgram] answers with the finished module.
-  llvm(c)= CatlnResult(files= [BuildFile(path= "main.ll", contents= /Data/Context/unwrap(this= /ContextIn(value= /LLVM/llvmProgram, ctx= (llvmprogram= /LLVM/LlvmProgram(todo= [/LLVM/LlvmTodo(fun= c)], functions= /Data/List/Nil, externs= /Data/List/Nil)))))])
+  llvm(c)= CatlnResult(files= [BuildFile(path= "main.ll", contents= /Data/Context/unwrap(this= /ContextIn(value= /LLVM/llvmProgram, ctx= (llvmprogram= /LLVM/LlvmProgram(todo= [/LLVM/LlvmTodo(fun= c, name= "main", args= /Data/List/Nil)], done= /Data/List/Nil, functions= /Data/List/Nil, externs= /Data/List/Nil)))))])
 module(LLVM)
   # ## Compiling a program
     A program is compiled in a [Context] holding an [LlvmProgram]: what has been compiled so far,
     and what is still to be compiled. Each function is compiled in turn, in a [Context] holding an
     [LlvmFn] as well: the lines of that one function.
-  data(LlvmTodo(fun))
-    # An [LlvmTodo] is a function still to be compiled: [fun] is its name, as a value.
-  data(LlvmProgram(todo -> /Data/List/ConsList[$T -> LlvmTodo..], functions -> /Data/List/ConsList[$T -> String], externs -> /Data/List/ConsList[$T -> String]))
-    # An [LlvmProgram] is a program being compiled: the functions still [todo], the [functions]
+  data(LlvmTodo(fun, name -> String, args -> /Data/List/ConsList[$T -> LlvmArg..]))
+    # An [LlvmTodo] is a function still to be compiled: [fun] is it, as a value, [name] the name it
+      is compiled under, and [args] what its caller gives it, each argument's name and operand.
+    # TODO A function is compiled once, for the arguments its first caller gives it; one called with
+    #   arguments of other types is to be compiled for them too.
+  data(LlvmArg(name -> String, op -> Operand..))
+    # An [LlvmArg] is an argument of a call: the [name] of the parameter it is given as, and the
+      operand [op] holding it.
+  data(LlvmProgram(todo -> /Data/List/ConsList[$T -> LlvmTodo..], done -> /Data/List/ConsList[$T -> String], functions -> /Data/List/ConsList[$T -> String], externs -> /Data/List/ConsList[$T -> String]))
+    # An [LlvmProgram] is a program being compiled: the functions still [todo], the names of those
+      [done], the [functions]
       already compiled, each as the text of its definition, and the [externs] they need: the
       functions they declare and the constants they name, each a line of the module. Each list is
       kept the latest first.
-  data(LlvmFn(next -> Integer, lines -> /Data/List/ConsList[$T -> String], aux -> LlvmAux..))
+  data(LlvmFn(next -> Integer, instrs -> /Data/List/ConsList[$T -> String], aux -> LlvmAux..))
     # An [LlvmFn] is a function being compiled: [next] is the number of the next register it
-      names, [lines] are the lines of its body written so far, the latest first, and [aux] is what
+      names, [instrs] are the lines of its body written so far, the latest first, and [aux] is what
       else it knows ([LlvmAux]).
-  data(LlvmAux(locals -> /Data/List/ConsList[$T -> LlvmLocal..], externs -> /Data/List/ConsList[$T -> String], strings -> Integer))
+  data(LlvmAux(locals -> /Data/List/ConsList[$T -> LlvmLocal..], externs -> /Data/List/ConsList[$T -> String], strings -> Integer, calls -> /Data/List/ConsList[$T -> LlvmTodo..]))
     # An [LlvmAux] is what a function being compiled knows beside its lines: the values of the
-      names it has bound ([locals]), the [externs] it needs, and how many [strings] it has named.
+      names it has bound ([locals]), the [externs] it needs, how many [strings] it has named, and
+      the functions it [calls], each still to be compiled.
   data(LlvmLocal(name -> String, val -> LlvmVal))
     # An [LlvmLocal] is what the name [name] stands for in the function being compiled.
 
@@ -48,17 +56,21 @@ module(LLVM)
   class(LlvmFound, [Operand.., LlvmContextVal.., NoLocal])
     # An [LlvmFound] is what looking a name up finds: an [LlvmVal], or [NoLocal].
 
-  llvmProgram{LlvmProgram(todo, functions, externs)} -> String{llvmprogram -> LlvmProgram..}
+  llvmProgram{LlvmProgram(todo, done, functions, externs)} -> String{llvmprogram -> LlvmProgram..}
     # [llvmProgram] compiles each function [todo], and the functions they call, and answers with
       the module of them all.
-  llvmProgram{LlvmProgram(todo= /Data/List/Nil, functions, externs)}= (llvmModule(functions= functions, externs= externs)){LlvmProgram(todo= /Data/List/Nil, functions= functions, externs= externs)}
-  llvmProgram{LlvmProgram(todo= /Data/List/Cons(head= LlvmTodo(fun), tail), functions, externs)} =
-    _<- (){LlvmProgram(todo= tail, functions= functions, externs= externs)}
-    _<- llvmFunction(fun= fun)
+  llvmProgram{LlvmProgram(todo= /Data/List/Nil, done, functions, externs)}= (llvmModule(functions= functions, externs= externs)){LlvmProgram(todo= /Data/List/Nil, done= done, functions= functions, externs= externs)}
+  llvmProgram{LlvmProgram(todo= /Data/List/Cons(head= LlvmTodo(fun, name, args), tail), done, functions, externs)} | llvmHas(lines= done, line= name) =
+    _<- (){LlvmProgram(todo= tail, done= done, functions= functions, externs= externs)}
+    text<- llvmProgram
+    text
+  llvmProgram{LlvmProgram(todo= /Data/List/Cons(head= LlvmTodo(fun, name, args)@item, tail), done, functions, externs)} else  =
+    _<- (){LlvmProgram(todo= tail, done= done, functions= functions, externs= externs)}
+    _<- llvmFunction(item= item)
     text<- llvmProgram
     text
 
-  llvmFunction{LlvmProgram(todo, functions, externs)}(fun) -> (){llvmprogram -> LlvmProgram..}
+  llvmFunction{LlvmProgram(todo, done, functions, externs)}(item -> LlvmTodo..) -> (){llvmprogram -> LlvmProgram..}
     # [llvmFunction] compiles the function [fun] and adds it to the program's [functions]. It is
       compiled in a fresh [LlvmFn]. [fun] is a name, and the guard asks for the definition it names
       ([\@->]): [body] is then the function the definition is, of its own parameters [ps] with the
@@ -68,40 +80,43 @@ module(LLVM)
     # TODO The [LlvmFn] is replaced by the next function's rather than removed when the function is
     #   done. It needs a state added within a scope and removed when it ends, which is not supported
     #   yet (see [imperative] in @memory/main.ct@).
-    # TODO The function is named @main@ and takes no parameters, as only [c] is compiled for now,
-    #   and its states (@io@) are not passed to it.
-  llvmFunction{LlvmProgram(todo, functions, externs)}(fun) | (fun(..ps) @-> _)@Some(value@body) =
-    _<- (){LlvmFn(next= 0, lines= /Data/List/Nil, aux= LlvmAux(locals= /Data/List/Nil, externs= /Data/List/Nil, strings= 0))}
+    # TODO A function's states (@io@) are not passed to it.
+  llvmFunction{LlvmProgram(todo, done, functions, externs)}(item= LlvmTodo(fun, name, args)) | (fun(..ps) @-> _)@Some(value@body) =
+    _<- (){LlvmFn(next= 0, instrs= /Data/List/Nil, aux= LlvmAux(locals= llvmParamLocals(args= args), externs= /Data/List/Nil, strings= 0, calls= /Data/List/Nil))}
     retOp<- llvmOperand(f(..ps)= body(..ps))
     _<- llvmEmit(line= llvmRet(o= retOp))
     bodyLines<- llvmLines
 
     fnExterns<- llvmFnExterns
-    _<- llvmAddFunction(text= llvmDefine(ret= llvmOperandType(o= retOp), name= "main", body= /Data/List/Cons(head= "entry:", tail= bodyLines)), needs= fnExterns)
+
+    fnCalls<- llvmFnCalls
+    _<- llvmAddFunction(name= name, text= llvmDefine(ret= llvmOperandType(o= retOp), name= name, params= llvmParamsText(args= args), body= /Data/List/Cons(head= "entry:", tail= bodyLines)), needs= fnExterns, calls= fnCalls)
     ()
-  llvmFunction{LlvmProgram(todo, functions, externs)}(fun) | (fun(..ps) @-> _)@Nothing =
-    _<- llvmAddFunction(text= llvmDefine(ret= "i32", name= "main", body= ["entry:", "  ; TODO unsupported: a function with no definition", "  ret i32 0"]), needs= /Data/List/Nil)
+  llvmFunction{LlvmProgram(todo, done, functions, externs)}(item= LlvmTodo(fun, name, args)) | (fun(..ps) @-> _)@Nothing =
+    _<- llvmAddFunction(name= name, text= llvmDefine(ret= "i32", name= name, params= llvmParamsText(args= args), body= ["entry:", "  ; TODO unsupported: a function with no definition", "  ret i32 0"]), needs= /Data/List/Nil, calls= /Data/List/Nil)
+    ()
+  llvmFunction{LlvmProgram(todo, done, functions, externs)}(item= LlvmTodo(fun, name, args)) else  =
+    _<- llvmAddFunction(name= name, text= llvmDefine(ret= "i32", name= name, params= llvmParamsText(args= args), body= ["entry:", "  ; TODO unsupported: a function of several definitions", "  ret i32 0"]), needs= /Data/List/Nil, calls= /Data/List/Nil)
     ()
 
   # ## Compiling an expression
-  llvmOperand{LlvmFn(next, lines, aux)}(f(..ps) -> _) -> /Context..(value -> Operand.., ctx -> (llvmfn -> LlvmFn..))
+  llvmOperand{LlvmFn(next, instrs, aux)}(f(..ps) -> _) -> /Context..(value -> Operand.., ctx -> (llvmfn -> LlvmFn..))
     # [llvmOperand] compiles the body of [f], a function of whatever parameters [ps] it has, writing
       the instructions computing it in the function's lines, and answers with the [Operand] holding
       its value. Its arms are chosen by the body of [f]: each compiles one shape of expression, and
       compiles the parts of the shape by [llvmOperand] in turn.
-  llvmOperand{LlvmFn(next, lines, aux)}(f(..ps) -> _) else = (Operand(type= I32, repr= "undef")){LlvmFn(next= next, lines= /Data/List/Cons(head= "  ; TODO unsupported: an expression no arm of llvmOperand compiles", tail= lines), aux= aux)}
-    # An expression no other arm compiles is written as a TODO line, and its value is undefined.
-    # TODO An expression that cannot be compiled should fail the build rather than be written as a
-    #   TODO, once every integration fixture compiles.
+  llvmOperand{LlvmFn(next, instrs, aux)}(f(..ps) -> _) else  =
+    callOp<- llvmCall(f(..ps)= f(..ps))
+    callOp
 
   # ### Constants and parameters
-  llvmOperand{LlvmFn(next, lines, aux)}(f(..ps)= (k :: Integer))= (Operand(type= I64, repr= k.toString)){LlvmFn(next= next, lines= lines, aux= aux)}
+  llvmOperand{LlvmFn(next, instrs, aux)}(f(..ps)= (k :: Integer))= (Operand(type= I64, repr= k.toString)){LlvmFn(next= next, instrs= instrs, aux= aux)}
     # An [Integer] is an @i64@ constant, which needs no instruction.
-  llvmOperand{LlvmFn(next, lines, aux)}(f(..ps)= (k :: Float))= (Operand(type= F64, repr= k.toString)){LlvmFn(next= next, lines= lines, aux= aux)}
+  llvmOperand{LlvmFn(next, instrs, aux)}(f(..ps)= (k :: Float))= (Operand(type= F64, repr= k.toString)){LlvmFn(next= next, instrs= instrs, aux= aux)}
     # A [Float] is a @double@ constant.
     # TODO A double that a decimal does not write exactly (@0.1@) is written in LLVM's hexadecimal
     #   form instead.
-  llvmOperand{LlvmFn(next, lines, aux= LlvmAux(locals, externs, strings))}(f(${p}, ..ps)= ${p})= (llvmParamValue(found= llvmFindLocal(locals= locals, name= p), name= p)){LlvmFn(next= next, lines= lines, aux= LlvmAux(locals= locals, externs= externs, strings= strings))}
+  llvmOperand{LlvmFn(next, instrs, aux= LlvmAux(locals, externs, strings, calls))}(f(${p}, ..ps)= ${p})= (llvmParamValue(found= llvmFindLocal(locals= locals, name= p), name= p)){LlvmFn(next= next, instrs= instrs, aux= LlvmAux(locals= locals, externs= externs, strings= strings, calls= calls))}
     # A parameter [p] of the function is what the function has bound it to, or else the register
       of the same name.
     # TODO A parameter is typed as the function's callers give it, once functions are compiled for
@@ -114,56 +129,56 @@ module(LLVM)
     #   (@/ContextIn(value= llvmBinary(op, a(..ps)= a(..ps), b(..ps)= b(..ps)), ctx)@) makes inference
     #   of the core component run past 15 minutes, where these binds take seconds; each arm repeats
     #   them until that is found.
-  llvmOperand{LlvmFn(next, lines, aux)}(f(..ps)= a(..ps) + b(..ps)) =
+  llvmOperand{LlvmFn(next, instrs, aux)}(f(..ps)= a(..ps) + b(..ps)) =
     leftOp<- llvmOperand(f(..ps)= a(..ps))
 
     rightOp<- llvmOperand(f(..ps)= b(..ps))
 
     instrOp<- llvmInstr(op= LlvmArith(int= "add", float= "fadd"), l= leftOp, r= rightOp)
     instrOp
-  llvmOperand{LlvmFn(next, lines, aux)}(f(..ps)= a(..ps) - b(..ps)) =
+  llvmOperand{LlvmFn(next, instrs, aux)}(f(..ps)= a(..ps) - b(..ps)) =
     leftOp<- llvmOperand(f(..ps)= a(..ps))
 
     rightOp<- llvmOperand(f(..ps)= b(..ps))
 
     instrOp<- llvmInstr(op= LlvmArith(int= "sub", float= "fsub"), l= leftOp, r= rightOp)
     instrOp
-  llvmOperand{LlvmFn(next, lines, aux)}(f(..ps)= a(..ps) * b(..ps)) =
+  llvmOperand{LlvmFn(next, instrs, aux)}(f(..ps)= a(..ps) * b(..ps)) =
     leftOp<- llvmOperand(f(..ps)= a(..ps))
 
     rightOp<- llvmOperand(f(..ps)= b(..ps))
 
     instrOp<- llvmInstr(op= LlvmArith(int= "mul", float= "fmul"), l= leftOp, r= rightOp)
     instrOp
-  llvmOperand{LlvmFn(next, lines, aux)}(f(..ps)= a(..ps) < b(..ps)) =
+  llvmOperand{LlvmFn(next, instrs, aux)}(f(..ps)= a(..ps) < b(..ps)) =
     leftOp<- llvmOperand(f(..ps)= a(..ps))
 
     rightOp<- llvmOperand(f(..ps)= b(..ps))
 
     instrOp<- llvmInstr(op= LlvmCompare(int= "icmp slt", float= "fcmp olt"), l= leftOp, r= rightOp)
     instrOp
-  llvmOperand{LlvmFn(next, lines, aux)}(f(..ps)= a(..ps) > b(..ps)) =
+  llvmOperand{LlvmFn(next, instrs, aux)}(f(..ps)= a(..ps) > b(..ps)) =
     leftOp<- llvmOperand(f(..ps)= a(..ps))
 
     rightOp<- llvmOperand(f(..ps)= b(..ps))
 
     instrOp<- llvmInstr(op= LlvmCompare(int= "icmp sgt", float= "fcmp ogt"), l= leftOp, r= rightOp)
     instrOp
-  llvmOperand{LlvmFn(next, lines, aux)}(f(..ps)= a(..ps) <= b(..ps)) =
+  llvmOperand{LlvmFn(next, instrs, aux)}(f(..ps)= a(..ps) <= b(..ps)) =
     leftOp<- llvmOperand(f(..ps)= a(..ps))
 
     rightOp<- llvmOperand(f(..ps)= b(..ps))
 
     instrOp<- llvmInstr(op= LlvmCompare(int= "icmp sle", float= "fcmp ole"), l= leftOp, r= rightOp)
     instrOp
-  llvmOperand{LlvmFn(next, lines, aux)}(f(..ps)= a(..ps) >= b(..ps)) =
+  llvmOperand{LlvmFn(next, instrs, aux)}(f(..ps)= a(..ps) >= b(..ps)) =
     leftOp<- llvmOperand(f(..ps)= a(..ps))
 
     rightOp<- llvmOperand(f(..ps)= b(..ps))
 
     instrOp<- llvmInstr(op= LlvmCompare(int= "icmp sge", float= "fcmp oge"), l= leftOp, r= rightOp)
     instrOp
-  llvmOperand{LlvmFn(next, lines, aux)}(f(..ps)= a(..ps) == b(..ps)) =
+  llvmOperand{LlvmFn(next, instrs, aux)}(f(..ps)= a(..ps) == b(..ps)) =
     leftOp<- llvmOperand(f(..ps)= a(..ps))
 
     rightOp<- llvmOperand(f(..ps)= b(..ps))
@@ -179,44 +194,90 @@ module(LLVM)
     each name its pattern binds is a read of a field of one of them ([/Catln/FieldOf]). The
     continuation's parameter is bound to a [Context] holding what the expression compiled to, so the
     names it binds read that.
-  llvmOperand{LlvmFn(next, lines, aux)}(f(..ps)= /Data/bindap(m= /ContextIn(value= e(..ps), ctx= s(..ps)), fn(v)= ${cont}(${argKey}= v, ..cargs))) | (${cont}(..ps) @-> _)@Some(value@contBody) =
+  llvmOperand{LlvmFn(next, instrs, aux)}(f(..ps)= /Data/bindap(m= /ContextIn(value= e(..ps), ctx= s(..ps)), fn(v)= ${cont}(${argKey}= v, ..cargs))) | (${cont}(..ps) @-> _)@Some(value@contBody) =
     boundOp<- llvmOperand(f(..ps)= e(..ps))
     _<- llvmBindLocal(name= argKey, val= LlvmContextVal(value= boundOp))
     restOp<- llvmOperand(f(..ps)= contBody(..ps))
     restOp
-  llvmOperand{LlvmFn(next, lines, aux= LlvmAux(locals, externs, strings))}(f(${p}, ..ps)= /Catln/FieldOf(this= ${p}, field= "value"))= (llvmContextValue(found= llvmFindLocal(locals= locals, name= p))){LlvmFn(next= next, lines= lines, aux= LlvmAux(locals= locals, externs= externs, strings= strings))}
+  llvmOperand{LlvmFn(next, instrs, aux= LlvmAux(locals, externs, strings, calls))}(f(${p}, ..ps)= /Catln/FieldOf(this= ${p}, field= "value"))= (llvmContextValue(found= llvmFindLocal(locals= locals, name= p))){LlvmFn(next= next, instrs= instrs, aux= LlvmAux(locals= locals, externs= externs, strings= strings, calls= calls))}
     # The value of a [Context] a parameter is bound to.
-  llvmOperand{LlvmFn(next, lines, aux)}(f(..ps)= /Context(value= a(..ps), ctx= c(..ps))) =
+  llvmOperand{LlvmFn(next, instrs, aux)}(f(..ps)= /Context(value= a(..ps), ctx= c(..ps))) =
     valueOp<- llvmOperand(f(..ps)= a(..ps))
     valueOp
-  llvmOperand{LlvmFn(next, lines, aux)}(f(..ps)= ())= (Operand(type= I32, repr= "0")){LlvmFn(next= next, lines= lines, aux= aux)}
+  llvmOperand{LlvmFn(next, instrs, aux)}(f(..ps)= ())= (Operand(type= I32, repr= "0")){LlvmFn(next= next, instrs= instrs, aux= aux)}
     # The empty tuple, which a body that only does something answers with.
     # TODO The empty tuple is an @i32@ 0, as the value a @main@ returns; it is no value at all.
+
+  # ### Calls
+    A call of a function with a definition is compiled as a call of the function, which is added
+    to those the program still compiles ([llvmCallFn]). Each argument is compiled in turn
+    ([llvmArgs]), and the call is of the type the body it is in is of there. A body no arm compiles
+    is written as a TODO line, and its value is undefined.
+    # TODO An expression that cannot be compiled should fail the build rather than be written as a
+    #   TODO, once every integration fixture compiles.
+  llvmCall{LlvmFn(next, instrs, aux)}(f(..ps) -> _) -> /Context..(value -> Operand.., ctx -> (llvmfn -> LlvmFn..))
+    # [llvmCall] compiles the body of [f] as a call, of the type the body is of.
+  llvmCall{LlvmFn(next, instrs, aux)}(f(..ps)= (c(..ps) :: Integer)) =
+    callOp<- llvmCallTyped(type= I64, f(..ps)= c(..ps))
+    callOp
+  llvmCall{LlvmFn(next, instrs, aux)}(f(..ps)= (c(..ps) :: Float)) =
+    callOp<- llvmCallTyped(type= F64, f(..ps)= c(..ps))
+    callOp
+  llvmCall{LlvmFn(next, instrs, aux)}(f(..ps)= (c(..ps) :: Boolean)) =
+    callOp<- llvmCallTyped(type= I1, f(..ps)= c(..ps))
+    callOp
+  llvmCall{LlvmFn(next, instrs, aux)}(f(..ps) -> _) else = (Operand(type= I32, repr= "undef")){LlvmFn(next= next, instrs= /Data/List/Cons(head= "  ; TODO unsupported: an expression no arm of llvmOperand compiles", tail= instrs), aux= aux)}
+
+  llvmCallTyped{LlvmFn(next, instrs, aux)}(type -> LlvmType, f(..ps) -> _) -> /Context..(value -> Operand.., ctx -> (llvmfn -> LlvmFn..))
+    # [llvmCallTyped] compiles the body of [f], a call of a function of one definition, as a call
+      answering a [type].
+  llvmCallTyped{LlvmFn(next, instrs, aux)}(type, f(..ps)= ${fun}(..args)) | (${fun}(..ps) @-> _)@Some(value@calleeBody) =
+    argOps<- llvmArgs(f(..ps)= ${fun}(..args))
+
+    callOp<- llvmCallFn(fun= fun, type= type, args= argOps)
+    callOp
+  llvmCallTyped{LlvmFn(next, instrs, aux)}(type, f(..ps) -> _) else = (Operand(type= I32, repr= "undef")){LlvmFn(next= next, instrs= /Data/List/Cons(head= "  ; TODO unsupported: a call of a function that has no one definition", tail= instrs), aux= aux)}
+    # TODO A function of several definitions is compiled as the choice between them.
+
+  llvmArgs{LlvmFn(next, instrs, aux)}(f(..ps) -> _) -> /Context..(value -> /Data/List/ConsList[$T -> LlvmArg..], ctx -> (llvmfn -> LlvmFn..))
+    # [llvmArgs] compiles each argument of the call that is the body of [f], and answers with them.
+      The arguments after the first are compiled first.
+  llvmArgs{LlvmFn(next, instrs, aux)}(f(..ps)= ${fun}(${k}= a(..ps), ..rest)) =
+    moreArgs<- llvmArgs(f(..ps)= ${fun}(..rest))
+
+    argOp<- llvmOperand(f(..ps)= a(..ps))
+
+    /Data/List/Cons(head= LlvmArg(name= k, op= argOp), tail= moreArgs)
+  llvmArgs{LlvmFn(next, instrs, aux)}(f(..ps)= ${fun})= (/Data/List/Nil){LlvmFn(next= next, instrs= instrs, aux= aux)}
+
+  llvmCallFn{LlvmFn(next, instrs, aux= LlvmAux(locals, externs, strings, calls))}(fun, type -> LlvmType, args -> /Data/List/ConsList[$T -> LlvmArg..])= (Operand(type= type, repr= "%r" ++ next.toString)){LlvmFn(next= next + 1, instrs= /Data/List/Cons(head= "  %r" ++ next.toString ++ " = call " ++ llvmTypeText(t= type) ++ " " ++ llvmGlobalName(name= /Catln/nameText(value= fun)) ++ "(" ++ llvmArgsText(args= args) ++ ")", tail= instrs), aux= LlvmAux(locals= locals, externs= externs, strings= strings, calls= /Data/List/Cons(head= LlvmTodo(fun= fun, name= /Catln/nameText(value= fun), args= args), tail= calls)))}
+    # [llvmCallFn] writes a call of [fun] given [args], answering a [type], into a fresh register,
+      and notes that [fun] is to be compiled for them.
 
   # ### Input and output
     [exit] and [println] are calls of C's @exit@ and @puts@, declared once in the module. A message
     is a constant of the module, so only one written in the program is printed for now.
-  llvmOperand{LlvmFn(next, lines, aux)}(f(..ps)= /Catln/exit(val= a(..ps))) =
+  llvmOperand{LlvmFn(next, instrs, aux)}(f(..ps)= /Catln/exit(val= a(..ps))) =
     exitOp<- llvmOperand(f(..ps)= a(..ps))
 
     narrowOp<- llvmNarrow(o= exitOp)
     _<- llvmExtern(line= "declare void @exit(i32)")
     _<- llvmEmit(line= "  call void @exit(" ++ llvmOperandText(o= narrowOp) ++ ")")
     Operand(type= I32, repr= "0")
-  llvmOperand{LlvmFn(next, lines, aux)}(f(..ps)= /Catln/println(msg= (text :: String))) =
+  llvmOperand{LlvmFn(next, instrs, aux)}(f(..ps)= /Catln/println(msg= (text :: String))) =
     _<- llvmExtern(line= "declare i32 @puts(ptr)")
     strName<- llvmString(text= text)
     _<- llvmEmit(line= "  call i32 @puts(ptr " ++ strName ++ ")")
     Operand(type= I32, repr= "0")
 
-  llvmInstr{LlvmFn(next, lines, aux)}(op -> LlvmBinOp, l -> Operand.., r -> Operand..) -> /Context..(value -> Operand.., ctx -> (llvmfn -> LlvmFn..))
+  llvmInstr{LlvmFn(next, instrs, aux)}(op -> LlvmBinOp, l -> Operand.., r -> Operand..) -> /Context..(value -> Operand.., ctx -> (llvmfn -> LlvmFn..))
     # [llvmInstr] writes the instruction [op] of the operands [l] and [r] into a fresh register, and
       answers with it: an arithmetic one is of the operands' type, and a comparison is an @i1@.
-  llvmInstr{LlvmFn(next, lines, aux)}(op= LlvmArith(int, float), l= Operand(type= I64, repr@lv), r= Operand(type= I64, repr@rv))= (Operand(type= I64, repr= "%r" ++ next.toString)){LlvmFn(next= next + 1, lines= /Data/List/Cons(head= "  %r" ++ next.toString ++ " = " ++ int ++ " i64 " ++ lv ++ ", " ++ rv, tail= lines), aux= aux)}
-  llvmInstr{LlvmFn(next, lines, aux)}(op= LlvmArith(int, float), l= Operand(type= F64, repr@lv), r= Operand(type= F64, repr@rv))= (Operand(type= F64, repr= "%r" ++ next.toString)){LlvmFn(next= next + 1, lines= /Data/List/Cons(head= "  %r" ++ next.toString ++ " = " ++ float ++ " double " ++ lv ++ ", " ++ rv, tail= lines), aux= aux)}
-  llvmInstr{LlvmFn(next, lines, aux)}(op= LlvmCompare(int, float), l= Operand(type= I64, repr@lv), r= Operand(type= I64, repr@rv))= (Operand(type= I1, repr= "%r" ++ next.toString)){LlvmFn(next= next + 1, lines= /Data/List/Cons(head= "  %r" ++ next.toString ++ " = " ++ int ++ " i64 " ++ lv ++ ", " ++ rv, tail= lines), aux= aux)}
-  llvmInstr{LlvmFn(next, lines, aux)}(op= LlvmCompare(int, float), l= Operand(type= F64, repr@lv), r= Operand(type= F64, repr@rv))= (Operand(type= I1, repr= "%r" ++ next.toString)){LlvmFn(next= next + 1, lines= /Data/List/Cons(head= "  %r" ++ next.toString ++ " = " ++ float ++ " double " ++ lv ++ ", " ++ rv, tail= lines), aux= aux)}
-  llvmInstr{LlvmFn(next, lines, aux)}(op, l, r) else = (Operand(type= I32, repr= "undef")){LlvmFn(next= next, lines= /Data/List/Cons(head= "  ; TODO unsupported: an operator of operands of different types", tail= lines), aux= aux)}
+  llvmInstr{LlvmFn(next, instrs, aux)}(op= LlvmArith(int, float), l= Operand(type= I64, repr@lv), r= Operand(type= I64, repr@rv))= (Operand(type= I64, repr= "%r" ++ next.toString)){LlvmFn(next= next + 1, instrs= /Data/List/Cons(head= "  %r" ++ next.toString ++ " = " ++ int ++ " i64 " ++ lv ++ ", " ++ rv, tail= instrs), aux= aux)}
+  llvmInstr{LlvmFn(next, instrs, aux)}(op= LlvmArith(int, float), l= Operand(type= F64, repr@lv), r= Operand(type= F64, repr@rv))= (Operand(type= F64, repr= "%r" ++ next.toString)){LlvmFn(next= next + 1, instrs= /Data/List/Cons(head= "  %r" ++ next.toString ++ " = " ++ float ++ " double " ++ lv ++ ", " ++ rv, tail= instrs), aux= aux)}
+  llvmInstr{LlvmFn(next, instrs, aux)}(op= LlvmCompare(int, float), l= Operand(type= I64, repr@lv), r= Operand(type= I64, repr@rv))= (Operand(type= I1, repr= "%r" ++ next.toString)){LlvmFn(next= next + 1, instrs= /Data/List/Cons(head= "  %r" ++ next.toString ++ " = " ++ int ++ " i64 " ++ lv ++ ", " ++ rv, tail= instrs), aux= aux)}
+  llvmInstr{LlvmFn(next, instrs, aux)}(op= LlvmCompare(int, float), l= Operand(type= F64, repr@lv), r= Operand(type= F64, repr@rv))= (Operand(type= I1, repr= "%r" ++ next.toString)){LlvmFn(next= next + 1, instrs= /Data/List/Cons(head= "  %r" ++ next.toString ++ " = " ++ float ++ " double " ++ lv ++ ", " ++ rv, tail= instrs), aux= aux)}
+  llvmInstr{LlvmFn(next, instrs, aux)}(op, l, r) else = (Operand(type= I32, repr= "undef")){LlvmFn(next= next, instrs= /Data/List/Cons(head= "  ; TODO unsupported: an operator of operands of different types", tail= instrs), aux= aux)}
     # TODO Operands of different types are converted to one type, or refused.
 
   data(LlvmArith(int -> String, float -> String))
@@ -256,9 +317,21 @@ module(LLVM)
   llvmRet(o= Operand(type, repr))= "  ret " ++ llvmTypeText(t= type) ++ " " ++ repr
     # [llvmRet] is the instruction returning the operand [o].
 
-  llvmAddFunction{LlvmProgram(todo, functions, externs)}(text -> String, needs -> /Data/List/ConsList[$T -> String])= (){LlvmProgram(todo= todo, functions= /Data/List/Cons(head= text, tail= functions), externs= llvmAddNew(lines= needs, into= externs))}
-    # [llvmAddFunction] adds the compiled function [text] to the program, and the externs it
-      [needs] that the program does not have yet.
+  llvmAddFunction{LlvmProgram(todo, done, functions, externs)}(name -> String, text -> String, needs -> /Data/List/ConsList[$T -> String], calls -> /Data/List/ConsList[$T -> LlvmTodo..])= (){LlvmProgram(todo= llvmTodoAfter(todo= todo, calls= calls), done= /Data/List/Cons(head= name, tail= done), functions= /Data/List/Cons(head= text, tail= functions), externs= llvmAddNew(lines= needs, into= externs))}
+    # [llvmAddFunction] adds the compiled function [text] to the program as [name], done, the
+      externs it [needs] that the program does not have yet, and the functions it [calls] to those
+      still to compile.
+
+  llvmTodoAfter(todo -> /Data/List/ConsList[$T -> LlvmTodo..], calls -> /Data/List/ConsList[$T -> LlvmTodo..]) -> /Data/List/ConsList[$T -> LlvmTodo..]
+    # [llvmTodoAfter] is [todo] with each of [calls] after it, in the order they were made ([calls]
+      are the latest first).
+  llvmTodoAfter(todo, calls= /Data/List/Nil)= todo
+  llvmTodoAfter(todo, calls= /Data/List/Cons(head, tail))= llvmTodoAfter(todo= llvmTodoAppend(todo= todo, item= head), calls= tail)
+
+  llvmTodoAppend(todo -> /Data/List/ConsList[$T -> LlvmTodo..], item -> LlvmTodo..) -> /Data/List/ConsList[$T -> LlvmTodo..]
+    # [llvmTodoAppend] is [todo] with [item] at its end.
+  llvmTodoAppend(todo= /Data/List/Nil, item)= [item]
+  llvmTodoAppend(todo= /Data/List/Cons(head, tail), item)= /Data/List/Cons(head= head, tail= llvmTodoAppend(todo= tail, item= item))
 
   llvmParamValue(found= Operand(type, repr), name)= Operand(type= type, repr= repr)
     # [llvmParamValue] is the operand a parameter [name] is: what it was [found] bound to, or the
@@ -271,23 +344,23 @@ module(LLVM)
   llvmContextValue(found) else = Operand(type= I32, repr= "undef")
     # TODO A field read of a name not bound to a [Context] fails the build.
 
-  llvmNarrow{LlvmFn(next, lines, aux)}(o -> Operand..) -> /Context..(value -> Operand.., ctx -> (llvmfn -> LlvmFn..))
+  llvmNarrow{LlvmFn(next, instrs, aux)}(o -> Operand..) -> /Context..(value -> Operand.., ctx -> (llvmfn -> LlvmFn..))
     # [llvmNarrow] is the operand [o] as an @i32@, the exit code C's @exit@ takes.
-  llvmNarrow{LlvmFn(next, lines, aux)}(o= Operand(type= I64, repr))= (Operand(type= I32, repr= "%r" ++ next.toString)){LlvmFn(next= next + 1, lines= /Data/List/Cons(head= "  %r" ++ next.toString ++ " = trunc i64 " ++ repr ++ " to i32", tail= lines), aux= aux)}
-  llvmNarrow{LlvmFn(next, lines, aux)}(o= Operand(type= I32, repr))= (Operand(type= I32, repr= repr)){LlvmFn(next= next, lines= lines, aux= aux)}
-  llvmNarrow{LlvmFn(next, lines, aux)}(o) else = (Operand(type= I32, repr= "undef")){LlvmFn(next= next, lines= /Data/List/Cons(head= "  ; TODO unsupported: an exit code that is not an integer", tail= lines), aux= aux)}
+  llvmNarrow{LlvmFn(next, instrs, aux)}(o= Operand(type= I64, repr))= (Operand(type= I32, repr= "%r" ++ next.toString)){LlvmFn(next= next + 1, instrs= /Data/List/Cons(head= "  %r" ++ next.toString ++ " = trunc i64 " ++ repr ++ " to i32", tail= instrs), aux= aux)}
+  llvmNarrow{LlvmFn(next, instrs, aux)}(o= Operand(type= I32, repr))= (Operand(type= I32, repr= repr)){LlvmFn(next= next, instrs= instrs, aux= aux)}
+  llvmNarrow{LlvmFn(next, instrs, aux)}(o) else = (Operand(type= I32, repr= "undef")){LlvmFn(next= next, instrs= /Data/List/Cons(head= "  ; TODO unsupported: an exit code that is not an integer", tail= instrs), aux= aux)}
 
   llvmOperandText(o= Operand(type, repr))= llvmTypeText(t= type) ++ " " ++ repr
     # [llvmOperandText] is the operand [o] as an instruction is given it, its type and its text.
 
   # ## Compiling a function
-  llvmEmit{LlvmFn(next, lines, aux)}(line -> String)= (){LlvmFn(next= next, lines= /Data/List/Cons(head= line, tail= lines), aux= aux)}
+  llvmEmit{LlvmFn(next, instrs, aux)}(line -> String)= (){LlvmFn(next= next, instrs= /Data/List/Cons(head= line, tail= instrs), aux= aux)}
     # [llvmEmit] writes the [line] at the end of the function's body.
 
-  llvmLines{LlvmFn(next, lines, aux)}= (llvmReversed(lines= lines, acc= /Data/List/Nil)){LlvmFn(next= next, lines= lines, aux= aux)}
+  llvmLines{LlvmFn(next, instrs, aux)}= (llvmReversed(lines= instrs, acc= /Data/List/Nil)){LlvmFn(next= next, instrs= instrs, aux= aux)}
     # [llvmLines] are the lines of the function's body, in the order they were written.
 
-  llvmBindLocal{LlvmFn(next, lines, aux= LlvmAux(locals, externs, strings))}(name -> String, val -> LlvmVal)= (){LlvmFn(next= next, lines= lines, aux= LlvmAux(locals= /Data/List/Cons(head= LlvmLocal(name= name, val= val), tail= locals), externs= externs, strings= strings))}
+  llvmBindLocal{LlvmFn(next, instrs, aux= LlvmAux(locals, externs, strings, calls))}(name -> String, val -> LlvmVal)= (){LlvmFn(next= next, instrs= instrs, aux= LlvmAux(locals= /Data/List/Cons(head= LlvmLocal(name= name, val= val), tail= locals), externs= externs, strings= strings, calls= calls))}
     # [llvmBindLocal] binds the name [name] to [val] in the function being compiled.
 
   llvmFindLocal(locals -> /Data/List/ConsList[$T -> LlvmLocal..], name -> String) -> LlvmFound
@@ -297,15 +370,45 @@ module(LLVM)
   llvmFindLocal(locals= /Data/List/Cons(head= LlvmLocal(name@bound, val), tail), name) | bound == name= val
   llvmFindLocal(locals= /Data/List/Cons(head= LlvmLocal(name@bound, val), tail), name) else = llvmFindLocal(locals= tail, name= name)
 
-  llvmExtern{LlvmFn(next, lines, aux= LlvmAux(locals, externs, strings))}(line -> String)= (){LlvmFn(next= next, lines= lines, aux= LlvmAux(locals= locals, externs= llvmAddNew(lines= [line], into= externs), strings= strings))}
+  llvmExtern{LlvmFn(next, instrs, aux= LlvmAux(locals, externs, strings, calls))}(line -> String)= (){LlvmFn(next= next, instrs= instrs, aux= LlvmAux(locals= locals, externs= llvmAddNew(lines= [line], into= externs), strings= strings, calls= calls))}
     # [llvmExtern] notes that the function needs the line [line] of the module, a declaration or a
       constant, once.
 
-  llvmString{LlvmFn(next, lines, aux= LlvmAux(locals, externs, strings))}(text -> String)= ("@.str" ++ strings.toString){LlvmFn(next= next, lines= lines, aux= LlvmAux(locals= locals, externs= /Data/List/Cons(head= llvmStringConstant(name= "@.str" ++ strings.toString, text= text), tail= externs), strings= strings + 1))}
+  llvmString{LlvmFn(next, instrs, aux= LlvmAux(locals, externs, strings, calls))}(text -> String)= ("@.str" ++ strings.toString){LlvmFn(next= next, instrs= instrs, aux= LlvmAux(locals= locals, externs= /Data/List/Cons(head= llvmStringConstant(name= "@.str" ++ strings.toString, text= text), tail= externs), strings= strings + 1, calls= calls))}
     # [llvmString] names a constant holding the [text], a C string, and answers with its name.
     # TODO Strings are named per function, so two functions each naming one name the same constant.
 
-  llvmFnExterns{LlvmFn(next, lines, aux= LlvmAux(locals, externs, strings))}= (externs){LlvmFn(next= next, lines= lines, aux= LlvmAux(locals= locals, externs= externs, strings= strings))}
+  llvmFnCalls{LlvmFn(next, instrs, aux= LlvmAux(locals, externs, strings, calls))}= (calls){LlvmFn(next= next, instrs= instrs, aux= LlvmAux(locals= locals, externs= externs, strings= strings, calls= calls))}
+    # [llvmFnCalls] are the functions the function being compiled calls.
+
+  llvmParamLocals(args) -> /Data/List/ConsList[$T -> LlvmLocal..]
+  llvmParamLocals(args= /Data/List/Nil)= /Data/List/Nil
+    # [llvmParamLocals] binds each parameter a function is given ([args]) to the register of its
+      name, of the type its argument is.
+  llvmParamLocals(args= /Data/List/Cons(head= LlvmArg(name, op= Operand(type, repr)), tail))= /Data/List/Cons(head= LlvmLocal(name= name, val= Operand(type= type, repr= "%" ++ name)), tail= llvmParamLocals(args= tail))
+  llvmParamLocals(args) else = /Data/List/Nil
+
+  llvmParamsText(args) -> String
+  llvmParamsText(args= /Data/List/Nil)= ""
+    # [llvmParamsText] is the parameters of a function given [args], as its definition writes them.
+  llvmParamsText(args= /Data/List/Cons(head= LlvmArg(name, op= Operand(type, repr)), tail= /Data/List/Nil))= llvmTypeText(t= type) ++ " %" ++ name
+  llvmParamsText(args= /Data/List/Cons(head= LlvmArg(name, op= Operand(type, repr)), tail= /Data/List/Cons(head@next, tail@rest)))= llvmTypeText(t= type) ++ " %" ++ name ++ ", " ++ llvmParamsText(args= /Data/List/Cons(head= next, tail= rest))
+  llvmParamsText(args) else = ""
+
+  llvmArgsText(args) -> String
+  llvmArgsText(args= /Data/List/Nil)= ""
+    # [llvmArgsText] is the arguments of a call, as the call writes them.
+  llvmArgsText(args= /Data/List/Cons(head= LlvmArg(name, op), tail= /Data/List/Nil))= llvmOperandText(o= op)
+  llvmArgsText(args= /Data/List/Cons(head= LlvmArg(name, op), tail= /Data/List/Cons(head@next, tail@rest)))= llvmOperandText(o= op) ++ ", " ++ llvmArgsText(args= /Data/List/Cons(head= next, tail= rest))
+  llvmArgsText(args) else = ""
+
+  llvmGlobalName(name -> String) -> String
+    # [llvmGlobalName] is the name of the function compiled as [name] in the module: @main@ for the
+      program's entry, and every other quoted, as a name of a module holds its slashes.
+  llvmGlobalName(name) | name == "main"= "@main"
+  llvmGlobalName(name) else = "@\"" ++ name ++ "\""
+
+  llvmFnExterns{LlvmFn(next, instrs, aux= LlvmAux(locals, externs, strings, calls))}= (externs){LlvmFn(next= next, instrs= instrs, aux= LlvmAux(locals= locals, externs= externs, strings= strings, calls= calls))}
     # [llvmFnExterns] are the externs the function being compiled needs.
 
   llvmStringConstant(name -> String, text -> String) -> String
@@ -349,13 +452,13 @@ module(LLVM)
   llvmModule(functions, externs= /Data/List/Nil)= "; ModuleID = 'catln'\n\n" ++ join(sep= "\n", parts= llvmReversed(lines= functions, acc= /Data/List/Nil))
   llvmModule(functions, externs= /Data/List/Cons(head, tail))= "; ModuleID = 'catln'\n\n" ++ join(sep= "\n", parts= llvmReversed(lines= /Data/List/Cons(head= head, tail= tail), acc= /Data/List/Nil)) ++ "\n\n" ++ join(sep= "\n", parts= llvmReversed(lines= functions, acc= /Data/List/Nil))
 
-  llvmDefine(ret -> String, name -> String, body -> /Data/List/ConsList[$T -> String]) -> String
-    # [llvmDefine] is the definition of the function [name], taking no arguments and returning a
-      [ret]. Its [body] is the lines of its basic blocks, each label and instruction written as it
-      appears in the function.
-  llvmDefine(ret, name, body)= join(sep= "\n", parts= /Data/List/Cons(head= "define " ++ ret ++ " @" ++ name ++ "() {", tail= body)) ++ "\n}\n"
+  llvmDefine(ret -> String, name -> String, params -> String, body -> /Data/List/ConsList[$T -> String]) -> String
+    # [llvmDefine] is the definition of the function compiled as [name] ([llvmGlobalName]), taking
+      the [params] and returning a [ret]. Its [body] is the lines of its basic blocks, each label and
+      instruction written as it appears in the function.
+  llvmDefine(ret, name, params, body)= join(sep= "\n", parts= /Data/List/Cons(head= "define " ++ ret ++ " " ++ llvmGlobalName(name= name) ++ "(" ++ params ++ ") {", tail= body)) ++ "\n}\n"
 
-  > llvmModule(functions= [llvmDefine(ret= "i32", name= "main", body= ["entry:", "  ret i32 0"])], externs= /Data/List/Nil)
+  > llvmModule(functions= [llvmDefine(ret= "i32", name= "main", params= "", body= ["entry:", "  ret i32 0"])], externs= /Data/List/Nil)
     >>> ; ModuleID = 'catln'
     >>>
     >>> define i32 @main() {
@@ -433,5 +536,30 @@ module(LLVM/Example)
     >>>   %r0 = trunc i64 3 to i32
     >>>   call void @exit(i32 %r0)
     >>>   ret i32 0
+    >>> }
+    >>>
+  llvmExTwice(n -> Integer) -> Integer
+    # [llvmExTwice] is [n] added to itself.
+  llvmExTwice(n)= n + n
+
+  llvmExCalls(x -> Integer) -> Integer
+    # [llvmExCalls] calls [llvmExTwice], which is compiled as a function of its own.
+  llvmExCalls(x)= llvmExTwice(n= x + 1) * 2
+
+  > llvmText(c= /LLVM/Example/llvmExCalls)
+    >>> ; ModuleID = 'catln'
+    >>>
+    >>> define i64 @main() {
+    >>> entry:
+    >>>   %r0 = add i64 %x, 1
+    >>>   %r1 = call i64 @"/LLVM/Example/llvmExTwice"(i64 %r0)
+    >>>   %r2 = mul i64 %r1, 2
+    >>>   ret i64 %r2
+    >>> }
+    >>>
+    >>> define i64 @"/LLVM/Example/llvmExTwice"(i64 %n) {
+    >>> entry:
+    >>>   %r0 = add i64 %n, %n
+    >>>   ret i64 %r0
     >>> }
     >>>

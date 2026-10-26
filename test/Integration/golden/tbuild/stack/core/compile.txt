@@ -36,6 +36,18 @@ Prgm
                     }
                 )
             ,
+                ( "/Catln/nameText"
+                , ObjectMapItem
+                    { omiDecls = []
+                    , omiRuntimeDecls =
+                        [ /Catln/nameText
+                            ( EAppArg { eaaArg = Value /value } ) -> ∀/Data/String
+                        ]
+                    , omiRefineDecls = []
+                    , omiDefs = []
+                    }
+                )
+            ,
                 ( "/Catln/Else"
                 , ObjectMapItem
                     { omiDecls = [ Value /Catln/Else ]
@@ -381,6 +393,7 @@ Prgm
         }
     , prgmCg =
         [ CGType
+        , CGType
         , CGType
         , CGType
         , CGType

@@ -145,6 +145,11 @@ module(Catln)
   (_ ?-> _) -> Boolean
     #runtime("arrExists")
 
+  nameText(value) -> String
+    # [nameText] is the name [value] is, a function written alone (@main@) or data without
+      arguments, written out in full with its module (@/main@).
+    #runtime("nameText")
+
   data(FieldOf(this, field -> String))
     # A [FieldOf] is a read of the [field] of the value [this], written where a definition binds a
       name to a part of what it is given. A guard asking for a definition whose parameters

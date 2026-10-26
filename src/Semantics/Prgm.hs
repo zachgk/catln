@@ -934,6 +934,9 @@ bodyPatternVarArgs = go
     go (TupleApply _ (_, be) arg) = H.unionWith (++) (go be) $ case arg of
       EAppArg ObjArr{oaObj=Just (Value _ kn), oaArr=Just (Just v, _)}
         | Just k <- keyVarName kn -> H.insertWith (++) (TVArg $ partialKey (makeAbsoluteName k)) [(Value (emptyMetaT strT) k, emptyMetaT strT)] (go v)
+      -- The spread of an open call (@${fun}(..rest)@) binds the arguments it matches.
+      EAppArg ObjArr{oaObj=Just (Value _ kn), oaArr=Just (Nothing, _)}
+        | isSpreadParamsName kn, isNothing (keyVarName kn) -> H.singleton (TVArg $ partialKey (makeAbsoluteName kn)) [(Value emptyMetaN kn, emptyMetaN)]
       EAppArg ObjArr{oaArr=Just (Just v, _)} -> go v
       EAppSpread a                           -> go a
       _                                      -> H.empty

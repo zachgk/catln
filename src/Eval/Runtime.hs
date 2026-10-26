@@ -286,6 +286,16 @@ ioReadLine = EIOPrim "ioReadLine" prim
     failed EndOfInput = TupleVal ctInputErrEndOfInput H.empty
     failed NoInput    = TupleVal ctInputErrNoInput H.empty
 
+-- | Backs @\/Catln\/nameText@: the name a value is given as, a function written alone (@main@) or
+-- data, which is what the compiler names what it compiles after.
+nameText :: EPrim
+nameText = EPrim "nameText" prim
+  where
+    prim args = case H.lookup "/value" args of
+      Just (TupleVal n _) -> Right (StrVal n)
+      Just v -> Left $ printf "nameText was given %s, which is not a name" (show v)
+      Nothing -> Left $ printf "nameText has no value argument, only %s" (show $ H.keys args)
+
 arrExists :: Op
 arrExists = ("arrExists", Right (MacroFunction macroBuild))
   where
@@ -457,5 +467,6 @@ primEnv = H.fromList [(mkName k, v) | (k, v) <- map mapPrim prims ++ macros]
             , floatFloor
             , floatCeil
             , intDiv
+            , nameText
             ]
     macros = [arrExists, contextMacro, callerPage, callerSource, typeOfMacro]
