@@ -20,7 +20,7 @@ import           CtService                  (ctssBaseFiles, getTPrgm,
 import           Data.Graph                 (graphFromEdges)
 import qualified Data.HashMap.Strict        as H
 import qualified Data.HashSet               as S
-import           Data.List                  (isInfixOf, sort)
+import           Data.List                  (isInfixOf, isPrefixOf, sort)
 import           Hedgehog
 import qualified Hedgehog.Gen               as HG
 import           MapMeta
@@ -226,6 +226,38 @@ testRefineNarrowsCall mk = testCase "a call is within every refinement covering 
         rs  -> error ("one result for " ++ show name ++ ", found " ++ show rs)
   assertBool ("onZ is within B: " ++ show (settledResultOf "/onZ")) (within "/onZ" (typeVal "/B"))
   assertBool ("onNat admits A and C: " ++ show (settledResultOf "/onNat")) (admits "/onNat" (typeVal "/A") && admits "/onNat" (typeVal "/C"))
+
+-- | A class conjunct implied by a sibling through a declared @isa@ edge is dropped wherever it
+-- sits in a formula. With @Maybe isa Functor@, @h@'s meet of a @Maybe@ with the @Functor@-bounded
+-- @$F@ is the @Maybe@ alone, and @f@'s bind continuations hold no @Functor@ atom, though their
+-- @fmap@ arm instantiates @$F[$T -> $_B]@ with the inner continuation's whole result inside the
+-- arms' union. Kept, the atom copied that result once more at every level of a nested bind chain,
+-- so a chain's types grew threefold per bind. Fixture: unit/impliedClassConjunct.ct.
+testImpliedClassConjunct :: MkService -> TestTree
+testImpliedClassConjunct mk = testCase "an implied class conjunct is dropped at any depth" $ do
+  res <- runCResT $ do
+    ctss <- lift $ mk ["test/Typecheck/unit/impliedClassConjunct.ct"]
+    getTPrgmJoined ctss
+  prgm <- case res of
+    CRes _ p -> return p
+    CErr ns  -> assertFailure (prettyCNotes ns) >> fail "did not type-check"
+  let results = [ (p, getMetaType m) | oa@ObjArr{oaArr=Just (_, m)} <- flatObjectMap (prgmObjMap prgm)
+                                      , let p = nameStr (oaObjPath oa), p == "/h" || "/f." `isPrefixOf` p ]
+  assertBool "h and f's continuations are in the program" (any ((== "/h") . fst) results && any (("/f." `isPrefixOf`) . fst) results)
+  let withFunctor = [ (p, t) | (p, t) <- results, "/Data/Functor" `elem` classAtomNames t ]
+  assertEqual (unlines [p ++ " :: " ++ show t | (p, t) <- withFunctor]) [] (map fst withFunctor)
+  where
+    classAtomNames :: Type -> [String]
+    classAtomNames (UnionType mTop leafs _) = maybe [] (\(ps, negs, _) -> predNames ps ++ leafNames negs) mTop ++ leafNames leafs
+    classAtomNames (TypeVar _ _ inner) = classAtomNames inner
+    leafNames = concatMap partialNames . splitUnionType
+    partialNames p = concatMap classAtomNames (H.elems (ptVars p) ++ H.elems (ptArgs p)) ++ predNames (ptPreds p)
+    predNames (PredsAnd ps)            = concatMap predNames ps
+    predNames (PredsNot p)             = predNames p
+    predNames (PredsOne (PredClass c)) = nameStr (ptName c) : partialNames c
+    predNames (PredsOne (PredRel r))   = partialNames r
+    predNames (PredsOne (PredExpr e))  = partialNames e
+    predNames (PredsOne _)             = []
 
 -- | A value predicate is decided against a known value shape through the type graph. @Nat_isZ@ is
 -- @Nat | $this.isZ == True@: on @Z@ it reaches only @True@, so @h@'s @Z@ is guaranteed within its
@@ -516,6 +548,7 @@ typecheckTests mk = do
     , testHoleArm mk
     , testFoldClassOp mk
     , testRefineNarrowsCall mk
+    , testImpliedClassConjunct mk
     , testRefineDecide mk
     , testRefineRuntime mk
     , testRefineOut mk

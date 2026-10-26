@@ -947,12 +947,10 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p ->
-                    ( TopType | PredClass /Data/Result
-                        [ /T=/Data/Primitive/Integer
-                        , /E=∀/Data/IntegerParseErr
-                        ] && PredClass /Catln/Doc/DShow
-                    ) =
+                { eaaArg = Value /p -> ∀/Data/Result
+                    [ /T=/Data/Primitive/Integer
+                    , /E=∀/Data/IntegerParseErr
+                    ] =
                     ( /Data/parseInteger
                         ( EAppArg
                             { eaaArg = Value /this ->
@@ -960,12 +958,10 @@ Prgm
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
                                 ) = "42"
                             }
-                        ) ↦
-                        ( TopType | PredClass /Data/Result
-                            [ /T=/Data/Primitive/Integer
-                            , /E=∀/Data/IntegerParseErr
-                            ] && PredClass /Catln/Doc/DShow
-                        )
+                        ) ↦ ∀/Data/Result
+                        [ /T=/Data/Primitive/Integer
+                        , /E=∀/Data/IntegerParseErr
+                        ]
                     )
                 }
             )
@@ -978,12 +974,10 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p ->
-                    ( TopType | PredClass /Data/Result
-                        [ /T=/Data/Primitive/Integer
-                        , /E=∀/Data/IntegerParseErr
-                        ] && PredClass /Catln/Doc/DShow
-                    ) =
+                { eaaArg = Value /p -> ∀/Data/Result
+                    [ /T=/Data/Primitive/Integer
+                    , /E=∀/Data/IntegerParseErr
+                    ] =
                     ( /Data/parseInteger
                         ( EAppArg
                             { eaaArg = Value /this ->
@@ -991,12 +985,10 @@ Prgm
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
                                 ) = "-17"
                             }
-                        ) ↦
-                        ( TopType | PredClass /Data/Result
-                            [ /T=/Data/Primitive/Integer
-                            , /E=∀/Data/IntegerParseErr
-                            ] && PredClass /Catln/Doc/DShow
-                        )
+                        ) ↦ ∀/Data/Result
+                        [ /T=/Data/Primitive/Integer
+                        , /E=∀/Data/IntegerParseErr
+                        ]
                     )
                 }
             )
@@ -1009,12 +1001,10 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p ->
-                    ( TopType | PredClass /Data/Result
-                        [ /T=/Data/Primitive/Integer
-                        , /E=∀/Data/IntegerParseErr
-                        ] && PredClass /Catln/Doc/DShow
-                    ) =
+                { eaaArg = Value /p -> ∀/Data/Result
+                    [ /T=/Data/Primitive/Integer
+                    , /E=∀/Data/IntegerParseErr
+                    ] =
                     ( /Data/parseIntegerBase
                         ( EAppArg
                             { eaaArg = Value /base -> /Data/Primitive/Integer = 16 }
@@ -1025,12 +1015,10 @@ Prgm
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
                                 ) = "ff"
                             }
-                        ) ↦
-                        ( TopType | PredClass /Data/Result
-                            [ /T=/Data/Primitive/Integer
-                            , /E=∀/Data/IntegerParseErr
-                            ] && PredClass /Catln/Doc/DShow
-                        )
+                        ) ↦ ∀/Data/Result
+                        [ /T=/Data/Primitive/Integer
+                        , /E=∀/Data/IntegerParseErr
+                        ]
                     )
                 }
             )
@@ -1043,12 +1031,10 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p ->
-                    ( TopType | PredClass /Data/Result
-                        [ /T=/Data/Primitive/Integer
-                        , /E=∀/Data/IntegerParseErr
-                        ] && PredClass /Catln/Doc/DShow
-                    ) =
+                { eaaArg = Value /p -> ∀/Data/Result
+                    [ /T=/Data/Primitive/Integer
+                    , /E=∀/Data/IntegerParseErr
+                    ] =
                     ( /Data/parseInteger
                         ( EAppArg
                             { eaaArg = Value /this ->
@@ -1056,12 +1042,10 @@ Prgm
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
                                 ) = "12a"
                             }
-                        ) ↦
-                        ( TopType | PredClass /Data/Result
-                            [ /T=/Data/Primitive/Integer
-                            , /E=∀/Data/IntegerParseErr
-                            ] && PredClass /Catln/Doc/DShow
-                        )
+                        ) ↦ ∀/Data/Result
+                        [ /T=/Data/Primitive/Integer
+                        , /E=∀/Data/IntegerParseErr
+                        ]
                     )
                 }
             )
@@ -1074,12 +1058,10 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p ->
-                    ( TopType | PredClass /Data/Result
-                        [ /T=/Data/Primitive/Integer
-                        , /E=∀/Data/IntegerParseErr
-                        ] && PredClass /Catln/Doc/DShow
-                    ) =
+                { eaaArg = Value /p -> ∀/Data/Result
+                    [ /T=/Data/Primitive/Integer
+                    , /E=∀/Data/IntegerParseErr
+                    ] =
                     ( /Data/parseInteger
                         ( EAppArg
                             { eaaArg = Value /this ->
@@ -1087,12 +1069,10 @@ Prgm
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
                                 ) = "-"
                             }
-                        ) ↦
-                        ( TopType | PredClass /Data/Result
-                            [ /T=/Data/Primitive/Integer
-                            , /E=∀/Data/IntegerParseErr
-                            ] && PredClass /Catln/Doc/DShow
-                        )
+                        ) ↦ ∀/Data/Result
+                        [ /T=/Data/Primitive/Integer
+                        , /E=∀/Data/IntegerParseErr
+                        ]
                     )
                 }
             )
@@ -1105,12 +1085,10 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p ->
-                    ( TopType | PredClass /Data/Result
-                        [ /T=/Data/Primitive/Integer
-                        , /E=∀/Data/IntegerParseErr
-                        ] && PredClass /Catln/Doc/DShow
-                    ) =
+                { eaaArg = Value /p -> ∀/Data/Result
+                    [ /T=/Data/Primitive/Integer
+                    , /E=∀/Data/IntegerParseErr
+                    ] =
                     ( /Data/parseInteger
                         ( EAppArg
                             { eaaArg = Value /this ->
@@ -1118,12 +1096,10 @@ Prgm
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
                                 ) = ""
                             }
-                        ) ↦
-                        ( TopType | PredClass /Data/Result
-                            [ /T=/Data/Primitive/Integer
-                            , /E=∀/Data/IntegerParseErr
-                            ] && PredClass /Catln/Doc/DShow
-                        )
+                        ) ↦ ∀/Data/Result
+                        [ /T=/Data/Primitive/Integer
+                        , /E=∀/Data/IntegerParseErr
+                        ]
                     )
                 }
             )
@@ -1136,12 +1112,10 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p ->
-                    ( TopType | PredClass /Data/Result
-                        [ /T=/Data/Primitive/Integer
-                        , /E=∀/Data/IntegerParseErr
-                        ] && PredClass /Catln/Doc/DShow
-                    ) =
+                { eaaArg = Value /p -> ∀/Data/Result
+                    [ /T=/Data/Primitive/Integer
+                    , /E=∀/Data/IntegerParseErr
+                    ] =
                     ( /Data/parseIntegerBase
                         ( EAppArg
                             { eaaArg = Value /base -> /Data/Primitive/Integer = 1 }
@@ -1152,12 +1126,10 @@ Prgm
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
                                 ) = "12"
                             }
-                        ) ↦
-                        ( TopType | PredClass /Data/Result
-                            [ /T=/Data/Primitive/Integer
-                            , /E=∀/Data/IntegerParseErr
-                            ] && PredClass /Catln/Doc/DShow
-                        )
+                        ) ↦ ∀/Data/Result
+                        [ /T=/Data/Primitive/Integer
+                        , /E=∀/Data/IntegerParseErr
+                        ]
                     )
                 }
             )

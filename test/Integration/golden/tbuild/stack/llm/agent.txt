@@ -567,14 +567,11 @@ Prgm
                             ( EAppArg
                                 { eaaArg = Value /ats -> /Data/List/Cons[ /T=/Llm/EditAt.. ]
                                     ( /head=/Llm/EditAt..
-                                    , /tail=
-                                        ( TopType | PredClass /Data/List[ /T=/Llm/EditAt.. ] && PredClass /Data/List/ConsList[ /T=/Llm/EditAt.. ] )
+                                    , /tail=∀/Data/List/ConsList[ /T=/Llm/EditAt.. ]
                                     ) = /Data/List/Cons
                                     ( EAppArg { eaaArg = Value /head -> /Llm/EditAt.. } )
                                     ( EAppArg
-                                        { eaaArg = Value /tail ->
-                                            ( TopType | PredClass /Data/List[ /T=/Llm/EditAt.. ] && PredClass /Data/List/ConsList[ /T=/Llm/EditAt.. ] )
-                                        }
+                                        { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=/Llm/EditAt.. ] }
                                     )
                                 }
                             ) -> ∀/Data/Primitive/Boolean =
@@ -2648,16 +2645,10 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = Value /rest -> /Data/Result/Ok
-                                    [ /T=
-                                        ( TopType | PredClass /Data/List[ /T=/Llm/EditAt.. ] && PredClass /Data/List/ConsList[ /T=/Llm/EditAt.. ] )
-                                    ]
-                                    ( /value=
-                                        ( TopType | PredClass /Data/List[ /T=/Llm/EditAt.. ] && PredClass /Data/List/ConsList[ /T=/Llm/EditAt.. ] )
-                                    ) = /Data/Result/Ok
+                                    [ /T=∀/Data/List/ConsList[ /T=/Llm/EditAt.. ] ]
+                                    ( /value=∀/Data/List/ConsList[ /T=/Llm/EditAt.. ] ) = /Data/Result/Ok
                                     ( EAppArg
-                                        { eaaArg = Value /value@Value /r ->
-                                            ( TopType | PredClass /Data/List[ /T=/Llm/EditAt.. ] && PredClass /Data/List/ConsList[ /T=/Llm/EditAt.. ] )
-                                        }
+                                        { eaaArg = Value /value@Value /r -> ∀/Data/List/ConsList[ /T=/Llm/EditAt.. ] }
                                     )
                                 }
                             ) -> /Data/Result/Ok

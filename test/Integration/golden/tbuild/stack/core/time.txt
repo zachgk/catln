@@ -5317,12 +5317,10 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p ->
-                    ( TopType | PredClass /Data/Result
-                        [ /T=/Data/Primitive/Integer
-                        , /E=∀/Data/IntegerParseErr
-                        ] && PredClass /Catln/Doc/DShow
-                    ) =
+                { eaaArg = Value /p -> ∀/Data/Result
+                    [ /T=/Data/Primitive/Integer
+                    , /E=∀/Data/IntegerParseErr
+                    ] =
                     ( /Data/Time/natural
                         ( EAppArg
                             { eaaArg = Value /s ->
@@ -5336,12 +5334,10 @@ Prgm
                                     ) + /Catln/CStr
                                 ) = "042"
                             }
-                        ) ↦
-                        ( TopType | PredClass /Data/Result
-                            [ /T=/Data/Primitive/Integer
-                            , /E=∀/Data/IntegerParseErr
-                            ] && PredClass /Catln/Doc/DShow
-                        )
+                        ) ↦ ∀/Data/Result
+                        [ /T=/Data/Primitive/Integer
+                        , /E=∀/Data/IntegerParseErr
+                        ]
                     )
                 }
             )
@@ -5354,12 +5350,10 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p ->
-                    ( TopType | PredClass /Data/Result
-                        [ /T=/Data/Primitive/Integer
-                        , /E=∀/Data/IntegerParseErr
-                        ] && PredClass /Catln/Doc/DShow
-                    ) =
+                { eaaArg = Value /p -> ∀/Data/Result
+                    [ /T=/Data/Primitive/Integer
+                    , /E=∀/Data/IntegerParseErr
+                    ] =
                     ( /Data/Time/natural
                         ( EAppArg
                             { eaaArg = Value /s ->
@@ -5373,12 +5367,10 @@ Prgm
                                     ) + /Catln/CStr
                                 ) = "+42"
                             }
-                        ) ↦
-                        ( TopType | PredClass /Data/Result
-                            [ /T=/Data/Primitive/Integer
-                            , /E=∀/Data/IntegerParseErr
-                            ] && PredClass /Catln/Doc/DShow
-                        )
+                        ) ↦ ∀/Data/Result
+                        [ /T=/Data/Primitive/Integer
+                        , /E=∀/Data/IntegerParseErr
+                        ]
                     )
                 }
             )
@@ -5391,12 +5383,10 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p ->
-                    ( TopType | PredClass /Data/Result
-                        [ /T=/Data/Primitive/Integer
-                        , /E=∀/Data/IntegerParseErr
-                        ] && PredClass /Catln/Doc/DShow
-                    ) =
+                { eaaArg = Value /p -> ∀/Data/Result
+                    [ /T=/Data/Primitive/Integer
+                    , /E=∀/Data/IntegerParseErr
+                    ] =
                     ( /Data/Time/natural
                         ( EAppArg
                             { eaaArg = Value /s ->
@@ -5410,12 +5400,10 @@ Prgm
                                     ) + /Catln/CStr
                                 ) = ""
                             }
-                        ) ↦
-                        ( TopType | PredClass /Data/Result
-                            [ /T=/Data/Primitive/Integer
-                            , /E=∀/Data/IntegerParseErr
-                            ] && PredClass /Catln/Doc/DShow
-                        )
+                        ) ↦ ∀/Data/Result
+                        [ /T=/Data/Primitive/Integer
+                        , /E=∀/Data/IntegerParseErr
+                        ]
                     )
                 }
             )
@@ -5438,12 +5426,10 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p ->
-                    ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Result
-                        [ /T=/Data/Time/Date..
-                        , /E=∀/Data/Time/DateParseErr
-                        ]
-                    ) =
+                { eaaArg = Value /p -> ∀/Data/Result
+                    [ /T=/Data/Time/Date..
+                    , /E=∀/Data/Time/DateParseErr
+                    ] =
                     ( /Data/Time/parseDate
                         ( EAppArg
                             { eaaArg = Value /s ->
@@ -5451,12 +5437,10 @@ Prgm
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
                                 ) = "2026-01-03"
                             }
-                        ) ↦
-                        ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Result
-                            [ /T=/Data/Time/Date..
-                            , /E=∀/Data/Time/DateParseErr
-                            ]
-                        )
+                        ) ↦ ∀/Data/Result
+                        [ /T=/Data/Time/Date..
+                        , /E=∀/Data/Time/DateParseErr
+                        ]
                     )
                 }
             )
@@ -5469,12 +5453,10 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p ->
-                    ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Result
-                        [ /T=/Data/Time/Date..
-                        , /E=∀/Data/Time/DateParseErr
-                        ]
-                    ) =
+                { eaaArg = Value /p -> ∀/Data/Result
+                    [ /T=/Data/Time/Date..
+                    , /E=∀/Data/Time/DateParseErr
+                    ] =
                     ( /Data/Time/parseDate
                         ( EAppArg
                             { eaaArg = Value /s ->
@@ -5482,12 +5464,10 @@ Prgm
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
                                 ) = "2024-02-29"
                             }
-                        ) ↦
-                        ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Result
-                            [ /T=/Data/Time/Date..
-                            , /E=∀/Data/Time/DateParseErr
-                            ]
-                        )
+                        ) ↦ ∀/Data/Result
+                        [ /T=/Data/Time/Date..
+                        , /E=∀/Data/Time/DateParseErr
+                        ]
                     )
                 }
             )
@@ -5500,12 +5480,10 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p ->
-                    ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Result
-                        [ /T=/Data/Time/Date..
-                        , /E=∀/Data/Time/DateParseErr
-                        ]
-                    ) =
+                { eaaArg = Value /p -> ∀/Data/Result
+                    [ /T=/Data/Time/Date..
+                    , /E=∀/Data/Time/DateParseErr
+                    ] =
                     ( /Data/Time/parseDate
                         ( EAppArg
                             { eaaArg = Value /s ->
@@ -5513,12 +5491,10 @@ Prgm
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
                                 ) = "2026-02-29"
                             }
-                        ) ↦
-                        ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Result
-                            [ /T=/Data/Time/Date..
-                            , /E=∀/Data/Time/DateParseErr
-                            ]
-                        )
+                        ) ↦ ∀/Data/Result
+                        [ /T=/Data/Time/Date..
+                        , /E=∀/Data/Time/DateParseErr
+                        ]
                     )
                 }
             )
@@ -5531,12 +5507,10 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p ->
-                    ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Result
-                        [ /T=/Data/Time/Date..
-                        , /E=∀/Data/Time/DateParseErr
-                        ]
-                    ) =
+                { eaaArg = Value /p -> ∀/Data/Result
+                    [ /T=/Data/Time/Date..
+                    , /E=∀/Data/Time/DateParseErr
+                    ] =
                     ( /Data/Time/parseDate
                         ( EAppArg
                             { eaaArg = Value /s ->
@@ -5544,12 +5518,10 @@ Prgm
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
                                 ) = "2026-13-01"
                             }
-                        ) ↦
-                        ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Result
-                            [ /T=/Data/Time/Date..
-                            , /E=∀/Data/Time/DateParseErr
-                            ]
-                        )
+                        ) ↦ ∀/Data/Result
+                        [ /T=/Data/Time/Date..
+                        , /E=∀/Data/Time/DateParseErr
+                        ]
                     )
                 }
             )
@@ -5562,12 +5534,10 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p ->
-                    ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Result
-                        [ /T=/Data/Time/Date..
-                        , /E=∀/Data/Time/DateParseErr
-                        ]
-                    ) =
+                { eaaArg = Value /p -> ∀/Data/Result
+                    [ /T=/Data/Time/Date..
+                    , /E=∀/Data/Time/DateParseErr
+                    ] =
                     ( /Data/Time/parseDate
                         ( EAppArg
                             { eaaArg = Value /s ->
@@ -5575,12 +5545,10 @@ Prgm
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
                                 ) = "2026-0x-01"
                             }
-                        ) ↦
-                        ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Result
-                            [ /T=/Data/Time/Date..
-                            , /E=∀/Data/Time/DateParseErr
-                            ]
-                        )
+                        ) ↦ ∀/Data/Result
+                        [ /T=/Data/Time/Date..
+                        , /E=∀/Data/Time/DateParseErr
+                        ]
                     )
                 }
             )
@@ -5593,12 +5561,10 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p ->
-                    ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Result
-                        [ /T=/Data/Time/Date..
-                        , /E=∀/Data/Time/DateParseErr
-                        ]
-                    ) =
+                { eaaArg = Value /p -> ∀/Data/Result
+                    [ /T=/Data/Time/Date..
+                    , /E=∀/Data/Time/DateParseErr
+                    ] =
                     ( /Data/Time/parseDate
                         ( EAppArg
                             { eaaArg = Value /s ->
@@ -5606,12 +5572,10 @@ Prgm
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
                                 ) = "lunch"
                             }
-                        ) ↦
-                        ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Result
-                            [ /T=/Data/Time/Date..
-                            , /E=∀/Data/Time/DateParseErr
-                            ]
-                        )
+                        ) ↦ ∀/Data/Result
+                        [ /T=/Data/Time/Date..
+                        , /E=∀/Data/Time/DateParseErr
+                        ]
                     )
                 }
             )
@@ -6024,12 +5988,10 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p ->
-                    ( TopType | PredClass /Data/Result
-                        [ /T=/Data/Time/TimeOfDay..
-                        , /E=∀/Data/Time/TimeParseErr
-                        ] && PredClass /Catln/Doc/DShow
-                    ) =
+                { eaaArg = Value /p -> ∀/Data/Result
+                    [ /T=/Data/Time/TimeOfDay..
+                    , /E=∀/Data/Time/TimeParseErr
+                    ] =
                     ( /Data/Time/parseTimeOfDay
                         ( EAppArg
                             { eaaArg = Value /s ->
@@ -6037,12 +5999,10 @@ Prgm
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
                                 ) = "9:30"
                             }
-                        ) ↦
-                        ( TopType | PredClass /Data/Result
-                            [ /T=/Data/Time/TimeOfDay..
-                            , /E=∀/Data/Time/TimeParseErr
-                            ] && PredClass /Catln/Doc/DShow
-                        )
+                        ) ↦ ∀/Data/Result
+                        [ /T=/Data/Time/TimeOfDay..
+                        , /E=∀/Data/Time/TimeParseErr
+                        ]
                     )
                 }
             )
@@ -6055,12 +6015,10 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p ->
-                    ( TopType | PredClass /Data/Result
-                        [ /T=/Data/Time/TimeOfDay..
-                        , /E=∀/Data/Time/TimeParseErr
-                        ] && PredClass /Catln/Doc/DShow
-                    ) =
+                { eaaArg = Value /p -> ∀/Data/Result
+                    [ /T=/Data/Time/TimeOfDay..
+                    , /E=∀/Data/Time/TimeParseErr
+                    ] =
                     ( /Data/Time/parseTimeOfDay
                         ( EAppArg
                             { eaaArg = Value /s ->
@@ -6068,12 +6026,10 @@ Prgm
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
                                 ) = "09.00"
                             }
-                        ) ↦
-                        ( TopType | PredClass /Data/Result
-                            [ /T=/Data/Time/TimeOfDay..
-                            , /E=∀/Data/Time/TimeParseErr
-                            ] && PredClass /Catln/Doc/DShow
-                        )
+                        ) ↦ ∀/Data/Result
+                        [ /T=/Data/Time/TimeOfDay..
+                        , /E=∀/Data/Time/TimeParseErr
+                        ]
                     )
                 }
             )
@@ -6086,12 +6042,10 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p ->
-                    ( TopType | PredClass /Data/Result
-                        [ /T=/Data/Time/TimeOfDay..
-                        , /E=∀/Data/Time/TimeParseErr
-                        ] && PredClass /Catln/Doc/DShow
-                    ) =
+                { eaaArg = Value /p -> ∀/Data/Result
+                    [ /T=/Data/Time/TimeOfDay..
+                    , /E=∀/Data/Time/TimeParseErr
+                    ] =
                     ( /Data/Time/parseTimeOfDay
                         ( EAppArg
                             { eaaArg = Value /s ->
@@ -6099,12 +6053,10 @@ Prgm
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
                                 ) = "9:30pm"
                             }
-                        ) ↦
-                        ( TopType | PredClass /Data/Result
-                            [ /T=/Data/Time/TimeOfDay..
-                            , /E=∀/Data/Time/TimeParseErr
-                            ] && PredClass /Catln/Doc/DShow
-                        )
+                        ) ↦ ∀/Data/Result
+                        [ /T=/Data/Time/TimeOfDay..
+                        , /E=∀/Data/Time/TimeParseErr
+                        ]
                     )
                 }
             )
@@ -6117,12 +6069,10 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p ->
-                    ( TopType | PredClass /Data/Result
-                        [ /T=/Data/Time/TimeOfDay..
-                        , /E=∀/Data/Time/TimeParseErr
-                        ] && PredClass /Catln/Doc/DShow
-                    ) =
+                { eaaArg = Value /p -> ∀/Data/Result
+                    [ /T=/Data/Time/TimeOfDay..
+                    , /E=∀/Data/Time/TimeParseErr
+                    ] =
                     ( /Data/Time/parseTimeOfDay
                         ( EAppArg
                             { eaaArg = Value /s ->
@@ -6130,12 +6080,10 @@ Prgm
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
                                 ) = "930 PM"
                             }
-                        ) ↦
-                        ( TopType | PredClass /Data/Result
-                            [ /T=/Data/Time/TimeOfDay..
-                            , /E=∀/Data/Time/TimeParseErr
-                            ] && PredClass /Catln/Doc/DShow
-                        )
+                        ) ↦ ∀/Data/Result
+                        [ /T=/Data/Time/TimeOfDay..
+                        , /E=∀/Data/Time/TimeParseErr
+                        ]
                     )
                 }
             )
@@ -6148,12 +6096,10 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p ->
-                    ( TopType | PredClass /Data/Result
-                        [ /T=/Data/Time/TimeOfDay..
-                        , /E=∀/Data/Time/TimeParseErr
-                        ] && PredClass /Catln/Doc/DShow
-                    ) =
+                { eaaArg = Value /p -> ∀/Data/Result
+                    [ /T=/Data/Time/TimeOfDay..
+                    , /E=∀/Data/Time/TimeParseErr
+                    ] =
                     ( /Data/Time/parseTimeOfDay
                         ( EAppArg
                             { eaaArg = Value /s ->
@@ -6161,12 +6107,10 @@ Prgm
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
                                 ) = "12:15am"
                             }
-                        ) ↦
-                        ( TopType | PredClass /Data/Result
-                            [ /T=/Data/Time/TimeOfDay..
-                            , /E=∀/Data/Time/TimeParseErr
-                            ] && PredClass /Catln/Doc/DShow
-                        )
+                        ) ↦ ∀/Data/Result
+                        [ /T=/Data/Time/TimeOfDay..
+                        , /E=∀/Data/Time/TimeParseErr
+                        ]
                     )
                 }
             )
@@ -6179,12 +6123,10 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p ->
-                    ( TopType | PredClass /Data/Result
-                        [ /T=/Data/Time/TimeOfDay..
-                        , /E=∀/Data/Time/TimeParseErr
-                        ] && PredClass /Catln/Doc/DShow
-                    ) =
+                { eaaArg = Value /p -> ∀/Data/Result
+                    [ /T=/Data/Time/TimeOfDay..
+                    , /E=∀/Data/Time/TimeParseErr
+                    ] =
                     ( /Data/Time/parseTimeOfDay
                         ( EAppArg
                             { eaaArg = Value /s ->
@@ -6192,12 +6134,10 @@ Prgm
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
                                 ) = "25:00"
                             }
-                        ) ↦
-                        ( TopType | PredClass /Data/Result
-                            [ /T=/Data/Time/TimeOfDay..
-                            , /E=∀/Data/Time/TimeParseErr
-                            ] && PredClass /Catln/Doc/DShow
-                        )
+                        ) ↦ ∀/Data/Result
+                        [ /T=/Data/Time/TimeOfDay..
+                        , /E=∀/Data/Time/TimeParseErr
+                        ]
                     )
                 }
             )
@@ -6210,12 +6150,10 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p ->
-                    ( TopType | PredClass /Data/Result
-                        [ /T=/Data/Time/TimeOfDay..
-                        , /E=∀/Data/Time/TimeParseErr
-                        ] && PredClass /Catln/Doc/DShow
-                    ) =
+                { eaaArg = Value /p -> ∀/Data/Result
+                    [ /T=/Data/Time/TimeOfDay..
+                    , /E=∀/Data/Time/TimeParseErr
+                    ] =
                     ( /Data/Time/parseTimeOfDay
                         ( EAppArg
                             { eaaArg = Value /s ->
@@ -6223,12 +6161,10 @@ Prgm
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
                                 ) = "13:00pm"
                             }
-                        ) ↦
-                        ( TopType | PredClass /Data/Result
-                            [ /T=/Data/Time/TimeOfDay..
-                            , /E=∀/Data/Time/TimeParseErr
-                            ] && PredClass /Catln/Doc/DShow
-                        )
+                        ) ↦ ∀/Data/Result
+                        [ /T=/Data/Time/TimeOfDay..
+                        , /E=∀/Data/Time/TimeParseErr
+                        ]
                     )
                 }
             )
@@ -6241,12 +6177,10 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p ->
-                    ( TopType | PredClass /Data/Result
-                        [ /T=/Data/Time/TimeOfDay..
-                        , /E=∀/Data/Time/TimeParseErr
-                        ] && PredClass /Catln/Doc/DShow
-                    ) =
+                { eaaArg = Value /p -> ∀/Data/Result
+                    [ /T=/Data/Time/TimeOfDay..
+                    , /E=∀/Data/Time/TimeParseErr
+                    ] =
                     ( /Data/Time/parseTimeOfDay
                         ( EAppArg
                             { eaaArg = Value /s ->
@@ -6254,12 +6188,10 @@ Prgm
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
                                 ) = "13pm"
                             }
-                        ) ↦
-                        ( TopType | PredClass /Data/Result
-                            [ /T=/Data/Time/TimeOfDay..
-                            , /E=∀/Data/Time/TimeParseErr
-                            ] && PredClass /Catln/Doc/DShow
-                        )
+                        ) ↦ ∀/Data/Result
+                        [ /T=/Data/Time/TimeOfDay..
+                        , /E=∀/Data/Time/TimeParseErr
+                        ]
                     )
                 }
             )
@@ -6272,12 +6204,10 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p ->
-                    ( TopType | PredClass /Data/Result
-                        [ /T=/Data/Time/TimeOfDay..
-                        , /E=∀/Data/Time/TimeParseErr
-                        ] && PredClass /Catln/Doc/DShow
-                    ) =
+                { eaaArg = Value /p -> ∀/Data/Result
+                    [ /T=/Data/Time/TimeOfDay..
+                    , /E=∀/Data/Time/TimeParseErr
+                    ] =
                     ( /Data/Time/parseTimeOfDay
                         ( EAppArg
                             { eaaArg = Value /s ->
@@ -6285,12 +6215,10 @@ Prgm
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
                                 ) = "930"
                             }
-                        ) ↦
-                        ( TopType | PredClass /Data/Result
-                            [ /T=/Data/Time/TimeOfDay..
-                            , /E=∀/Data/Time/TimeParseErr
-                            ] && PredClass /Catln/Doc/DShow
-                        )
+                        ) ↦ ∀/Data/Result
+                        [ /T=/Data/Time/TimeOfDay..
+                        , /E=∀/Data/Time/TimeParseErr
+                        ]
                     )
                 }
             )
@@ -6303,12 +6231,10 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p ->
-                    ( TopType | PredClass /Data/Result
-                        [ /T=/Data/Time/TimeOfDay..
-                        , /E=∀/Data/Time/TimeParseErr
-                        ] && PredClass /Catln/Doc/DShow
-                    ) =
+                { eaaArg = Value /p -> ∀/Data/Result
+                    [ /T=/Data/Time/TimeOfDay..
+                    , /E=∀/Data/Time/TimeParseErr
+                    ] =
                     ( /Data/Time/parseTimeOfDay
                         ( EAppArg
                             { eaaArg = Value /s ->
@@ -6316,12 +6242,10 @@ Prgm
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
                                 ) = "9:75"
                             }
-                        ) ↦
-                        ( TopType | PredClass /Data/Result
-                            [ /T=/Data/Time/TimeOfDay..
-                            , /E=∀/Data/Time/TimeParseErr
-                            ] && PredClass /Catln/Doc/DShow
-                        )
+                        ) ↦ ∀/Data/Result
+                        [ /T=/Data/Time/TimeOfDay..
+                        , /E=∀/Data/Time/TimeParseErr
+                        ]
                     )
                 }
             )
@@ -6334,12 +6258,10 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p ->
-                    ( TopType | PredClass /Data/Result
-                        [ /T=/Data/Time/TimeOfDay..
-                        , /E=∀/Data/Time/TimeParseErr
-                        ] && PredClass /Catln/Doc/DShow
-                    ) =
+                { eaaArg = Value /p -> ∀/Data/Result
+                    [ /T=/Data/Time/TimeOfDay..
+                    , /E=∀/Data/Time/TimeParseErr
+                    ] =
                     ( /Data/Time/parseTimeOfDay
                         ( EAppArg
                             { eaaArg = Value /s ->
@@ -6347,12 +6269,10 @@ Prgm
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
                                 ) = "9:3"
                             }
-                        ) ↦
-                        ( TopType | PredClass /Data/Result
-                            [ /T=/Data/Time/TimeOfDay..
-                            , /E=∀/Data/Time/TimeParseErr
-                            ] && PredClass /Catln/Doc/DShow
-                        )
+                        ) ↦ ∀/Data/Result
+                        [ /T=/Data/Time/TimeOfDay..
+                        , /E=∀/Data/Time/TimeParseErr
+                        ]
                     )
                 }
             )
@@ -6365,12 +6285,10 @@ Prgm
             )
         , /Catln/#print
             ( EAppArg
-                { eaaArg = Value /p ->
-                    ( TopType | PredClass /Data/Result
-                        [ /T=/Data/Time/TimeOfDay..
-                        , /E=∀/Data/Time/TimeParseErr
-                        ] && PredClass /Catln/Doc/DShow
-                    ) =
+                { eaaArg = Value /p -> ∀/Data/Result
+                    [ /T=/Data/Time/TimeOfDay..
+                    , /E=∀/Data/Time/TimeParseErr
+                    ] =
                     ( /Data/Time/parseTimeOfDay
                         ( EAppArg
                             { eaaArg = Value /s ->
@@ -6378,12 +6296,10 @@ Prgm
                                     ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
                                 ) = "9:3x"
                             }
-                        ) ↦
-                        ( TopType | PredClass /Data/Result
-                            [ /T=/Data/Time/TimeOfDay..
-                            , /E=∀/Data/Time/TimeParseErr
-                            ] && PredClass /Catln/Doc/DShow
-                        )
+                        ) ↦ ∀/Data/Result
+                        [ /T=/Data/Time/TimeOfDay..
+                        , /E=∀/Data/Time/TimeParseErr
+                        ]
                     )
                 }
             )

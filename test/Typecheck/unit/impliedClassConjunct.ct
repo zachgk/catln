@@ -1,0 +1,50 @@
+annot(#noCore)
+
+# A class conjunct implied by a sibling through a declared [isa] edge is dropped, at any depth of
+# the formula. [Maybe isa Functor], so [Maybe[$T -> X] ∧ Functor[$T -> X]] is [Maybe[$T -> X]].
+# [h] meets a [Maybe] with the class-bounded [$F]. [f] is a two-bind chain: each bind is a [bindap]
+# whose [fmap] arm declares [$F[$T -> $_B]], so the pair is instantiated with the inner
+# continuation's whole result as [X] and reaches the arms' union inside a disjunction. Kept, the
+# implied atom copied [X] once more at every level of a nested chain.
+#noCore
+module(Data/Primitive)
+  data(Integer)
+module(Data)
+  class(Functor[$T])
+  class(Monad[$T])
+  class(Maybe[$T], [Maybe/Some[$T -> $_T](value -> $T), Maybe/Nothing])
+
+  every(Maybe[$T -> $_T], isa= [/Data/Functor])
+  every(Maybe[$T -> $_T], isa= [/Data/Monad])
+
+  bindap[$M -> /Data/Monad[$T -> $_A], $A, $B](m -> $M, fn(v -> $_A) -> $M) -> $M
+    #exist
+  bindap[$M -> /Data/Monad[$T -> $_A], $A](m -> $M, fn(v -> $_A))= /Data/Monad/mmap(m= m, fn(v)= fn(v= v))
+  bindap[$F -> /Data/Functor[$T -> $_A], $A, $B](m -> $F, fn(v -> $_F) -> $_B) -> $B
+    #exist
+  bindap[$F -> /Data/Functor[$T -> $_A]](m -> $F, fn(v -> $_F))= fn(v= m)
+  bindap[$F -> /Data/Functor[$T -> $_A], $A, $B](m -> $F, fn(v -> $_A) -> $_B) -> $F[$T -> $_B]
+    #exist
+  bindap[$F -> /Data/Functor[$T -> $_A], $A](m -> $F, fn(v -> $_A))= /Data/Functor/fmap(lst= m, fn(v)= fn(v= v))
+module(Data/Functor)
+  fmap[$F -> /Data/Functor[$T -> $_A], $A, $B](lst -> $F, fn(v -> $_A) -> $_B) -> $F[$T -> $_B]
+module(Data/Monad)
+  mmap[$M -> /Data/Monad[$T -> $_A], $A, $B](m -> $M, fn(v -> $_A) -> $M) -> $M
+module(Data/Maybe)
+  /Data/Functor/fmap(lst= Nothing, fn(v))= Nothing
+  /Data/Functor/fmap(lst= /Data/Maybe/Some(value), fn(v))= /Data/Maybe/Some(value= fn(v= value))
+
+  /Data/Monad/mmap(m= Nothing, fn(v))= Nothing
+  /Data/Monad/mmap(m= /Data/Maybe/Some(value), fn(v))= fn(v= value)
+
+k[$F -> /Data/Functor[$T -> $_A]](m -> $F) -> $F
+k(m)= m
+
+h(a -> /Data/Maybe[$T -> Integer])= k(m= a)
+
+f(a1 -> /Data/Maybe[$T -> Integer]) -> /Data/Maybe[$T -> Integer] =
+  x1<- a1
+
+  x2<- a1
+
+  /Data/Maybe/Some(value= x2)

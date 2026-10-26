@@ -28,9 +28,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/List/allBy
-                            ( Value /lst ->
-                                ( TopType | PredClass /Data/Functor[ /T=TopType ] && PredClass /Data/List/ConsList[ /T=TopType ] )
-                            )
+                            ( Value /lst -> ∀/Data/List/ConsList[ /T=TopType ] )
                             ( /fn( Value /v ) ) -> ∀/Data/Primitive/Boolean = /Data/List/all
                             ( Value /lst ->
                                 ( /Data/List/Nil + /Data/List/Cons[ /T=∀/Data/Primitive/Boolean ]
@@ -174,9 +172,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/List/anyBy
-                            ( Value /lst ->
-                                ( TopType | PredClass /Data/Functor[ /T=TopType ] && PredClass /Data/List/ConsList[ /T=TopType ] )
-                            )
+                            ( Value /lst -> ∀/Data/List/ConsList[ /T=TopType ] )
                             ( /fn( Value /v ) ) -> ∀/Data/Primitive/Boolean = /Data/List/any
                             ( Value /lst ->
                                 ( /Data/List/Nil + /Data/List/Cons[ /T=∀/Data/Primitive/Boolean ]
@@ -250,9 +246,7 @@ Prgm
                             ) = /Data/List/Cons( Value /head -> TVArg /head = Value /head )
                             ( Value /tail -> ∀/Data/List/ConsList[ /T=TopType ] = /Data/List/append( Value /l -> TVArg /tail = Value /tail )( Value /r -> TVArg /r = Value /r ) )
                         , /Data/List/append
-                            ( Value /a ->
-                                ( TopType | PredClass /Data/List[ /T=TopType ] && PredClass /Data/List/ConsList[ /T=TopType ] )
-                            )
+                            ( Value /a -> ∀/Data/List/ConsList[ /T=TopType ] )
                             ( Value /b -> ∀/Data/List/ConsList[ /T=TopType ] ) -> ∀/Data/List/ConsList[ /T=TopType ] = /Data/List/foldr( Value /lst -> TVArg /a = Value /a )
                             ( /fn
                                 ( Value /acc -> ∀/Data/List/ConsList[ /T=TopType ] )( Value /v ) -> /Data/List/Cons[ /T=TopType ]
@@ -275,9 +269,7 @@ Prgm
                     , omiRefineDecls = []
                     , omiDefs =
                         [ /Data/List/filter
-                            ( Value /lst ->
-                                ( TopType | PredClass /Data/Monad[ /T=TopType ] && PredClass /Data/List/ConsList[ /T=TopType ] )
-                            )
+                            ( Value /lst -> ∀/Data/List/ConsList[ /T=TopType ] )
                             ( /fn( Value /v ) ) ->
                             ( TopType | PredClass /Data/List/ConsList[ /T=$_/A ] && PredClass /Data/Monad[ /T=$_/A ] ) = /Data/Monad/mmap( Value /m -> TVArg /lst = Value /lst )
                             ( /fn( Value /v ) ->
@@ -506,7 +498,7 @@ Prgm
                                 ( Value /tail@Value /t -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] )
                             ) -> UnionType
                             ( Just
-                                ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=TopType ]
+                                ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                                 , fromList []
                                 , []
                                 )
@@ -626,7 +618,7 @@ Prgm
                     , omiDefs =
                         [ /Data/List/elem
                             ( Value /lst -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Eq ] )( Value /item -> ∀/Data/Algebra/Eq ) -> ∀/Data/Primitive/Boolean = /Data/List/anyBy( Value /lst -> TVArg /lst = Value /lst )
-                            ( /fn( Value /v ) -> ∀/Data/Primitive/Boolean = /operator==( Value /l -> TVArg /v = Value /v )( Value /r -> TVArg /item = Value /item ) )
+                            ( /fn( Value /v -> ∀/Data/Algebra/Eq ) -> ∀/Data/Primitive/Boolean = /operator==( Value /l -> TVArg /v = Value /v )( Value /r -> TVArg /item = Value /item ) )
                         ]
                     }
                 )
@@ -697,8 +689,7 @@ Prgm
                     , omiRuntimeDecls = []
                     , omiRefineDecls = []
                     , omiDefs =
-                        [ /Data/List/range( Value /stop -> /Data/Primitive/Integer ) ->
-                            ( TopType | PredClass /Data/List[ /T=/Data/Primitive/Integer ] && PredClass /Data/List/ConsList[ /T=/Data/Primitive/Integer ] ) = /Data/List/range.rangeFrom
+                        [ /Data/List/range( Value /stop -> /Data/Primitive/Integer ) -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = /Data/List/range.rangeFrom
                             ( Value /i -> /Data/Primitive/Integer = CInt
                                 { ciValue = 0 }
                             )( Value /stop -> TVArg /stop = Value /stop )
@@ -1029,8 +1020,7 @@ Prgm
                 { csValue = "## Joining" }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/List/ConsList[ /T=/Data/Primitive/Integer ] ) = /Data/List/append
+            ( Value /p -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = /Data/List/append
                 ( Value /l -> /Data/List/Cons
                     ( /head=/Data/Primitive/Integer
                     , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
@@ -1776,8 +1766,7 @@ Prgm
                 operation a caller would want." }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Data/Monad[ /T=/Data/Primitive/Integer ] && PredClass /Catln/Doc/DShow && PredClass /Data/List/ConsList[ /T=/Data/Primitive/Integer ] ) = /Data/List/filter
+            ( Value /p -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = /Data/List/filter
                 ( Value /lst -> /Data/List/Cons
                     ( /head=/Data/Primitive/Integer
                     , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
@@ -1841,11 +1830,8 @@ Prgm
                 { csValue = "[3, 4]" }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Data/List/ConsList
-                    [ /T=( /Data/String/Text.. + /Catln/CStr ) ] && PredClass /Data/Monad
-                    [ /T=( /Data/String/Text.. + /Catln/CStr ) ] && PredClass /Catln/Doc/DShow
-                ) = /Data/List/filter
+            ( Value /p -> ∀/Data/List/ConsList
+                [ /T=( /Data/String/Text.. + /Catln/CStr ) ] = /Data/List/filter
                 ( Value /lst -> /Data/List/Cons
                     ( /head=( /Data/String/Text.. + /Catln/CStr )
                     , /tail=/Data/List/Cons
@@ -2095,7 +2081,7 @@ Prgm
         , /Catln/#print
             ( Value /p -> UnionType
                 ( Just
-                    ( PredClass /Data/List[ /T=/Data/Primitive/Integer ] && PredClass /Catln/Doc/DShow
+                    ( PredClass /Data/List[ /T=/Data/Primitive/Integer ]
                     , fromList []
                     , []
                     )
@@ -2149,7 +2135,7 @@ Prgm
         , /Catln/#print
             ( Value /p -> UnionType
                 ( Just
-                    ( PredClass /Data/List[ /T=/Data/Primitive/Integer ] && PredClass /Catln/Doc/DShow
+                    ( PredClass /Data/List[ /T=/Data/Primitive/Integer ]
                     , fromList []
                     , []
                     )
@@ -2225,8 +2211,7 @@ Prgm
                 { csValue = "## Counting ranges" }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Data/List[ /T=/Data/Primitive/Integer ] && PredClass /Catln/Doc/DShow ) = /Data/List/range
+            ( Value /p -> ∀/Data/List[ /T=/Data/Primitive/Integer ] = /Data/List/range
                 ( Value /stop -> /Data/Primitive/Integer = CInt
                     { ciValue = 3 }
                 )
@@ -2238,8 +2223,7 @@ Prgm
                 { csValue = "[0, 1, 2]" }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Data/List[ /T=/Data/Primitive/Integer ] && PredClass /Catln/Doc/DShow ) = /Data/List/range
+            ( Value /p -> ∀/Data/List[ /T=/Data/Primitive/Integer ] = /Data/List/range
                 ( Value /stop -> /Data/Primitive/Integer = CInt
                     { ciValue = 0 }
                 )
@@ -2996,8 +2980,7 @@ Prgm
                 { csValue = "[append] joins two lists end to end." }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/List/ConsList[ /T=/Data/Primitive/Integer ] ) = /Data/List/append
+            ( Value /p -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = /Data/List/append
                 ( Value /a -> /Data/List/Cons
                     ( /head=/Data/Primitive/Integer
                     , /tail=/Data/List/Nil
@@ -3043,8 +3026,7 @@ Prgm
                 { csValue = "  one reading it can grow the list. Binding the empty list yields the empty list." }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/List/ConsList[ /T=/Data/Primitive/Integer ] ) = /Data/Monad/mmap
+            ( Value /p -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = /Data/Monad/mmap
                 ( Value /m -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                     ( /head=/Data/Primitive/Integer
                     , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]
@@ -3080,8 +3062,7 @@ Prgm
                 { csValue = "[0, 0]" }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/List/ConsList[ /T=/Data/Primitive/Integer ] ) = /Data/Monad/mmap
+            ( Value /p -> ∀/Data/List/ConsList[ /T=/Data/Primitive/Integer ] = /Data/Monad/mmap
                 ( Value /m -> /Data/List/Cons[ /T=/Data/Primitive/Integer ]
                     ( /head=/Data/Primitive/Integer
                     , /tail=/Data/List/Cons[ /T=/Data/Primitive/Integer ]

@@ -782,6 +782,21 @@ compactTypeRaw typeEnv vaenv (UnionType (Just (PredsAnd ps, negPartials, ncs)) p
       | plainPartial q =
           any (\p -> ptName p /= ptName q && classDeclaredSubclassOf typeEnv (ptName p) (ptName q)) bareClasses
     isSuperclassOfSibling _ = False
+-- Any formula: the parameterized counterpart of the clause above, at every depth - drop a
+-- PredClass conjunct @q@ that a sibling PredClass @p@ implies through a declared @isa@ edge with
+-- its element bounds checked ('classDeclaredSubclassOfBounded'), so @Maybe[/T=R] ∧ Functor[/T=R]@
+-- is @Maybe[/T=R]@ under @every(Maybe[$T -> $_T], isa= [Functor])@. Such a pair is what a meet of a
+-- value with a class-bounded variable builds (@m -> $F@ with @$F -> Functor[$T -> $_A]@, given a
+-- Maybe), and what a declared result like @$F[$T -> $_B]@ instantiates; it then reaches a union's
+-- disjunction uncompacted, which is why the rewrite looks inside negations too (an equivalent
+-- subformula is equivalent in any context). Keeping the implied atom copied every element bound
+-- into both atoms, which doubled the type at each level of a nested bind chain. Only a
+-- VARIABLE-FREE @q@ is dropped: its set is fixed, so a later narrowing of @p@ keeps @p ⟹ q@, and
+-- no variable link @q@ carries is lost. A mutually implying pair keeps one atom. A conjunction
+-- with nothing to drop is left as it was, so no other formula is respelled.
+compactTypeRaw typeEnv vaenv (UnionType (Just (preds, negPartials, ncs)) posLeafs cs)
+  | Just preds' <- dropImpliedClassConjuncts typeEnv vaenv preds =
+      compactType typeEnv vaenv $ UnionType (Just (preds', negPartials, ncs)) posLeafs cs
 -- PredsAnd: drop a conjunct implied by a sibling (@p ∧ q = p@ when @p ⟹ q@), so a disjunction
 -- conjunct absorbed by a stronger sibling collapses - e.g. with @Ord isa Eq@,
 -- @PredClass Eq ∧ (PredRel Eq ∨ PredRel Ord) → PredClass Eq@ (the element bound a parameterized
@@ -1376,3 +1391,26 @@ hasExplicitRecursion typeEnv leafList = any partialRecurses leafList
     elemKeys p = S.fromList [k | dp <- typeGraphData typeEnv (ptName p), (k, TypeVar (TVVar _) TVInt _) <- H.toList (ptArgs dp)]
     argHasName encl (UnionType Nothing pos _) = any (\p' -> ptName p' == encl || partialRecurses p') (splitUnionType pos)
     argHasName _ _ = False -- predicate/top forms are the canonical recursive reference, not an unrolling
+
+
+-- | The formula with every PredClass conjunct a sibling implies through a bounded declared edge
+-- removed, at any depth of its conjunctions and negations, or 'Nothing' when none is (see the
+-- 'compactTypeRaw' clause using it).
+dropImpliedClassConjuncts :: (TypeGraph tg) => TypeEnv tg -> TypeVarArgEnv -> TypePredicates -> Maybe TypePredicates
+dropImpliedClassConjuncts typeEnv vaenv = go
+  where
+    go (PredsNot p) = PredsNot <$> go p
+    go (PredsAnd ps) =
+      let inner = map (\p -> fromMaybe p (go p)) ps
+          kept = dropFrom [] inner
+      in if length kept < length ps || inner /= ps then Just (mkAnd kept) else Nothing
+    go _ = Nothing
+    dropFrom kept [] = reverse kept
+    dropFrom kept (q:rest)
+      | impliedBySibling q (kept ++ rest) = dropFrom kept rest
+      | otherwise = dropFrom (q:kept) rest
+    impliedBySibling (PredsOne (PredClass q)) siblings
+      | not (partialMentionsVars q) =
+          any (\p -> ptName p /= ptName q && not (plainPartial p && plainPartial q) && classDeclaredSubclassOfBounded typeEnv vaenv p q)
+              [p | PredsOne (PredClass p) <- siblings]
+    impliedBySibling _ _ = False

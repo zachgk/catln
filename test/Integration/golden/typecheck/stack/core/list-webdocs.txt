@@ -152,8 +152,7 @@ Prgm
                                     ( Value /this -> ∀/Data/ToString = /fn( Value /v -> TVArg /head = Value /head ) )
                                 )
                             )
-                            ( Value /tail ->
-                                ( TopType | PredClass /Data/List/ConsList[ /T=/Catln/Doc/Show/Step.. ] && PredClass /Data/List[ /T=/Catln/Doc/Show/Step.. ] ) = /Data/List/fmapSteps( Value /lst -> TVArg /tail = Value /tail )
+                            ( Value /tail -> ∀/Data/List/ConsList[ /T=/Catln/Doc/Show/Step.. ] = /Data/List/fmapSteps( Value /lst -> TVArg /tail = Value /tail )
                                 ( /fn( Value /v ) -> ∀/Data/ToString = /fn( Value /v -> TVArg /v = Value /v ) )
                                 ( Value /index -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /index = Value /index )
                                     ( Value /r -> /Data/Primitive/Integer = CInt
@@ -431,8 +430,7 @@ Prgm
                                     ( Value /this -> $_/B = /fn( Value /acc -> TVArg /acc = Value /acc )( Value /v -> TVArg /head = Value /head ) )
                                 )
                             )
-                            ( Value /tail ->
-                                ( TopType | PredClass /Data/List/ConsList[ /T=/Catln/Doc/Show/FoldStep.. ] && PredClass /Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] ) = /Data/List/foldlSteps( Value /lst -> TVArg /tail = Value /tail )
+                            ( Value /tail -> ∀/Data/List/ConsList[ /T=/Catln/Doc/Show/FoldStep.. ] = /Data/List/foldlSteps( Value /lst -> TVArg /tail = Value /tail )
                                 ( /fn( Value /acc -> ∀/Data/ToString )( Value /v ) -> $_/B = /fn( Value /acc -> TVArg /acc = Value /acc )( Value /v -> TVArg /v = Value /v ) )
                                 ( Value /acc -> $_/B = /fn( Value /acc -> TVArg /acc = Value /acc )( Value /v -> TVArg /head = Value /head ) )
                                 ( Value /index -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /index = Value /index )
@@ -465,8 +463,7 @@ Prgm
                     , omiDefs =
                         [ /Catln/Doc/dshowCall
                             ( Value /s -> /Data/Functor/fmap
-                                [ /F=
-                                    ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] && PredClass /Data/Functor[ /T=∀/Data/ToString ] )
+                                [ /F=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
                                 , /B=TopType
                                 , /A=∀/Data/ToString
                                 ]
@@ -492,8 +489,7 @@ Prgm
                                         , /input=∀/Data/String
                                         , /index=/Data/Primitive/Integer
                                         )
-                                    , /tail=
-                                        ( TopType | PredClass /Data/List/ConsList[ /T=/Catln/Doc/Show/Step.. ] && PredClass /Data/List[ /T=/Catln/Doc/Show/Step.. ] )
+                                    , /tail=∀/Data/List/ConsList[ /T=/Catln/Doc/Show/Step.. ]
                                     )
                                 )
                             ) = /Catln/Doc/Show/Steps
@@ -510,8 +506,7 @@ Prgm
                                         , /input=∀/Data/String
                                         , /index=/Data/Primitive/Integer
                                         )
-                                    , /tail=
-                                        ( TopType | PredClass /Data/List/ConsList[ /T=/Catln/Doc/Show/Step.. ] && PredClass /Data/List[ /T=/Catln/Doc/Show/Step.. ] )
+                                    , /tail=∀/Data/List/ConsList[ /T=/Catln/Doc/Show/Step.. ]
                                     )
                                 ) = /Data/List/fmapSteps( Value /lst -> TVArg /lst = Value /lst )
                                 ( /fn( Value /v ) -> ∀/Data/ToString = /fn( Value /v -> TVArg /v = Value /v ) )
@@ -522,8 +517,7 @@ Prgm
                         , /Catln/Doc/dshowCall
                             ( Value /s -> /Data/Monad/mmap
                                 [ /B=TopType
-                                , /M=
-                                    ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] && PredClass /Data/Monad[ /T=∀/Data/ToString ] )
+                                , /M=∀/Data/List/ConsList[ /T=∀/Data/ToString ]
                                 , /A=∀/Data/ToString
                                 ]
                                 ( /fn( /v=TopType )=/fn
@@ -559,7 +553,7 @@ Prgm
                                     )
                                 , /init=∀/Data/ToString
                                 , /lst=
-                                    ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] && PredClass /Data/List[ /T=∀/Data/ToString ] )
+                                    ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] && PredClass /Data/List[ /T=$_/A ] )
                                 )| PredClass /Catln/Doc/DShowCall = /Data/List/foldl
                                 ( Value /lst -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] )
                                 ( /fn( Value /acc -> ∀/Data/ToString )( Value /v -> ∀/Data/ToString ) -> ∀/Data/ToString )( Value /init -> ∀/Data/ToString )
@@ -588,7 +582,7 @@ Prgm
                                     )
                                 , /init=∀/Data/ToString
                                 , /lst=
-                                    ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] && PredClass /Data/List[ /T=∀/Data/ToString ] )
+                                    ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/ToString ] && PredClass /Data/List[ /T=$_/A ] )
                                 )| PredClass /Catln/Doc/DShowCall = /Data/List/foldr
                                 ( Value /lst -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] )
                                 ( /fn( Value /acc -> ∀/Data/ToString )( Value /v -> ∀/Data/ToString ) -> ∀/Data/ToString )( Value /init -> ∀/Data/ToString )
@@ -680,8 +674,7 @@ Prgm
                                     ( Value /this -> ∀/Data/ToString = /fn( Value /v -> TVArg /head = Value /head ) )
                                 )
                             )
-                            ( Value /tail ->
-                                ( TopType | PredClass /Data/List/ConsList[ /T=/Catln/Doc/Show/Step.. ] && PredClass /Data/List[ /T=/Catln/Doc/Show/Step.. ] ) = /Data/List/mmapSteps( Value /m -> TVArg /tail = Value /tail )
+                            ( Value /tail -> ∀/Data/List/ConsList[ /T=/Catln/Doc/Show/Step.. ] = /Data/List/mmapSteps( Value /m -> TVArg /tail = Value /tail )
                                 ( /fn( Value /v -> ∀/Data/ToString ) -> ∀/Data/ToString = /fn( Value /v -> TVArg /v = Value /v ) )
                                 ( Value /index -> /Data/Primitive/Integer = /operator+( Value /l -> TVArg /index = Value /index )
                                     ( Value /r -> /Data/Primitive/Integer = CInt
@@ -715,9 +708,7 @@ Prgm
                                 ( Value /tail -> ∀/Data/List/ConsList[ /T=∀/Data/ToString ] )
                             )
                             ( /fn( Value /acc -> ∀/Data/ToString )( Value /v ) )( Value /acc -> ∀/Data/ToString )( Value /index -> /Data/Primitive/Integer )
-                            ( Value /rows ->
-                                ( TopType | PredClass /Data/List/ConsList[ /T=/Catln/Doc/Show/FoldStep.. ] && PredClass /Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] )
-                            ) -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] = /Data/List/foldrWalk( Value /stack -> TVArg /tail = Value /tail )
+                            ( Value /rows -> ∀/Data/List/ConsList[ /T=/Catln/Doc/Show/FoldStep.. ] ) -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] = /Data/List/foldrWalk( Value /stack -> TVArg /tail = Value /tail )
                             ( /fn( Value /acc -> ∀/Data/ToString )( Value /v ) -> $_/B = /fn( Value /acc -> TVArg /acc = Value /acc )( Value /v -> TVArg /v = Value /v ) )
                             ( Value /acc -> $_/B = /fn( Value /acc -> TVArg /acc = Value /acc )( Value /v -> TVArg /head = Value /head ) )
                             ( Value /index -> /Data/Primitive/Integer = /operator-( Value /l -> TVArg /index = Value /index )
@@ -739,8 +730,7 @@ Prgm
                                     , /input=∀/Data/String
                                     , /index=/Data/Primitive/Integer
                                     )
-                                , /tail=
-                                    ( TopType | PredClass /Data/List/ConsList[ /T=/Catln/Doc/Show/FoldStep.. ] && PredClass /Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] )
+                                , /tail=∀/Data/List/ConsList[ /T=/Catln/Doc/Show/FoldStep.. ]
                                 ) = /Data/List/Cons
                                 ( Value /head -> /Catln/Doc/Show/FoldStep
                                     ( /output=∀/Data/String

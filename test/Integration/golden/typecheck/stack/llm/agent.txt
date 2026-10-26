@@ -269,12 +269,9 @@ Prgm
                         , /Llm/editsOverlap
                             ( Value /ats -> /Data/List/Cons[ /T=/Llm/EditAt.. ]
                                 ( /head=/Llm/EditAt..
-                                , /tail=
-                                    ( TopType | PredClass /Data/List[ /T=/Llm/EditAt.. ] && PredClass /Data/List/ConsList[ /T=/Llm/EditAt.. ] )
+                                , /tail=∀/Data/List/ConsList[ /T=/Llm/EditAt.. ]
                                 ) = /Data/List/Cons( Value /head -> /Llm/EditAt.. )
-                                ( Value /tail ->
-                                    ( TopType | PredClass /Data/List[ /T=/Llm/EditAt.. ] && PredClass /Data/List/ConsList[ /T=/Llm/EditAt.. ] )
-                                )
+                                ( Value /tail -> ∀/Data/List/ConsList[ /T=/Llm/EditAt.. ] )
                             ) -> ∀/Data/Primitive/Boolean = /operator||
                             ( Value /l -> ∀/Data/Primitive/Boolean = /Llm/overlapsAny( Value /e -> TVArg /head = Value /head )( Value /ats -> TVArg /tail = Value /tail ) )
                             ( Value /r -> ∀/Data/Primitive/Boolean = /Llm/editsOverlap( Value /ats -> TVArg /tail = Value /tail ) )
@@ -1345,15 +1342,9 @@ Prgm
                         , /Llm/findEditsThen
                             ( Value /first -> /Data/Result/Ok[ /T=/Llm/EditAt.. ]( /value=/Llm/EditAt.. ) = /Data/Result/Ok( Value /value@Value /f -> /Llm/EditAt.. ) )
                             ( Value /rest -> /Data/Result/Ok
-                                [ /T=
-                                    ( TopType | PredClass /Data/List[ /T=/Llm/EditAt.. ] && PredClass /Data/List/ConsList[ /T=/Llm/EditAt.. ] )
-                                ]
-                                ( /value=
-                                    ( TopType | PredClass /Data/List[ /T=/Llm/EditAt.. ] && PredClass /Data/List/ConsList[ /T=/Llm/EditAt.. ] )
-                                ) = /Data/Result/Ok
-                                ( Value /value@Value /r ->
-                                    ( TopType | PredClass /Data/List[ /T=/Llm/EditAt.. ] && PredClass /Data/List/ConsList[ /T=/Llm/EditAt.. ] )
-                                )
+                                [ /T=∀/Data/List/ConsList[ /T=/Llm/EditAt.. ] ]
+                                ( /value=∀/Data/List/ConsList[ /T=/Llm/EditAt.. ] ) = /Data/Result/Ok
+                                ( Value /value@Value /r -> ∀/Data/List/ConsList[ /T=/Llm/EditAt.. ] )
                             ) -> /Data/Result/Ok
                             [ /T=/Data/List/Cons[ /T=/Llm/EditAt.. ]
                                 ( /head=/Llm/EditAt..

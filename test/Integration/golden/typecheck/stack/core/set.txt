@@ -45,18 +45,15 @@ Prgm
                                 )
                             , []
                             ) = /Data/Set/addAll
-                            ( Value /s ->
-                                ( TopType | PredClass /Data/Set/MapSet
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=TopType
-                                    ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                ) = Value /Data/Set/empty
+                            ( Value /s -> ∀/Data/Set/MapSet
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=TopType
+                                ] = Value /Data/Set/empty
                             )
-                            ( Value /items ->
-                                ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=TopType ] && PredClass /Data/Monad[ /T=∀/Data/Algebra/Ord ] ) = /Data/List/filter
+                            ( Value /items -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] = /Data/List/filter
                                 ( Value /lst -> UnionType
                                     ( Just
-                                        ( PredClass /Data/List[ /T=TopType ] && PredClass /Data/List/ConsList[ /T=TopType ]
+                                        ( PredClass /Data/List/ConsList[ /T=TopType ]
                                         , fromList []
                                         , []
                                         )
@@ -104,13 +101,13 @@ Prgm
                             ) = /Data/Set/addAll( Value /s -> TVArg /a = Value /a )
                             ( Value /items -> UnionType
                                 ( Just
-                                    ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=TopType ]
+                                    ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                                     , fromList []
                                     , []
                                     )
                                 , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
                                     ( /head=$/T
-                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                    , /tail=∀/Data/List/ConsList[ /T=$_/T ]
                                     )
                                 , []
                                 ) = /Data/Set/elements( Value /s -> TVArg /b = Value /b )
@@ -212,7 +209,7 @@ Prgm
                             ( Value /b -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] ) -> ∀/Data/Primitive/Boolean = /Data/List/allBy
                             ( Value /lst -> UnionType
                                 ( Just
-                                    ( PredClass /Data/List[ /T=TopType ] && PredClass /Data/List/ConsList[ /T=TopType ]
+                                    ( PredClass /Data/List/ConsList[ /T=TopType ]
                                     , fromList []
                                     , []
                                     )
@@ -240,9 +237,7 @@ Prgm
                     , omiDefs =
                         [ /Data/Set/removeAll
                             ( Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] )
-                            ( Value /items ->
-                                ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=TopType ] )
-                            ) -> UnionType
+                            ( Value /items -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
                                 , fromList []
@@ -454,9 +449,7 @@ Prgm
                     , omiDefs =
                         [ /Data/Set/addAll
                             ( Value /s -> ∀/Data/Set[ /T=∀/Data/Algebra/Ord ] )
-                            ( Value /items ->
-                                ( TopType | PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=TopType ] )
-                            ) -> UnionType
+                            ( Value /items -> ∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] ) -> UnionType
                             ( Just
                                 ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
                                 , fromList []
@@ -473,32 +466,22 @@ Prgm
                                 )
                             , []
                             ) = /Data/List/foldl( Value /lst -> TVArg /items = Value /items )
-                            ( /fn
-                                ( Value /acc -> UnionType
-                                    ( Just
-                                        ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                        , fromList []
-                                        , []
-                                        )
-                                    , /Data/Set/MkSet
-                                        [ /K=∀/Data/Algebra/Ord
-                                        , /V=()
-                                        ]
-                                        ( /map=∀/Data/Map
-                                            [ /K=∀/Data/Algebra/Ord
-                                            , /V=()
-                                            ]
-                                        )
+                            ( /fn( Value /acc )( Value /v -> ∀/Data/Algebra/Ord ) -> UnionType
+                                ( Just
+                                    ( PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
+                                    , fromList []
                                     , []
                                     )
-                                )( Value /v -> ∀/Data/Algebra/Ord ) -> /Data/Set/MkSet
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=()
-                                ]
-                                ( /map=∀/Data/Map
+                                , /Data/Set/MkSet
                                     [ /K=∀/Data/Algebra/Ord
                                     , /V=()
                                     ]
+                                    ( /map=∀/Data/Map
+                                        [ /K=∀/Data/Algebra/Ord
+                                        , /V=()
+                                        ]
+                                    )
+                                , []
                                 ) = /Data/Set/add( Value /s -> TVArg /acc = Value /acc )( Value /item -> TVArg /v = Value /v )
                             )( Value /init -> TVArg /s = Value /s )
                         ]
@@ -565,13 +548,13 @@ Prgm
                             ) = /Data/Set/removeAll( Value /s -> TVArg /a = Value /a )
                             ( Value /items -> UnionType
                                 ( Just
-                                    ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ] && PredClass /Data/List[ /T=TopType ]
+                                    ( PredClass /Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
                                     , fromList []
                                     , []
                                     )
                                 , /Data/List/Cons[ /T=∀/Data/Algebra/Ord ]
                                     ( /head=$/T
-                                    , /tail=∀/Data/List/ConsList[ /T=∀/Data/Algebra/Ord ]
+                                    , /tail=∀/Data/List/ConsList[ /T=$_/T ]
                                     )
                                 , []
                                 ) = /Data/Set/elements( Value /s -> TVArg /b = Value /b )
@@ -836,12 +819,10 @@ Prgm
                             , /V=()
                             ]
                         ) = /Data/Set/add
-                        ( Value /s ->
-                            ( TopType | PredClass /Data/Set/MapSet
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=TopType
-                                ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                            ) = Value /Data/Set/empty
+                        ( Value /s -> ∀/Data/Set/MapSet
+                            [ /K=∀/Data/Algebra/Ord
+                            , /V=TopType
+                            ] = Value /Data/Set/empty
                         )
                         ( Value /item -> /Data/Primitive/Integer = CInt
                             { ciValue = 1 }
@@ -872,12 +853,10 @@ Prgm
                         , /V=()
                         ]
                     ) = /Data/Set/add
-                    ( Value /s ->
-                        ( TopType | PredClass /Data/Set/MapSet
-                            [ /K=∀/Data/Algebra/Ord
-                            , /V=TopType
-                            ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                        ) = Value /Data/Set/empty
+                    ( Value /s -> ∀/Data/Set/MapSet
+                        [ /K=∀/Data/Algebra/Ord
+                        , /V=TopType
+                        ] = Value /Data/Set/empty
                     )
                     ( Value /item -> /Data/Primitive/Integer = CInt
                         { ciValue = 1 }
@@ -927,12 +906,10 @@ Prgm
                             , /V=()
                             ]
                         ) = /Data/Set/add
-                        ( Value /s ->
-                            ( TopType | PredClass /Data/Set/MapSet
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=TopType
-                                ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                            ) = Value /Data/Set/empty
+                        ( Value /s -> ∀/Data/Set/MapSet
+                            [ /K=∀/Data/Algebra/Ord
+                            , /V=TopType
+                            ] = Value /Data/Set/empty
                         )
                         ( Value /item -> /Data/Primitive/Integer = CInt
                             { ciValue = 1 }
@@ -968,12 +945,10 @@ Prgm
                         , /V=()
                         ]
                     ) = /Data/Set/add
-                    ( Value /s ->
-                        ( TopType | PredClass /Data/Set/MapSet
-                            [ /K=∀/Data/Algebra/Ord
-                            , /V=TopType
-                            ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                        ) = Value /Data/Set/empty
+                    ( Value /s -> ∀/Data/Set/MapSet
+                        [ /K=∀/Data/Algebra/Ord
+                        , /V=TopType
+                        ] = Value /Data/Set/empty
                     )
                     ( Value /item -> /Data/Primitive/Integer = CInt
                         { ciValue = 1 }
@@ -1025,12 +1000,10 @@ Prgm
                                 , /V=()
                                 ]
                             ) = /Data/Set/add
-                            ( Value /s ->
-                                ( TopType | PredClass /Data/Set/MapSet
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=TopType
-                                    ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                ) = Value /Data/Set/empty
+                            ( Value /s -> ∀/Data/Set/MapSet
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=TopType
+                                ] = Value /Data/Set/empty
                             )
                             ( Value /item -> /Data/Primitive/Integer = CInt
                                 { ciValue = 2 }
@@ -1138,12 +1111,10 @@ Prgm
                                 , /V=()
                                 ]
                             ) = /Data/Set/add
-                            ( Value /s ->
-                                ( TopType | PredClass /Data/Set/MapSet
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=TopType
-                                    ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                ) = Value /Data/Set/empty
+                            ( Value /s -> ∀/Data/Set/MapSet
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=TopType
+                                ] = Value /Data/Set/empty
                             )
                             ( Value /item -> /Data/Primitive/Integer = CInt
                                 { ciValue = 1 }
@@ -1196,12 +1167,10 @@ Prgm
                                 , /V=()
                                 ]
                             ) = /Data/Set/add
-                            ( Value /s ->
-                                ( TopType | PredClass /Data/Set/MapSet
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=TopType
-                                    ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                ) = Value /Data/Set/empty
+                            ( Value /s -> ∀/Data/Set/MapSet
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=TopType
+                                ] = Value /Data/Set/empty
                             )
                             ( Value /item -> /Data/Primitive/Integer = CInt
                                 { ciValue = 1 }
@@ -1269,12 +1238,10 @@ Prgm
                                 , /V=()
                                 ]
                             ) = /Data/Set/add
-                            ( Value /s ->
-                                ( TopType | PredClass /Data/Set/MapSet
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=TopType
-                                    ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                ) = Value /Data/Set/empty
+                            ( Value /s -> ∀/Data/Set/MapSet
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=TopType
+                                ] = Value /Data/Set/empty
                             )
                             ( Value /item -> /Data/Primitive/Integer = CInt
                                 { ciValue = 1 }
@@ -1302,12 +1269,10 @@ Prgm
                                 , /V=()
                                 ]
                             ) = /Data/Set/add
-                            ( Value /s ->
-                                ( TopType | PredClass /Data/Set/MapSet
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=TopType
-                                    ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                ) = Value /Data/Set/empty
+                            ( Value /s -> ∀/Data/Set/MapSet
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=TopType
+                                ] = Value /Data/Set/empty
                             )
                             ( Value /item -> /Data/Primitive/Integer = CInt
                                 { ciValue = 2 }
@@ -1353,12 +1318,10 @@ Prgm
                             , /V=()
                             ]
                         ) = /Data/Set/add
-                        ( Value /s ->
-                            ( TopType | PredClass /Data/Set/MapSet
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=TopType
-                                ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                            ) = Value /Data/Set/empty
+                        ( Value /s -> ∀/Data/Set/MapSet
+                            [ /K=∀/Data/Algebra/Ord
+                            , /V=TopType
+                            ] = Value /Data/Set/empty
                         )
                         ( Value /item -> /Data/Primitive/Integer = CInt
                             { ciValue = 1 }
@@ -1373,12 +1336,10 @@ Prgm
                             , /V=()
                             ]
                         ) = /Data/Set/add
-                        ( Value /s ->
-                            ( TopType | PredClass /Data/Set/MapSet
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=TopType
-                                ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                            ) = Value /Data/Set/empty
+                        ( Value /s -> ∀/Data/Set/MapSet
+                            [ /K=∀/Data/Algebra/Ord
+                            , /V=TopType
+                            ] = Value /Data/Set/empty
                         )
                         ( Value /item -> /Data/Primitive/Integer = CInt
                             { ciValue = 2 }
@@ -1439,12 +1400,10 @@ Prgm
                                 , /V=()
                                 ]
                             ) = /Data/Set/add
-                            ( Value /s ->
-                                ( TopType | PredClass /Data/Set/MapSet
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=TopType
-                                    ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                ) = Value /Data/Set/empty
+                            ( Value /s -> ∀/Data/Set/MapSet
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=TopType
+                                ] = Value /Data/Set/empty
                             )
                             ( Value /item -> /Data/Primitive/Integer = CInt
                                 { ciValue = 1 }
@@ -1463,12 +1422,10 @@ Prgm
                             , /V=()
                             ]
                         ) = /Data/Set/add
-                        ( Value /s ->
-                            ( TopType | PredClass /Data/Set/MapSet
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=TopType
-                                ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                            ) = Value /Data/Set/empty
+                        ( Value /s -> ∀/Data/Set/MapSet
+                            [ /K=∀/Data/Algebra/Ord
+                            , /V=TopType
+                            ] = Value /Data/Set/empty
                         )
                         ( Value /item -> /Data/Primitive/Integer = CInt
                             { ciValue = 2 }
@@ -1519,12 +1476,10 @@ Prgm
                                 , /V=()
                                 ]
                             ) = /Data/Set/add
-                            ( Value /s ->
-                                ( TopType | PredClass /Data/Set/MapSet
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=TopType
-                                    ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                ) = Value /Data/Set/empty
+                            ( Value /s -> ∀/Data/Set/MapSet
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=TopType
+                                ] = Value /Data/Set/empty
                             )
                             ( Value /item -> /Data/Primitive/Integer = CInt
                                 { ciValue = 1 }
@@ -1543,12 +1498,10 @@ Prgm
                             , /V=()
                             ]
                         ) = /Data/Set/add
-                        ( Value /s ->
-                            ( TopType | PredClass /Data/Set/MapSet
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=TopType
-                                ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                            ) = Value /Data/Set/empty
+                        ( Value /s -> ∀/Data/Set/MapSet
+                            [ /K=∀/Data/Algebra/Ord
+                            , /V=TopType
+                            ] = Value /Data/Set/empty
                         )
                         ( Value /item -> /Data/Primitive/Integer = CInt
                             { ciValue = 2 }
@@ -1602,12 +1555,10 @@ Prgm
                                 , /V=()
                                 ]
                             ) = /Data/Set/add
-                            ( Value /s ->
-                                ( TopType | PredClass /Data/Set/MapSet
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=TopType
-                                    ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                ) = Value /Data/Set/empty
+                            ( Value /s -> ∀/Data/Set/MapSet
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=TopType
+                                ] = Value /Data/Set/empty
                             )
                             ( Value /item -> /Data/Primitive/Integer = CInt
                                 { ciValue = 1 }
@@ -1626,12 +1577,10 @@ Prgm
                             , /V=()
                             ]
                         ) = /Data/Set/add
-                        ( Value /s ->
-                            ( TopType | PredClass /Data/Set/MapSet
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=TopType
-                                ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                            ) = Value /Data/Set/empty
+                        ( Value /s -> ∀/Data/Set/MapSet
+                            [ /K=∀/Data/Algebra/Ord
+                            , /V=TopType
+                            ] = Value /Data/Set/empty
                         )
                         ( Value /item -> /Data/Primitive/Integer = CInt
                             { ciValue = 2 }
@@ -1692,12 +1641,10 @@ Prgm
                                 , /V=()
                                 ]
                             ) = /Data/Set/add
-                            ( Value /s ->
-                                ( TopType | PredClass /Data/Set/MapSet
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=TopType
-                                    ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                ) = Value /Data/Set/empty
+                            ( Value /s -> ∀/Data/Set/MapSet
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=TopType
+                                ] = Value /Data/Set/empty
                             )
                             ( Value /item -> /Data/Primitive/Integer = CInt
                                 { ciValue = 1 }
@@ -1725,12 +1672,10 @@ Prgm
                                 , /V=()
                                 ]
                             ) = /Data/Set/add
-                            ( Value /s ->
-                                ( TopType | PredClass /Data/Set/MapSet
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=TopType
-                                    ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                ) = Value /Data/Set/empty
+                            ( Value /s -> ∀/Data/Set/MapSet
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=TopType
+                                ] = Value /Data/Set/empty
                             )
                             ( Value /item -> /Data/Primitive/Integer = CInt
                                 { ciValue = 2 }
@@ -1785,12 +1730,10 @@ Prgm
                                 , /V=()
                                 ]
                             ) = /Data/Set/add
-                            ( Value /s ->
-                                ( TopType | PredClass /Data/Set/MapSet
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=TopType
-                                    ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                ) = Value /Data/Set/empty
+                            ( Value /s -> ∀/Data/Set/MapSet
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=TopType
+                                ] = Value /Data/Set/empty
                             )
                             ( Value /item -> /Data/Primitive/Integer = CInt
                                 { ciValue = 1 }
@@ -1818,12 +1761,10 @@ Prgm
                                 , /V=()
                                 ]
                             ) = /Data/Set/add
-                            ( Value /s ->
-                                ( TopType | PredClass /Data/Set/MapSet
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=TopType
-                                    ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                ) = Value /Data/Set/empty
+                            ( Value /s -> ∀/Data/Set/MapSet
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=TopType
+                                ] = Value /Data/Set/empty
                             )
                             ( Value /item -> /Data/Primitive/Integer = CInt
                                 { ciValue = 2 }
@@ -1881,12 +1822,10 @@ Prgm
                                 , /V=()
                                 ]
                             ) = /Data/Set/add
-                            ( Value /s ->
-                                ( TopType | PredClass /Data/Set/MapSet
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=TopType
-                                    ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                ) = Value /Data/Set/empty
+                            ( Value /s -> ∀/Data/Set/MapSet
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=TopType
+                                ] = Value /Data/Set/empty
                             )
                             ( Value /item -> /Data/Primitive/Integer = CInt
                                 { ciValue = 1 }
@@ -1914,12 +1853,10 @@ Prgm
                                 , /V=()
                                 ]
                             ) = /Data/Set/add
-                            ( Value /s ->
-                                ( TopType | PredClass /Data/Set/MapSet
-                                    [ /K=∀/Data/Algebra/Ord
-                                    , /V=TopType
-                                    ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                                ) = Value /Data/Set/empty
+                            ( Value /s -> ∀/Data/Set/MapSet
+                                [ /K=∀/Data/Algebra/Ord
+                                , /V=TopType
+                                ] = Value /Data/Set/empty
                             )
                             ( Value /item -> /Data/Primitive/Integer = CInt
                                 { ciValue = 2 }
@@ -1958,12 +1895,10 @@ Prgm
                         , /V=()
                         ]
                     ) = /Data/Set/add
-                    ( Value /s ->
-                        ( TopType | PredClass /Data/Set/MapSet
-                            [ /K=∀/Data/Algebra/Ord
-                            , /V=TopType
-                            ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                        ) = Value /Data/Set/empty
+                    ( Value /s -> ∀/Data/Set/MapSet
+                        [ /K=∀/Data/Algebra/Ord
+                        , /V=TopType
+                        ] = Value /Data/Set/empty
                     )
                     ( Value /item -> /Data/Primitive/Integer = CInt
                         { ciValue = 1 }
@@ -1987,12 +1922,10 @@ Prgm
                             , /V=()
                             ]
                         ) = /Data/Set/add
-                        ( Value /s ->
-                            ( TopType | PredClass /Data/Set/MapSet
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=TopType
-                                ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                            ) = Value /Data/Set/empty
+                        ( Value /s -> ∀/Data/Set/MapSet
+                            [ /K=∀/Data/Algebra/Ord
+                            , /V=TopType
+                            ] = Value /Data/Set/empty
                         )
                         ( Value /item -> /Data/Primitive/Integer = CInt
                             { ciValue = 1 }
@@ -2029,12 +1962,10 @@ Prgm
                             , /V=()
                             ]
                         ) = /Data/Set/add
-                        ( Value /s ->
-                            ( TopType | PredClass /Data/Set/MapSet
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=TopType
-                                ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                            ) = Value /Data/Set/empty
+                        ( Value /s -> ∀/Data/Set/MapSet
+                            [ /K=∀/Data/Algebra/Ord
+                            , /V=TopType
+                            ] = Value /Data/Set/empty
                         )
                         ( Value /item -> /Data/Primitive/Integer = CInt
                             { ciValue = 1 }
@@ -2062,12 +1993,10 @@ Prgm
                             , /V=()
                             ]
                         ) = /Data/Set/add
-                        ( Value /s ->
-                            ( TopType | PredClass /Data/Set/MapSet
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=TopType
-                                ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                            ) = Value /Data/Set/empty
+                        ( Value /s -> ∀/Data/Set/MapSet
+                            [ /K=∀/Data/Algebra/Ord
+                            , /V=TopType
+                            ] = Value /Data/Set/empty
                         )
                         ( Value /item -> /Data/Primitive/Integer = CInt
                             { ciValue = 1 }
@@ -2131,12 +2060,10 @@ Prgm
                             , /V=()
                             ]
                         ) = /Data/Set/add
-                        ( Value /s ->
-                            ( TopType | PredClass /Data/Set/MapSet
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=TopType
-                                ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                            ) = Value /Data/Set/empty
+                        ( Value /s -> ∀/Data/Set/MapSet
+                            [ /K=∀/Data/Algebra/Ord
+                            , /V=TopType
+                            ] = Value /Data/Set/empty
                         )
                         ( Value /item -> /Data/Primitive/Integer = CInt
                             { ciValue = 1 }
@@ -2164,12 +2091,10 @@ Prgm
                             , /V=()
                             ]
                         ) = /Data/Set/add
-                        ( Value /s ->
-                            ( TopType | PredClass /Data/Set/MapSet
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=TopType
-                                ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                            ) = Value /Data/Set/empty
+                        ( Value /s -> ∀/Data/Set/MapSet
+                            [ /K=∀/Data/Algebra/Ord
+                            , /V=TopType
+                            ] = Value /Data/Set/empty
                         )
                         ( Value /item -> /Data/Primitive/Integer = CInt
                             { ciValue = 2 }
@@ -2206,12 +2131,10 @@ Prgm
                             , /V=()
                             ]
                         ) = /Data/Set/add
-                        ( Value /s ->
-                            ( TopType | PredClass /Data/Set/MapSet
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=TopType
-                                ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                            ) = Value /Data/Set/empty
+                        ( Value /s -> ∀/Data/Set/MapSet
+                            [ /K=∀/Data/Algebra/Ord
+                            , /V=TopType
+                            ] = Value /Data/Set/empty
                         )
                         ( Value /item -> /Data/Primitive/Integer = CInt
                             { ciValue = 1 }
@@ -2230,12 +2153,10 @@ Prgm
                         , /V=()
                         ]
                     ) = /Data/Set/add
-                    ( Value /s ->
-                        ( TopType | PredClass /Data/Set/MapSet
-                            [ /K=∀/Data/Algebra/Ord
-                            , /V=TopType
-                            ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                        ) = Value /Data/Set/empty
+                    ( Value /s -> ∀/Data/Set/MapSet
+                        [ /K=∀/Data/Algebra/Ord
+                        , /V=TopType
+                        ] = Value /Data/Set/empty
                     )
                     ( Value /item -> /Data/Primitive/Integer = CInt
                         { ciValue = 1 }
@@ -2259,12 +2180,10 @@ Prgm
                         , /V=()
                         ]
                     ) = /Data/Set/add
-                    ( Value /s ->
-                        ( TopType | PredClass /Data/Set/MapSet
-                            [ /K=∀/Data/Algebra/Ord
-                            , /V=TopType
-                            ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                        ) = Value /Data/Set/empty
+                    ( Value /s -> ∀/Data/Set/MapSet
+                        [ /K=∀/Data/Algebra/Ord
+                        , /V=TopType
+                        ] = Value /Data/Set/empty
                     )
                     ( Value /item -> /Data/Primitive/Integer = CInt
                         { ciValue = 1 }
@@ -2279,12 +2198,10 @@ Prgm
                         , /V=()
                         ]
                     ) = /Data/Set/add
-                    ( Value /s ->
-                        ( TopType | PredClass /Data/Set/MapSet
-                            [ /K=∀/Data/Algebra/Ord
-                            , /V=TopType
-                            ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                        ) = Value /Data/Set/empty
+                    ( Value /s -> ∀/Data/Set/MapSet
+                        [ /K=∀/Data/Algebra/Ord
+                        , /V=TopType
+                        ] = Value /Data/Set/empty
                     )
                     ( Value /item -> /Data/Primitive/Integer = CInt
                         { ciValue = 2 }
@@ -2317,12 +2234,10 @@ Prgm
                             , /V=()
                             ]
                         ) = /Data/Set/add
-                        ( Value /s ->
-                            ( TopType | PredClass /Data/Set/MapSet
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=TopType
-                                ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                            ) = Value /Data/Set/empty
+                        ( Value /s -> ∀/Data/Set/MapSet
+                            [ /K=∀/Data/Algebra/Ord
+                            , /V=TopType
+                            ] = Value /Data/Set/empty
                         )
                         ( Value /item -> /Data/Primitive/Integer = CInt
                             { ciValue = 1 }
@@ -2350,12 +2265,10 @@ Prgm
                             , /V=()
                             ]
                         ) = /Data/Set/add
-                        ( Value /s ->
-                            ( TopType | PredClass /Data/Set/MapSet
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=TopType
-                                ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                            ) = Value /Data/Set/empty
+                        ( Value /s -> ∀/Data/Set/MapSet
+                            [ /K=∀/Data/Algebra/Ord
+                            , /V=TopType
+                            ] = Value /Data/Set/empty
                         )
                         ( Value /item -> /Data/Primitive/Integer = CInt
                             { ciValue = 2 }
@@ -2375,12 +2288,10 @@ Prgm
                             , /V=()
                             ]
                         ) = /Data/Set/add
-                        ( Value /s ->
-                            ( TopType | PredClass /Data/Set/MapSet
-                                [ /K=∀/Data/Algebra/Ord
-                                , /V=TopType
-                                ] && PredClass /Data/Set[ /T=∀/Data/Algebra/Ord ]
-                            ) = Value /Data/Set/empty
+                        ( Value /s -> ∀/Data/Set/MapSet
+                            [ /K=∀/Data/Algebra/Ord
+                            , /V=TopType
+                            ] = Value /Data/Set/empty
                         )
                         ( Value /item -> /Data/Primitive/Integer = CInt
                             { ciValue = 1 }

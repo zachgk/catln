@@ -765,8 +765,7 @@ Prgm
                                 }
                             )
                             ( EAppArg
-                                { eaaArg = Value /tail ->
-                                    ( TopType | PredClass /Data/List/ConsList[ /T=/Catln/Doc/Show/FoldStep.. ] && PredClass /Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] ) =
+                                { eaaArg = Value /tail -> ∀/Data/List/ConsList[ /T=/Catln/Doc/Show/FoldStep.. ] =
                                     ( /Data/List/foldlSteps
                                         ( EAppArg
                                             { eaaArg = Value /lst -> TVArg /tail = ( Value /tail ↦ TVArg /tail ) }
@@ -808,8 +807,7 @@ Prgm
                                                     ) ↦ /Data/Primitive/Integer
                                                 )
                                             }
-                                        ) ↦
-                                        ( TopType | PredClass /Data/List/ConsList[ /T=/Catln/Doc/Show/FoldStep.. ] && PredClass /Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] )
+                                        ) ↦ ∀/Data/List/ConsList[ /T=/Catln/Doc/Show/FoldStep.. ]
                                     )
                                 }
                             )
@@ -978,9 +976,7 @@ Prgm
                             ( EAppArg { eaaArg = Value /acc -> ∀/Data/ToString } )
                             ( EAppArg { eaaArg = Value /index -> /Data/Primitive/Integer } )
                             ( EAppArg
-                                { eaaArg = Value /rows ->
-                                    ( TopType | PredClass /Data/List/ConsList[ /T=/Catln/Doc/Show/FoldStep.. ] && PredClass /Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] )
-                                }
+                                { eaaArg = Value /rows -> ∀/Data/List/ConsList[ /T=/Catln/Doc/Show/FoldStep.. ] }
                             ) -> ∀/Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] =
                             ( /Data/List/foldrWalk
                                 ( EAppArg
@@ -1039,8 +1035,7 @@ Prgm
                                             , /input=∀/Data/String
                                             , /index=/Data/Primitive/Integer
                                             )
-                                        , /tail=
-                                            ( TopType | PredClass /Data/List/ConsList[ /T=/Catln/Doc/Show/FoldStep.. ] && PredClass /Data/List[ /T=/Catln/Doc/Show/FoldStep.. ] )
+                                        , /tail=∀/Data/List/ConsList[ /T=/Catln/Doc/Show/FoldStep.. ]
                                         ) = /Data/List/Cons
                                         ( EAppArg
                                             { eaaArg = Value /head -> /Catln/Doc/Show/FoldStep

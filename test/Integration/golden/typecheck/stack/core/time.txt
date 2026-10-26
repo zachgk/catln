@@ -2924,12 +2924,10 @@ Prgm
                 { csValue = "2026-01-03" }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Data/Result
-                    [ /T=/Data/Primitive/Integer
-                    , /E=∀/Data/IntegerParseErr
-                    ] && PredClass /Catln/Doc/DShow
-                ) = /Data/Time/natural
+            ( Value /p -> ∀/Data/Result
+                [ /T=/Data/Primitive/Integer
+                , /E=∀/Data/IntegerParseErr
+                ] = /Data/Time/natural
                 ( Value /s ->
                     ( /Data/String/Text
                         ( /chars=
@@ -2950,12 +2948,10 @@ Prgm
                 { csValue = "42" }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Data/Result
-                    [ /T=/Data/Primitive/Integer
-                    , /E=∀/Data/IntegerParseErr
-                    ] && PredClass /Catln/Doc/DShow
-                ) = /Data/Time/natural
+            ( Value /p -> ∀/Data/Result
+                [ /T=/Data/Primitive/Integer
+                , /E=∀/Data/IntegerParseErr
+                ] = /Data/Time/natural
                 ( Value /s ->
                     ( /Data/String/Text
                         ( /chars=
@@ -2976,12 +2972,10 @@ Prgm
                 { csValue = "error: '+' at 0 is not a digit of base 10" }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Data/Result
-                    [ /T=/Data/Primitive/Integer
-                    , /E=∀/Data/IntegerParseErr
-                    ] && PredClass /Catln/Doc/DShow
-                ) = /Data/Time/natural
+            ( Value /p -> ∀/Data/Result
+                [ /T=/Data/Primitive/Integer
+                , /E=∀/Data/IntegerParseErr
+                ] = /Data/Time/natural
                 ( Value /s ->
                     ( /Data/String/Text
                         ( /chars=
@@ -3011,12 +3005,10 @@ Prgm
                 ([MonthOutOfRange]), or the day is not one the month has ([NoSuchDay])." }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Result
-                    [ /T=/Data/Time/Date..
-                    , /E=∀/Data/Time/DateParseErr
-                    ]
-                ) = /Data/Time/parseDate
+            ( Value /p -> ∀/Data/Result
+                [ /T=/Data/Time/Date..
+                , /E=∀/Data/Time/DateParseErr
+                ] = /Data/Time/parseDate
                 ( Value /s ->
                     ( /Data/String/Text
                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
@@ -3031,12 +3023,10 @@ Prgm
                 { csValue = "2026-01-03" }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Result
-                    [ /T=/Data/Time/Date..
-                    , /E=∀/Data/Time/DateParseErr
-                    ]
-                ) = /Data/Time/parseDate
+            ( Value /p -> ∀/Data/Result
+                [ /T=/Data/Time/Date..
+                , /E=∀/Data/Time/DateParseErr
+                ] = /Data/Time/parseDate
                 ( Value /s ->
                     ( /Data/String/Text
                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
@@ -3051,12 +3041,10 @@ Prgm
                 { csValue = "2024-02-29" }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Result
-                    [ /T=/Data/Time/Date..
-                    , /E=∀/Data/Time/DateParseErr
-                    ]
-                ) = /Data/Time/parseDate
+            ( Value /p -> ∀/Data/Result
+                [ /T=/Data/Time/Date..
+                , /E=∀/Data/Time/DateParseErr
+                ] = /Data/Time/parseDate
                 ( Value /s ->
                     ( /Data/String/Text
                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
@@ -3071,12 +3059,10 @@ Prgm
                 { csValue = "error: 2026-02-29 is not a day that exists" }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Result
-                    [ /T=/Data/Time/Date..
-                    , /E=∀/Data/Time/DateParseErr
-                    ]
-                ) = /Data/Time/parseDate
+            ( Value /p -> ∀/Data/Result
+                [ /T=/Data/Time/Date..
+                , /E=∀/Data/Time/DateParseErr
+                ] = /Data/Time/parseDate
                 ( Value /s ->
                     ( /Data/String/Text
                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
@@ -3091,12 +3077,10 @@ Prgm
                 { csValue = "error: 13 is not a month from 1 to 12" }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Result
-                    [ /T=/Data/Time/Date..
-                    , /E=∀/Data/Time/DateParseErr
-                    ]
-                ) = /Data/Time/parseDate
+            ( Value /p -> ∀/Data/Result
+                [ /T=/Data/Time/Date..
+                , /E=∀/Data/Time/DateParseErr
+                ] = /Data/Time/parseDate
                 ( Value /s ->
                     ( /Data/String/Text
                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
@@ -3111,12 +3095,10 @@ Prgm
                 { csValue = "error: the month is not a number: 'x' at 1 is not a digit of base 10" }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Result
-                    [ /T=/Data/Time/Date..
-                    , /E=∀/Data/Time/DateParseErr
-                    ]
-                ) = /Data/Time/parseDate
+            ( Value /p -> ∀/Data/Result
+                [ /T=/Data/Time/Date..
+                , /E=∀/Data/Time/DateParseErr
+                ] = /Data/Time/parseDate
                 ( Value /s ->
                     ( /Data/String/Text
                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
@@ -3451,12 +3433,10 @@ Prgm
                 of a 12-hour one is not 1 to 12 ([TwelveHourOutOfRange])." }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Data/Result
-                    [ /T=/Data/Time/TimeOfDay..
-                    , /E=∀/Data/Time/TimeParseErr
-                    ] && PredClass /Catln/Doc/DShow
-                ) = /Data/Time/parseTimeOfDay
+            ( Value /p -> ∀/Data/Result
+                [ /T=/Data/Time/TimeOfDay..
+                , /E=∀/Data/Time/TimeParseErr
+                ] = /Data/Time/parseTimeOfDay
                 ( Value /s ->
                     ( /Data/String/Text
                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
@@ -3471,12 +3451,10 @@ Prgm
                 { csValue = "09:30" }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Data/Result
-                    [ /T=/Data/Time/TimeOfDay..
-                    , /E=∀/Data/Time/TimeParseErr
-                    ] && PredClass /Catln/Doc/DShow
-                ) = /Data/Time/parseTimeOfDay
+            ( Value /p -> ∀/Data/Result
+                [ /T=/Data/Time/TimeOfDay..
+                , /E=∀/Data/Time/TimeParseErr
+                ] = /Data/Time/parseTimeOfDay
                 ( Value /s ->
                     ( /Data/String/Text
                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
@@ -3491,12 +3469,10 @@ Prgm
                 { csValue = "09:00" }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Data/Result
-                    [ /T=/Data/Time/TimeOfDay..
-                    , /E=∀/Data/Time/TimeParseErr
-                    ] && PredClass /Catln/Doc/DShow
-                ) = /Data/Time/parseTimeOfDay
+            ( Value /p -> ∀/Data/Result
+                [ /T=/Data/Time/TimeOfDay..
+                , /E=∀/Data/Time/TimeParseErr
+                ] = /Data/Time/parseTimeOfDay
                 ( Value /s ->
                     ( /Data/String/Text
                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
@@ -3511,12 +3487,10 @@ Prgm
                 { csValue = "21:30" }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Data/Result
-                    [ /T=/Data/Time/TimeOfDay..
-                    , /E=∀/Data/Time/TimeParseErr
-                    ] && PredClass /Catln/Doc/DShow
-                ) = /Data/Time/parseTimeOfDay
+            ( Value /p -> ∀/Data/Result
+                [ /T=/Data/Time/TimeOfDay..
+                , /E=∀/Data/Time/TimeParseErr
+                ] = /Data/Time/parseTimeOfDay
                 ( Value /s ->
                     ( /Data/String/Text
                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
@@ -3531,12 +3505,10 @@ Prgm
                 { csValue = "21:30" }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Data/Result
-                    [ /T=/Data/Time/TimeOfDay..
-                    , /E=∀/Data/Time/TimeParseErr
-                    ] && PredClass /Catln/Doc/DShow
-                ) = /Data/Time/parseTimeOfDay
+            ( Value /p -> ∀/Data/Result
+                [ /T=/Data/Time/TimeOfDay..
+                , /E=∀/Data/Time/TimeParseErr
+                ] = /Data/Time/parseTimeOfDay
                 ( Value /s ->
                     ( /Data/String/Text
                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
@@ -3551,12 +3523,10 @@ Prgm
                 { csValue = "00:15" }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Data/Result
-                    [ /T=/Data/Time/TimeOfDay..
-                    , /E=∀/Data/Time/TimeParseErr
-                    ] && PredClass /Catln/Doc/DShow
-                ) = /Data/Time/parseTimeOfDay
+            ( Value /p -> ∀/Data/Result
+                [ /T=/Data/Time/TimeOfDay..
+                , /E=∀/Data/Time/TimeParseErr
+                ] = /Data/Time/parseTimeOfDay
                 ( Value /s ->
                     ( /Data/String/Text
                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
@@ -3571,12 +3541,10 @@ Prgm
                 { csValue = "error: 25 is not an hour of a 24-hour clock, 0 to 23" }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Data/Result
-                    [ /T=/Data/Time/TimeOfDay..
-                    , /E=∀/Data/Time/TimeParseErr
-                    ] && PredClass /Catln/Doc/DShow
-                ) = /Data/Time/parseTimeOfDay
+            ( Value /p -> ∀/Data/Result
+                [ /T=/Data/Time/TimeOfDay..
+                , /E=∀/Data/Time/TimeParseErr
+                ] = /Data/Time/parseTimeOfDay
                 ( Value /s ->
                     ( /Data/String/Text
                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
@@ -3591,12 +3559,10 @@ Prgm
                 { csValue = "error: 13 is not an hour of a 12-hour clock, 1 to 12" }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Data/Result
-                    [ /T=/Data/Time/TimeOfDay..
-                    , /E=∀/Data/Time/TimeParseErr
-                    ] && PredClass /Catln/Doc/DShow
-                ) = /Data/Time/parseTimeOfDay
+            ( Value /p -> ∀/Data/Result
+                [ /T=/Data/Time/TimeOfDay..
+                , /E=∀/Data/Time/TimeParseErr
+                ] = /Data/Time/parseTimeOfDay
                 ( Value /s ->
                     ( /Data/String/Text
                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
@@ -3611,12 +3577,10 @@ Prgm
                 { csValue = "error: "13" does not write an hour and minutes apart" }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Data/Result
-                    [ /T=/Data/Time/TimeOfDay..
-                    , /E=∀/Data/Time/TimeParseErr
-                    ] && PredClass /Catln/Doc/DShow
-                ) = /Data/Time/parseTimeOfDay
+            ( Value /p -> ∀/Data/Result
+                [ /T=/Data/Time/TimeOfDay..
+                , /E=∀/Data/Time/TimeParseErr
+                ] = /Data/Time/parseTimeOfDay
                 ( Value /s ->
                     ( /Data/String/Text
                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
@@ -3631,12 +3595,10 @@ Prgm
                 { csValue = "error: "930" does not write an hour and minutes apart" }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Data/Result
-                    [ /T=/Data/Time/TimeOfDay..
-                    , /E=∀/Data/Time/TimeParseErr
-                    ] && PredClass /Catln/Doc/DShow
-                ) = /Data/Time/parseTimeOfDay
+            ( Value /p -> ∀/Data/Result
+                [ /T=/Data/Time/TimeOfDay..
+                , /E=∀/Data/Time/TimeParseErr
+                ] = /Data/Time/parseTimeOfDay
                 ( Value /s ->
                     ( /Data/String/Text
                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
@@ -3651,12 +3613,10 @@ Prgm
                 { csValue = "error: 75 is not a minute, 0 to 59" }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Data/Result
-                    [ /T=/Data/Time/TimeOfDay..
-                    , /E=∀/Data/Time/TimeParseErr
-                    ] && PredClass /Catln/Doc/DShow
-                ) = /Data/Time/parseTimeOfDay
+            ( Value /p -> ∀/Data/Result
+                [ /T=/Data/Time/TimeOfDay..
+                , /E=∀/Data/Time/TimeParseErr
+                ] = /Data/Time/parseTimeOfDay
                 ( Value /s ->
                     ( /Data/String/Text
                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr
@@ -3671,12 +3631,10 @@ Prgm
                 { csValue = "error: "9" and "3" are not an hour of one or two digits and minutes of two" }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Data/Result
-                    [ /T=/Data/Time/TimeOfDay..
-                    , /E=∀/Data/Time/TimeParseErr
-                    ] && PredClass /Catln/Doc/DShow
-                ) = /Data/Time/parseTimeOfDay
+            ( Value /p -> ∀/Data/Result
+                [ /T=/Data/Time/TimeOfDay..
+                , /E=∀/Data/Time/TimeParseErr
+                ] = /Data/Time/parseTimeOfDay
                 ( Value /s ->
                     ( /Data/String/Text
                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ).. + /Catln/CStr

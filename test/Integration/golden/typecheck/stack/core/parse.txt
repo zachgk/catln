@@ -494,12 +494,10 @@ Prgm
                 to 36 ([BadBase])." }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Data/Result
-                    [ /T=/Data/Primitive/Integer
-                    , /E=∀/Data/IntegerParseErr
-                    ] && PredClass /Catln/Doc/DShow
-                ) = /Data/parseInteger
+            ( Value /p -> ∀/Data/Result
+                [ /T=/Data/Primitive/Integer
+                , /E=∀/Data/IntegerParseErr
+                ] = /Data/parseInteger
                 ( Value /this ->
                     ( /Data/String/Text
                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
@@ -514,12 +512,10 @@ Prgm
                 { csValue = "42" }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Data/Result
-                    [ /T=/Data/Primitive/Integer
-                    , /E=∀/Data/IntegerParseErr
-                    ] && PredClass /Catln/Doc/DShow
-                ) = /Data/parseInteger
+            ( Value /p -> ∀/Data/Result
+                [ /T=/Data/Primitive/Integer
+                , /E=∀/Data/IntegerParseErr
+                ] = /Data/parseInteger
                 ( Value /this ->
                     ( /Data/String/Text
                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
@@ -534,12 +530,10 @@ Prgm
                 { csValue = "-17" }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Data/Result
-                    [ /T=/Data/Primitive/Integer
-                    , /E=∀/Data/IntegerParseErr
-                    ] && PredClass /Catln/Doc/DShow
-                ) = /Data/parseIntegerBase
+            ( Value /p -> ∀/Data/Result
+                [ /T=/Data/Primitive/Integer
+                , /E=∀/Data/IntegerParseErr
+                ] = /Data/parseIntegerBase
                 ( Value /base -> /Data/Primitive/Integer = CInt
                     { ciValue = 16 }
                 )
@@ -557,12 +551,10 @@ Prgm
                 { csValue = "255" }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Data/Result
-                    [ /T=/Data/Primitive/Integer
-                    , /E=∀/Data/IntegerParseErr
-                    ] && PredClass /Catln/Doc/DShow
-                ) = /Data/parseInteger
+            ( Value /p -> ∀/Data/Result
+                [ /T=/Data/Primitive/Integer
+                , /E=∀/Data/IntegerParseErr
+                ] = /Data/parseInteger
                 ( Value /this ->
                     ( /Data/String/Text
                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
@@ -577,12 +569,10 @@ Prgm
                 { csValue = "error: 'a' at 2 is not a digit of base 10" }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Data/Result
-                    [ /T=/Data/Primitive/Integer
-                    , /E=∀/Data/IntegerParseErr
-                    ] && PredClass /Catln/Doc/DShow
-                ) = /Data/parseInteger
+            ( Value /p -> ∀/Data/Result
+                [ /T=/Data/Primitive/Integer
+                , /E=∀/Data/IntegerParseErr
+                ] = /Data/parseInteger
                 ( Value /this ->
                     ( /Data/String/Text
                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
@@ -597,12 +587,10 @@ Prgm
                 { csValue = "error: a sign has no digits after it" }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Data/Result
-                    [ /T=/Data/Primitive/Integer
-                    , /E=∀/Data/IntegerParseErr
-                    ] && PredClass /Catln/Doc/DShow
-                ) = /Data/parseInteger
+            ( Value /p -> ∀/Data/Result
+                [ /T=/Data/Primitive/Integer
+                , /E=∀/Data/IntegerParseErr
+                ] = /Data/parseInteger
                 ( Value /this ->
                     ( /Data/String/Text
                         ( /chars=∀/Data/List/ConsList[ /T=/Data/Char ] ) + /Catln/CStr
@@ -617,12 +605,10 @@ Prgm
                 { csValue = "error: there is no number in an empty string" }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Data/Result
-                    [ /T=/Data/Primitive/Integer
-                    , /E=∀/Data/IntegerParseErr
-                    ] && PredClass /Catln/Doc/DShow
-                ) = /Data/parseIntegerBase
+            ( Value /p -> ∀/Data/Result
+                [ /T=/Data/Primitive/Integer
+                , /E=∀/Data/IntegerParseErr
+                ] = /Data/parseIntegerBase
                 ( Value /base -> /Data/Primitive/Integer = CInt
                     { ciValue = 1 }
                 )

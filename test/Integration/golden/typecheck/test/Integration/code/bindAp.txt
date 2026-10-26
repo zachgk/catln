@@ -59,9 +59,7 @@ Prgm
                         [ /apBind
                             ( Value /m -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> /Data/Primitive/Integer = /Data/bindap( Value /m -> TVArg /m = Value /m )
                             ( /fn
-                                ( Value /v ->
-                                    ( TopType | PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=/Data/Primitive/Integer ] )
-                                ) -> /Data/Primitive/Integer = /apBind.$9471e8
+                                ( Value /v -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] ) -> /Data/Primitive/Integer = /apBind.$9471e8
                                 ( Value /$9471e8-arg -> TVArg /v = Value /v )
                             )
                         ]

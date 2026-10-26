@@ -1804,12 +1804,10 @@ Prgm
                 answered with that rather than with the reply it does not hold." }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Result
-                    [ /T=∀/Data/String
-                    , /E=∀/Llm/LlmErr
-                    ]
-                ) = /Llm/llmReply
+            ( Value /p -> ∀/Data/Result
+                [ /T=∀/Data/String
+                , /E=∀/Llm/LlmErr
+                ] = /Llm/llmReply
                 ( Value /response -> ∀/Data/Result
                     [ /T=∀/Data/Json
                     , /E=/Data/JsonParseErr..
@@ -1829,12 +1827,10 @@ Prgm
                 { csValue = "Hello!" }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Result
-                    [ /T=∀/Data/String
-                    , /E=∀/Llm/LlmErr
-                    ]
-                ) = /Llm/llmReply
+            ( Value /p -> ∀/Data/Result
+                [ /T=∀/Data/String
+                , /E=∀/Llm/LlmErr
+                ] = /Llm/llmReply
                 ( Value /response -> ∀/Data/Result
                     [ /T=∀/Data/Json
                     , /E=/Data/JsonParseErr..
@@ -1854,12 +1850,10 @@ Prgm
                 { csValue = "error: the model's API answered with an error: Incorrect API key" }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Result
-                    [ /T=∀/Data/String
-                    , /E=∀/Llm/LlmErr
-                    ]
-                ) = /Llm/llmReply
+            ( Value /p -> ∀/Data/Result
+                [ /T=∀/Data/String
+                , /E=∀/Llm/LlmErr
+                ] = /Llm/llmReply
                 ( Value /response -> ∀/Data/Result
                     [ /T=∀/Data/Json
                     , /E=/Data/JsonParseErr..
@@ -1879,12 +1873,10 @@ Prgm
                 { csValue = "error: the model's API answered with an error: "no"" }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Result
-                    [ /T=∀/Data/String
-                    , /E=∀/Llm/LlmErr
-                    ]
-                ) = /Llm/llmReply
+            ( Value /p -> ∀/Data/Result
+                [ /T=∀/Data/String
+                , /E=∀/Llm/LlmErr
+                ] = /Llm/llmReply
                 ( Value /response -> ∀/Data/Result
                     [ /T=∀/Data/Json
                     , /E=/Data/JsonParseErr..
@@ -1904,12 +1896,10 @@ Prgm
                 { csValue = "error: the model's response has no reply at choices[0]: there is no entry 0 of an array of 0" }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Result
-                    [ /T=∀/Data/String
-                    , /E=∀/Llm/LlmErr
-                    ]
-                ) = /Llm/llmReply
+            ( Value /p -> ∀/Data/Result
+                [ /T=∀/Data/String
+                , /E=∀/Llm/LlmErr
+                ] = /Llm/llmReply
                 ( Value /response -> ∀/Data/Result
                     [ /T=∀/Data/Json
                     , /E=/Data/JsonParseErr..
@@ -1929,12 +1919,10 @@ Prgm
                 { csValue = "error: the model's reply at choices[0].message.content is a number, not text" }
             )
         , /Catln/#print
-            ( Value /p ->
-                ( TopType | PredClass /Catln/Doc/DShow && PredClass /Data/Result
-                    [ /T=∀/Data/String
-                    , /E=∀/Llm/LlmErr
-                    ]
-                ) = /Llm/llmReply
+            ( Value /p -> ∀/Data/Result
+                [ /T=∀/Data/String
+                , /E=∀/Llm/LlmErr
+                ] = /Llm/llmReply
                 ( Value /response -> ∀/Data/Result
                     [ /T=∀/Data/Json
                     , /E=/Data/JsonParseErr..

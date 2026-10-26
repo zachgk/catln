@@ -33,7 +33,7 @@ anyOver(lst, fn(v))= /Data/List/any(lst= /Data/Functor/fmap(lst= lst, fn(v)= fn(
   !!! 		Error:
   !!! 		Failed to build arrow tree from /fn(/v=TopType) to ∀/Data/Primitive/Boolean
   !!! 	(bound: TopType)
-  !!! 	(objSrcs: [/fn(/v=TopType),/lst,/anyOver[/A=TopType](/fn(/v=TopType)=/fn[/A=$_/A](/v=$/A), /lst=(TopType | PredClass /Data/List/ConsList[/T=$_/A] && PredClass /Data/Functor[/T=TopType])),/anyOver[/A=TopType](/fn(/v=TopType)=/fn[/A=$_/A](/v=$/A), /lst=(TopType | PredClass /Data/List/ConsList[/T=$_/A] && PredClass /Data/Functor[/T=TopType]))])
+  !!! 	(objSrcs: [/fn(/v=TopType),/lst,/anyOver[/A=TopType](/fn(/v=TopType)=/fn[/A=$_/A](/v=$/A), /lst=∀/Data/List/ConsList[/T=$_/A]),/anyOver[/A=TopType](/fn(/v=TopType)=/fn[/A=$_/A](/v=$/A), /lst=∀/Data/List/ConsList[/T=$_/A])])
   !!! Failed to Build Tree: The type /fn(/v=TopType) does not reach the destination ∀/Data/Primitive/BooleanFailed to Build Tree: Arrow has indeterminate return type
 
 annot(#hint(text -> String))
