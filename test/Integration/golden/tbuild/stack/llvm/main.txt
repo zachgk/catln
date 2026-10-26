@@ -19089,8 +19089,9 @@ Prgm
                   is ([llvmInstr]), given for integers and for floats.
                   # TODO An arm written as the call of a helper compiling both operands
                   #   (@/ContextIn(value= llvmBinary(op, a(..ps)= a(..ps), b(..ps)= b(..ps)), ctx)@) makes inference
-                  #   of the core component run past 15 minutes, where these binds take seconds; each arm repeats
-                  #   them until that is found."
+                  #   of the core component run past 30 minutes, where these binds take seconds; each arm repeats
+                  #   them until that is found. It is not the cost of a chain of binds, which is linear since types
+                  #   no longer triple per bind: measured again after that fix, the helper is as slow as before."
                 }
             )
         , /Catln/#md

@@ -12,22 +12,7 @@ Prgm
                             ( EAppArg
                                 { eaaArg = Value /b -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] }
                             )
-                            ( EAppArg { eaaArg = Value /$cee52d-arg@Value /x -> /Data/Primitive/Integer } ) -> UnionType
-                            ( Just
-                                ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && !
-                                    ( !
-                                        ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Monad[ /T=/Data/Primitive/Integer ] ) && !
-                                        ( PredClass /Data/Maybe
-                                            [ /T=/Data/Maybe/Some( /value=∀/Data/Algebra/Add ) ] && PredClass /Data/Functor
-                                            [ /T=/Data/Maybe/Some( /value=∀/Data/Algebra/Add ) ]
-                                        )
-                                    )
-                                , fromList []
-                                , []
-                                )
-                            , /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
-                            , []
-                            ) =
+                            ( EAppArg { eaaArg = Value /$cee52d-arg@Value /x -> /Data/Primitive/Integer } ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] =
                             ( /Data/bindap
                                 ( EAppArg
                                     { eaaArg = Value /m -> TVArg /b = ( Value /b ↦ TVArg /b ) }
@@ -44,22 +29,7 @@ Prgm
                                             ) ↦ /Data/Maybe/Some( /value=/Data/Primitive/Integer )
                                         )
                                     }
-                                ) ↦ UnionType
-                                ( Just
-                                    ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && !
-                                        ( !
-                                            ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Monad[ /T=/Data/Primitive/Integer ] ) && !
-                                            ( PredClass /Data/Maybe
-                                                [ /T=/Data/Maybe/Some( /value=∀/Data/Algebra/Add ) ] && PredClass /Data/Functor
-                                                [ /T=/Data/Maybe/Some( /value=∀/Data/Algebra/Add ) ]
-                                            )
-                                        )
-                                    , fromList []
-                                    , []
-                                    )
-                                , /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
-                                , []
-                                )
+                                ) ↦ ∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
                             )
                         ]
                     }
@@ -194,8 +164,7 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = Value /b -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] }
-                            ) ->
-                            ( TopType | PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=/Data/Primitive/Integer ] ) =
+                            ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] =
                             ( /Data/bindap
                                 ( EAppArg
                                     { eaaArg = Value /m -> TVArg /a = ( Value /a ↦ TVArg /a ) }
@@ -203,23 +172,18 @@ Prgm
                                 ( EAppArg
                                     { eaaArg = /fn
                                         ( EAppArg
-                                            { eaaArg = Value /v ->
-                                                ( TopType | PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=/Data/Primitive/Integer ] )
-                                            }
-                                        ) ->
-                                        ( TopType | PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=/Data/Primitive/Integer ] ) =
+                                            { eaaArg = Value /v -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] }
+                                        ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] =
                                         ( /apFmap.$a1e82b
                                             ( EAppArg
                                                 { eaaArg = Value /b -> TVArg /b = ( Value /b ↦ TVArg /b ) }
                                             )
                                             ( EAppArg
                                                 { eaaArg = Value /$a1e82b-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                            ) ↦
-                                            ( TopType | PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=/Data/Primitive/Integer ] )
+                                            ) ↦ ∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
                                         )
                                     }
-                                ) ↦
-                                ( TopType | PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=/Data/Primitive/Integer ] )
+                                ) ↦ ∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
                             )
                         ]
                     }
@@ -237,8 +201,7 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = Value /b -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] }
-                            ) ->
-                            ( TopType | PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=/Data/Primitive/Integer ] ) =
+                            ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] =
                             ( /Data/bindap
                                 ( EAppArg
                                     { eaaArg = Value /m -> TVArg /a = ( Value /a ↦ TVArg /a ) }
@@ -255,8 +218,7 @@ Prgm
                                             ) ↦ /Data/Primitive/Integer
                                         )
                                     }
-                                ) ↦
-                                ( TopType | PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=/Data/Primitive/Integer ] )
+                                ) ↦ ∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
                             )
                         ]
                     }
@@ -306,11 +268,8 @@ Prgm
                                 { eaaArg = Value /b -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] }
                             )
                             ( EAppArg
-                                { eaaArg = Value /$a1e82b-arg@Value /x ->
-                                    ( TopType | PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=/Data/Primitive/Integer ] )
-                                }
-                            ) ->
-                            ( TopType | PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=/Data/Primitive/Integer ] ) =
+                                { eaaArg = Value /$a1e82b-arg@Value /x -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] }
+                            ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] =
                             ( /Data/bindap
                                 ( EAppArg
                                     { eaaArg = Value /m -> TVArg /b = ( Value /b ↦ TVArg /b ) }
@@ -327,8 +286,7 @@ Prgm
                                             ) ↦ /Data/Primitive/Integer
                                         )
                                     }
-                                ) ↦
-                                ( TopType | PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=/Data/Primitive/Integer ] )
+                                ) ↦ ∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
                             )
                         ]
                     }
@@ -383,52 +341,14 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = Value /c -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] }
-                            ) ->
-                            ( TopType | PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor
-                                [ /T=UnionType
-                                    ( Just
-                                        ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ]
-                                        , fromList []
-                                        , []
-                                        )
-                                    , /Data/Primitive/Integer
-                                    , []
-                                    )
-                                ]
-                            ) =
+                            ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] =
                             ( /Data/bindap
                                 ( EAppArg
                                     { eaaArg = Value /m -> TVArg /a = ( Value /a ↦ TVArg /a ) }
                                 )
                                 ( EAppArg
                                     { eaaArg = /fn
-                                        ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) ->
-                                        ( TopType | !
-                                            ( !
-                                                ( PredClass /Data/Functor[ /T=∀/Data/Algebra/Add ] && !
-                                                    ( !
-                                                        ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Add ] && PredClass /Data/Functor[ /T=∀/Data/Algebra/Add ] ) && !( PredClass /Data/Algebra/Add )
-                                                    ) && PredClass /Data/Maybe[ /T=∀/Data/Algebra/Add ]
-                                                ) && !
-                                                ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Monad[ /T=/Data/Primitive/Integer ] ) && !
-                                                ( PredClass /Data/Maybe
-                                                    [ /T=
-                                                        ( TopType | PredClass /Data/Functor[ /T=∀/Data/Algebra/Add ] && !
-                                                            ( !
-                                                                ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Add ] && PredClass /Data/Functor[ /T=∀/Data/Algebra/Add ] ) && !( PredClass /Data/Algebra/Add )
-                                                            ) && PredClass /Data/Maybe[ /T=∀/Data/Algebra/Add ]
-                                                        )
-                                                    ] && PredClass /Data/Functor
-                                                    [ /T=
-                                                        ( TopType | PredClass /Data/Functor[ /T=∀/Data/Algebra/Add ] && !
-                                                            ( !
-                                                                ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Add ] && PredClass /Data/Functor[ /T=∀/Data/Algebra/Add ] ) && !( PredClass /Data/Algebra/Add )
-                                                            ) && PredClass /Data/Maybe[ /T=∀/Data/Algebra/Add ]
-                                                        )
-                                                    ]
-                                                )
-                                            ) && PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ]
-                                        ) =
+                                        ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] =
                                         ( /mmapApFmap.$a4afea
                                             ( EAppArg
                                                 { eaaArg = Value /c -> TVArg /c = ( Value /c ↦ TVArg /c ) }
@@ -438,48 +358,10 @@ Prgm
                                             )
                                             ( EAppArg
                                                 { eaaArg = Value /$a4afea-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                            ) ↦
-                                            ( TopType | !
-                                                ( !
-                                                    ( PredClass /Data/Functor[ /T=∀/Data/Algebra/Add ] && !
-                                                        ( !
-                                                            ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Add ] && PredClass /Data/Functor[ /T=∀/Data/Algebra/Add ] ) && !( PredClass /Data/Algebra/Add )
-                                                        ) && PredClass /Data/Maybe[ /T=∀/Data/Algebra/Add ]
-                                                    ) && !
-                                                    ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Monad[ /T=/Data/Primitive/Integer ] ) && !
-                                                    ( PredClass /Data/Maybe
-                                                        [ /T=
-                                                            ( TopType | PredClass /Data/Functor[ /T=∀/Data/Algebra/Add ] && !
-                                                                ( !
-                                                                    ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Add ] && PredClass /Data/Functor[ /T=∀/Data/Algebra/Add ] ) && !( PredClass /Data/Algebra/Add )
-                                                                ) && PredClass /Data/Maybe[ /T=∀/Data/Algebra/Add ]
-                                                            )
-                                                        ] && PredClass /Data/Functor
-                                                        [ /T=
-                                                            ( TopType | PredClass /Data/Functor[ /T=∀/Data/Algebra/Add ] && !
-                                                                ( !
-                                                                    ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Add ] && PredClass /Data/Functor[ /T=∀/Data/Algebra/Add ] ) && !( PredClass /Data/Algebra/Add )
-                                                                ) && PredClass /Data/Maybe[ /T=∀/Data/Algebra/Add ]
-                                                            )
-                                                        ]
-                                                    )
-                                                ) && PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ]
-                                            )
+                                            ) ↦ ∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
                                         )
                                     }
-                                ) ↦
-                                ( TopType | PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor
-                                    [ /T=UnionType
-                                        ( Just
-                                            ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ]
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/Primitive/Integer
-                                        , []
-                                        )
-                                    ]
-                                )
+                                ) ↦ ∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
                             )
                         ]
                     }
@@ -498,10 +380,10 @@ Prgm
                             ( EAppArg
                                 { eaaArg = Value /$7b77bf-arg@Value /x -> /Data/Primitive/Integer }
                             ) ->
-                            ( TopType | !
+                            ( TopType | PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && !
                                 ( !
-                                    ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Add ] && PredClass /Data/Functor[ /T=∀/Data/Algebra/Add ] ) && !( PredClass /Data/Algebra/Add )
-                                ) && PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=/Data/Primitive/Integer ]
+                                    ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Add ] ) && !( PredClass /Data/Algebra/Add )
+                                )
                             ) =
                             ( /Data/bindap
                                 ( EAppArg
@@ -520,10 +402,10 @@ Prgm
                                         )
                                     }
                                 ) ↦
-                                ( TopType | !
+                                ( TopType | PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && !
                                     ( !
-                                        ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Add ] && PredClass /Data/Functor[ /T=∀/Data/Algebra/Add ] ) && !( PredClass /Data/Algebra/Add )
-                                    ) && PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=/Data/Primitive/Integer ]
+                                        ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Add ] ) && !( PredClass /Data/Algebra/Add )
+                                    )
                                 )
                             )
                         ]
@@ -542,15 +424,8 @@ Prgm
                             )
                             ( EAppArg { eaaArg = Value /x -> /Data/Primitive/Integer } )
                             ( EAppArg
-                                { eaaArg = Value /$2fc598-arg@Value /y ->
-                                    ( TopType | PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=/Data/Primitive/Integer ] )
-                                }
-                            ) ->
-                            ( TopType | !
-                                ( !
-                                    ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Add ] && PredClass /Data/Functor[ /T=∀/Data/Algebra/Add ] ) && !( PredClass /Data/Algebra/Add )
-                                ) && PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=/Data/Primitive/Integer ]
-                            ) =
+                                { eaaArg = Value /$2fc598-arg@Value /y -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] }
+                            ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] =
                             ( /Data/bindap
                                 ( EAppArg
                                     { eaaArg = Value /m -> TVArg /c = ( Value /c ↦ TVArg /c ) }
@@ -570,12 +445,7 @@ Prgm
                                             ) ↦ /Data/Primitive/Integer
                                         )
                                     }
-                                ) ↦
-                                ( TopType | !
-                                    ( !
-                                        ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Add ] && PredClass /Data/Functor[ /T=∀/Data/Algebra/Add ] ) && !( PredClass /Data/Algebra/Add )
-                                    ) && PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=/Data/Primitive/Integer ]
-                                )
+                                ) ↦ ∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
                             )
                         ]
                     }
@@ -593,78 +463,24 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = Value /b -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] }
-                            ) ->
-                            ( TopType | PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor
-                                [ /T=UnionType
-                                    ( Just
-                                        ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ]
-                                        , fromList []
-                                        , []
-                                        )
-                                    , /Data/Primitive/Integer
-                                    , []
-                                    )
-                                ]
-                            ) =
+                            ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] =
                             ( /Data/bindap
                                 ( EAppArg
                                     { eaaArg = Value /m -> TVArg /a = ( Value /a ↦ TVArg /a ) }
                                 )
                                 ( EAppArg
                                     { eaaArg = /fn
-                                        ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> UnionType
-                                        ( Just
-                                            ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && !
-                                                ( !
-                                                    ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Monad[ /T=/Data/Primitive/Integer ] ) && !
-                                                    ( PredClass /Data/Maybe
-                                                        [ /T=/Data/Maybe/Some( /value=∀/Data/Algebra/Add ) ] && PredClass /Data/Functor
-                                                        [ /T=/Data/Maybe/Some( /value=∀/Data/Algebra/Add ) ]
-                                                    )
-                                                )
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
-                                        , []
-                                        ) =
+                                        ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] =
                                         ( /mmapMmap.$cee52d
                                             ( EAppArg
                                                 { eaaArg = Value /b -> TVArg /b = ( Value /b ↦ TVArg /b ) }
                                             )
                                             ( EAppArg
                                                 { eaaArg = Value /$cee52d-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                            ) ↦ UnionType
-                                            ( Just
-                                                ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && !
-                                                    ( !
-                                                        ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Monad[ /T=/Data/Primitive/Integer ] ) && !
-                                                        ( PredClass /Data/Maybe
-                                                            [ /T=/Data/Maybe/Some( /value=∀/Data/Algebra/Add ) ] && PredClass /Data/Functor
-                                                            [ /T=/Data/Maybe/Some( /value=∀/Data/Algebra/Add ) ]
-                                                        )
-                                                    )
-                                                , fromList []
-                                                , []
-                                                )
-                                            , /Data/Maybe/Some[ /T=/Data/Primitive/Integer ]( /value=/Data/Primitive/Integer )
-                                            , []
-                                            )
+                                            ) ↦ ∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
                                         )
                                     }
-                                ) ↦
-                                ( TopType | PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor
-                                    [ /T=UnionType
-                                        ( Just
-                                            ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ]
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/Primitive/Integer
-                                        , []
-                                        )
-                                    ]
-                                )
+                                ) ↦ ∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
                             )
                         ]
                     }
@@ -710,19 +526,7 @@ Prgm
                             )
                             ( EAppArg
                                 { eaaArg = Value /b -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] }
-                            ) ->
-                            ( TopType | PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor
-                                [ /T=UnionType
-                                    ( Just
-                                        ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ]
-                                        , fromList []
-                                        , []
-                                        )
-                                    , /Data/Primitive/Integer
-                                    , []
-                                    )
-                                ]
-                            ) =
+                            ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] =
                             ( /Data/bindap
                                 ( EAppArg
                                     { eaaArg = Value /m -> TVArg /a = ( Value /a ↦ TVArg /a ) }
@@ -730,10 +534,10 @@ Prgm
                                 ( EAppArg
                                     { eaaArg = /fn
                                         ( EAppArg { eaaArg = Value /v -> /Data/Primitive/Integer } ) ->
-                                        ( TopType | !
+                                        ( TopType | PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && !
                                             ( !
-                                                ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Add ] && PredClass /Data/Functor[ /T=∀/Data/Algebra/Add ] ) && !( PredClass /Data/Algebra/Add )
-                                            ) && PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=/Data/Primitive/Integer ]
+                                                ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Add ] ) && !( PredClass /Data/Algebra/Add )
+                                            )
                                         ) =
                                         ( /mmapFmap.$7b77bf
                                             ( EAppArg
@@ -742,26 +546,14 @@ Prgm
                                             ( EAppArg
                                                 { eaaArg = Value /$7b77bf-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
                                             ) ↦
-                                            ( TopType | !
+                                            ( TopType | PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && !
                                                 ( !
-                                                    ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Add ] && PredClass /Data/Functor[ /T=∀/Data/Algebra/Add ] ) && !( PredClass /Data/Algebra/Add )
-                                                ) && PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=/Data/Primitive/Integer ]
+                                                    ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Add ] ) && !( PredClass /Data/Algebra/Add )
+                                                )
                                             )
                                         )
                                     }
-                                ) ↦
-                                ( TopType | PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor
-                                    [ /T=UnionType
-                                        ( Just
-                                            ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ]
-                                            , fromList []
-                                            , []
-                                            )
-                                        , /Data/Primitive/Integer
-                                        , []
-                                        )
-                                    ]
-                                )
+                                ) ↦ ∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
                             )
                         ]
                     }
@@ -821,9 +613,7 @@ Prgm
                                 ( EAppArg
                                     { eaaArg = /fn
                                         ( EAppArg
-                                            { eaaArg = Value /v ->
-                                                ( TopType | PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=/Data/Primitive/Integer ] )
-                                            }
+                                            { eaaArg = Value /v -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] }
                                         ) -> /Data/Primitive/Integer =
                                         ( /fmapAp.$9e70e6.$48e8f3
                                             ( EAppArg
@@ -853,33 +643,7 @@ Prgm
                             ( EAppArg
                                 { eaaArg = Value /b -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] }
                             )
-                            ( EAppArg { eaaArg = Value /$a4afea-arg@Value /x -> /Data/Primitive/Integer } ) ->
-                            ( TopType | !
-                                ( !
-                                    ( PredClass /Data/Functor[ /T=∀/Data/Algebra/Add ] && !
-                                        ( !
-                                            ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Add ] && PredClass /Data/Functor[ /T=∀/Data/Algebra/Add ] ) && !( PredClass /Data/Algebra/Add )
-                                        ) && PredClass /Data/Maybe[ /T=∀/Data/Algebra/Add ]
-                                    ) && !
-                                    ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Monad[ /T=/Data/Primitive/Integer ] ) && !
-                                    ( PredClass /Data/Maybe
-                                        [ /T=
-                                            ( TopType | PredClass /Data/Functor[ /T=∀/Data/Algebra/Add ] && !
-                                                ( !
-                                                    ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Add ] && PredClass /Data/Functor[ /T=∀/Data/Algebra/Add ] ) && !( PredClass /Data/Algebra/Add )
-                                                ) && PredClass /Data/Maybe[ /T=∀/Data/Algebra/Add ]
-                                            )
-                                        ] && PredClass /Data/Functor
-                                        [ /T=
-                                            ( TopType | PredClass /Data/Functor[ /T=∀/Data/Algebra/Add ] && !
-                                                ( !
-                                                    ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Add ] && PredClass /Data/Functor[ /T=∀/Data/Algebra/Add ] ) && !( PredClass /Data/Algebra/Add )
-                                                ) && PredClass /Data/Maybe[ /T=∀/Data/Algebra/Add ]
-                                            )
-                                        ]
-                                    )
-                                ) && PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ]
-                            ) =
+                            ( EAppArg { eaaArg = Value /$a4afea-arg@Value /x -> /Data/Primitive/Integer } ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] =
                             ( /Data/bindap
                                 ( EAppArg
                                     { eaaArg = Value /m -> TVArg /b = ( Value /b ↦ TVArg /b ) }
@@ -887,15 +651,8 @@ Prgm
                                 ( EAppArg
                                     { eaaArg = /fn
                                         ( EAppArg
-                                            { eaaArg = Value /v ->
-                                                ( TopType | PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=/Data/Primitive/Integer ] )
-                                            }
-                                        ) ->
-                                        ( TopType | !
-                                            ( !
-                                                ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Add ] && PredClass /Data/Functor[ /T=∀/Data/Algebra/Add ] ) && !( PredClass /Data/Algebra/Add )
-                                            ) && PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=/Data/Primitive/Integer ]
-                                        ) =
+                                            { eaaArg = Value /v -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] }
+                                        ) -> ∀/Data/Maybe[ /T=/Data/Primitive/Integer ] =
                                         ( /mmapApFmap.$a4afea.$2fc598
                                             ( EAppArg
                                                 { eaaArg = Value /c -> TVArg /c = ( Value /c ↦ TVArg /c ) }
@@ -905,41 +662,10 @@ Prgm
                                             )
                                             ( EAppArg
                                                 { eaaArg = Value /$2fc598-arg -> TVArg /v = ( Value /v ↦ TVArg /v ) }
-                                            ) ↦
-                                            ( TopType | !
-                                                ( !
-                                                    ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Add ] && PredClass /Data/Functor[ /T=∀/Data/Algebra/Add ] ) && !( PredClass /Data/Algebra/Add )
-                                                ) && PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Functor[ /T=/Data/Primitive/Integer ]
-                                            )
+                                            ) ↦ ∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
                                         )
                                     }
-                                ) ↦
-                                ( TopType | !
-                                    ( !
-                                        ( PredClass /Data/Functor[ /T=∀/Data/Algebra/Add ] && !
-                                            ( !
-                                                ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Add ] && PredClass /Data/Functor[ /T=∀/Data/Algebra/Add ] ) && !( PredClass /Data/Algebra/Add )
-                                            ) && PredClass /Data/Maybe[ /T=∀/Data/Algebra/Add ]
-                                        ) && !
-                                        ( PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ] && PredClass /Data/Monad[ /T=/Data/Primitive/Integer ] ) && !
-                                        ( PredClass /Data/Maybe
-                                            [ /T=
-                                                ( TopType | PredClass /Data/Functor[ /T=∀/Data/Algebra/Add ] && !
-                                                    ( !
-                                                        ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Add ] && PredClass /Data/Functor[ /T=∀/Data/Algebra/Add ] ) && !( PredClass /Data/Algebra/Add )
-                                                    ) && PredClass /Data/Maybe[ /T=∀/Data/Algebra/Add ]
-                                                )
-                                            ] && PredClass /Data/Functor
-                                            [ /T=
-                                                ( TopType | PredClass /Data/Functor[ /T=∀/Data/Algebra/Add ] && !
-                                                    ( !
-                                                        ( PredClass /Data/Maybe[ /T=∀/Data/Algebra/Add ] && PredClass /Data/Functor[ /T=∀/Data/Algebra/Add ] ) && !( PredClass /Data/Algebra/Add )
-                                                    ) && PredClass /Data/Maybe[ /T=∀/Data/Algebra/Add ]
-                                                )
-                                            ]
-                                        )
-                                    ) && PredClass /Data/Maybe[ /T=/Data/Primitive/Integer ]
-                                )
+                                ) ↦ ∀/Data/Maybe[ /T=/Data/Primitive/Integer ]
                             )
                         ]
                     }
