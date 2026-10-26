@@ -11,11 +11,14 @@ annot(#noCore)
   library, so that when a compiler change breaks it there are a few lines to read rather than a
   standard library. `classArrowRun.ct` runs the same shapes.
 class(S)
+
 data(T(v -> Yes))
 data(P)
 data(Yes)
 data(No)
+
 class(YN, [Yes, No])
+
 every(T.., isa= [/S])
 every(P, isa= [/S])
 

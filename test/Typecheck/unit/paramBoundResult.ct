@@ -16,9 +16,7 @@ module(Rx)
   every(Fl, isa= [/Rx/Ring])
 
   class(Opt[$T], [Has[$T -> $_T](value -> $T), Nope])
-
   class(Bag[$V])
-
   class(Tree[$V], [Full[$V -> $_V](v -> $V), Empty])
 
   every(Tree[$V -> $_V], isa= [/Rx/Bag[$V -> $_V]])

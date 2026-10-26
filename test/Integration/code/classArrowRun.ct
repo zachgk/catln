@@ -7,8 +7,10 @@ import "core"
   [ReprT], and the field it answers with says which value arrived: a [ReprP] arriving unconverted
   finds no arm, and one converted answers 1.
 class(ReprS)
+
 data(ReprT(v -> /Data/Primitive/Integer))
 data(ReprP)
+
 every(ReprT.., isa= [/ReprS])
 every(ReprP, isa= [/ReprS])
 
